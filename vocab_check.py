@@ -52,9 +52,11 @@ def zh_vocab_check(model_name:str, debug=False):
             if tokens_ids[0] == 5:
                 tokens_ids = tokens_ids[1:]
         elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
+            # TODO: 不使用 hardcode 的数值
             # 汉字(一)被拆分了，编码为[1, 29871, 30287]
             # 汉字(溻)被拆分了，编码为[0, 29871, 233, 189, 190]
-            if tokens_ids[0] in [0,1] and tokens_ids[1] == 29871:
+            # 汉字(一)被拆分了，编码为[1, 31822, 231, 187, 131]
+            if tokens_ids[0] in [0,1] and tokens_ids[1] == [29871, 31822]:
                 tokens_ids = tokens_ids[2:]
         if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and tokens_ids[0] == tokenizer.unk_token_id):
             charset_map[i] = 0
