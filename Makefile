@@ -4,7 +4,8 @@ MODELS_BERT = \
 	bert-base-chinese \
 	roberta-large \
 	hfl/chinese-bert-wwm-ext \
-	hfl/chinese-macbert-base
+	hfl/chinese-macbert-base \
+	hfl/chinese-legal-electra-base-generator
 
 MODELS_ERNIE = \
 	nghuyong/ernie-1.0-base-zh \
@@ -12,7 +13,8 @@ MODELS_ERNIE = \
 	nghuyong/ernie-3.0-nano-zh \
 	nghuyong/ernie-3.0-xbase-zh \
 	nghuyong/ernie-health-zh \
-	nghuyong/ernie-gram-zh
+	nghuyong/ernie-gram-zh \
+	swtx/ernie-2.0-base-chinese
 
 MODELS_LLAMA = \
 	decapoda-research/llama-7b-hf \
@@ -20,7 +22,7 @@ MODELS_LLAMA = \
 	TheBloke/guanaco-7B-HF \
 	TheBloke/koala-7B-HF \
 	TheBloke/wizardLM-7B-HF \
-	TheBloke/vicuna-7B-1.1-HF \
+	lmsys/vicuna-7b-delta-v1.1 \
 	openlm-research/open_llama_7b
 
 MODELS_LLM = \
@@ -46,7 +48,7 @@ install-deps:
 update-deps:
 	pip freeze > requirements.txt
 
-generate-charsets:
+charsets:
 	python generate_charsets.py
 
 run: run-bert run-ernie run-llama run-llm run-shibing624

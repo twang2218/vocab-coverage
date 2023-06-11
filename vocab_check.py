@@ -1,20 +1,12 @@
 import json
 import os
 from transformers import AutoTokenizer
-from grid_graph import draw_vocab_graph, vocab_index_to_level
+from grid_graph import draw_vocab_graph
 import argparse
 from transformers import LlamaTokenizer as LLaMATokenizer
 
 # 加载字表
-charset_table = json.load(open('charset.json', 'r'))
-# 由于汉典的汉字太多了，8万汉字，我们暂时不考虑汉典其它汉字，将来如果找到一个2万汉字的字表，再考虑
-charset_table = charset_table[:3]
-all_chars = []
-for c in charset_table:
-    all_chars.extend(c)
-# print("共有{}个汉字".format(len(all_chars)))
-charset_map = [1 for _ in range(len(all_chars))]
-
+charset = json.load(open('charset.json', 'r'))
 
 def zh_vocab_check(model_name:str, debug=False):
     print("检查模型 {} 的字表".format(model_name))
@@ -41,44 +33,59 @@ def zh_vocab_check(model_name:str, debug=False):
         "T5Tokenizer",
         "T5TokenizerFast",
     ]
-    count_by_level = [0, 0, 0, 0]
-    for i, c in enumerate(all_chars):
-        tokens_ids = tokenizer.encode(c)
-        tn = type(tokenizer).__name__
-        if tn in tokenizers_with_warp_token:
-            tokens_ids = tokens_ids[1:-1]
-        elif tn == "ChatGLMTokenizer":
-            tokens_ids = tokens_ids[:-2]
-            if tokens_ids[0] == 5:
-                tokens_ids = tokens_ids[1:]
-        elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
-            # TODO: 不使用 hardcode 的数值
-            # 汉字(一)被拆分了，编码为[1, 29871, 30287]
-            # 汉字(溻)被拆分了，编码为[0, 29871, 233, 189, 190]
-            # 汉字(一)被拆分了，编码为[1, 31822, 231, 187, 131]
-            if tokens_ids[0] in [0,1] and tokens_ids[1] == [29871, 31822]:
-                tokens_ids = tokens_ids[2:]
-        if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and tokens_ids[0] == tokenizer.unk_token_id):
-            charset_map[i] = 0
-        else:
-            level = vocab_index_to_level(i)
-            charset_map[i] = 1.0/len(tokens_ids)
-            if len(tokens_ids) > 1:
-                # 说明可能是BBPE编码导致汉字被拆分了，这里我们不认为覆盖了该汉字
-                count_by_level[level] += 0
+
+    charset_stats = {
+        name: {
+            'known': 0,
+            'total': len(chars),
+            'chars': chars,
+            'map': [0 for _ in range(len(chars))]
+        } for name, chars in charset.items()
+    }
+    for name, chars in charset.items():
+        for i, c in enumerate(chars):
+            # 编码
+            tokens_ids = tokenizer.encode(c)
+
+            # 编码预处理
+            tn = type(tokenizer).__name__
+            if tn in tokenizers_with_warp_token:
+                # 对有头尾token的编码，去掉头尾token
+                tokens_ids = tokens_ids[1:-1]
+            elif tn == "ChatGLMTokenizer":
+                tokens_ids = tokens_ids[:-2]
+                if tokens_ids[0] == 5:
+                    tokens_ids = tokens_ids[1:]
+            elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
+                # TODO: 不使用 hardcode 的数值
+                # 汉字(一)被拆分了，编码为[1, 29871, 30287]
+                # 汉字(溻)被拆分了，编码为[0, 29871, 233, 189, 190]
+                # 汉字(一)被拆分了，编码为[1, 31822, 231, 187, 131]
+                if tokens_ids[0] in [0,1] and tokens_ids[1] in [29871, 31822]:
+                    tokens_ids = tokens_ids[2:]
+
+            # 识字程度判断
+            if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and tokens_ids[0] == tokenizer.unk_token_id):
+                # 未识别的字
+                charset_stats[name]['map'][i] = 0
+            elif len(tokens_ids) == 1:
+                # 完全识别的字
+                charset_stats[name]['map'][i] = 1
+                charset_stats[name]['known'] += 1
+            else: # len(tokens_ids) > 1
+                # 一定程度上识别的字，并不计数，只计算识别程度
+                charset_stats[name]['map'][i] = 1.0/len(tokens_ids) # 识别程度
                 if debug:
-                    print("汉字({})被拆分了，编码为{}".format(c, tokens_ids))
-            else:
-                count_by_level[level] += 1
+                    print("[{}] 汉字({})被拆分了，编码为{}".format(tn, c, tokens_ids))
 
+    # 统计显示
+    for name, stats in charset_stats.items():
+        print("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
 
-    for i in range(len(charset_table)):
-        print("第{}级字表：{}/{} ({:.2%})".format(i+1, count_by_level[i+1], len(charset_table[i]), float(count_by_level[i+1])/len(charset_table[i])))
-    print("总计：{}/{} ({:.2%})".format(sum(count_by_level), len(all_chars), float(sum(count_by_level))/len(all_chars)))
+    # 生成字表图
     filename = model_name.replace("/", "_") + ".png"
     filename = os.path.join("images", filename)
-    draw_vocab_graph(model_name, charset_map, filename, width=100)
-
+    draw_vocab_graph(model_name, charset_stats, filename, width=150)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
