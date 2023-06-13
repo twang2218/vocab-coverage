@@ -1,11 +1,25 @@
 
 MODELS_BERT = \
 	bert-base-cased \
-	bert-base-chinese \
 	roberta-large \
+	xlnet-base-cased \
+	albert-base-v2 \
+	google/flan-t5-base \
+	google/electra-base-discriminator \
+	bert-base-chinese \
 	hfl/chinese-bert-wwm-ext \
 	hfl/chinese-macbert-base \
 	hfl/chinese-legal-electra-base-generator
+
+MODELS_SBERT = \
+	sentence-transformers/all-MiniLM-L6-v2 \
+	sentence-transformers/all-mpnet-base-v2 \
+	sentence-transformers/multi-qa-mpnet-base-dot-v1 \
+	sentence-transformers/paraphrase-MiniLM-L6-v2 \
+	sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
+	sentence-transformers/paraphrase-multilingual-mpnet-base-v2 \
+	sentence-transformers/distiluse-base-multilingual-cased-v2 \
+	sentence-transformers/all-roberta-large-v1
 
 MODELS_ERNIE = \
 	nghuyong/ernie-1.0-base-zh \
@@ -55,6 +69,11 @@ run: run-bert run-ernie run-llama run-llm run-shibing624
 
 run-bert:
 	@for model in $(MODELS_BERT); do \
+		python vocab_check.py --model_name $$model; \
+	done
+
+run-sbert:
+	@for model in $(MODELS_SBERT); do \
 		python vocab_check.py --model_name $$model; \
 	done
 

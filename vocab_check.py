@@ -3,7 +3,6 @@ import os
 from transformers import AutoTokenizer
 from grid_graph import draw_vocab_graph
 import argparse
-from transformers import LlamaTokenizer as LLaMATokenizer
 
 # 加载字表
 charset = json.load(open('charset.json', 'r'))
@@ -32,6 +31,16 @@ def zh_vocab_check(model_name:str, debug=False):
         "ElectraTokenizerFast",
         "T5Tokenizer",
         "T5TokenizerFast",
+        "MPNetTokenizer",
+        "MPNetTokenizerFast",
+        "DistilBertTokenizer",
+        "DistilBertTokenizerFast",
+        "XLMRobertaTokenizer",
+        "XLMRobertaTokenizerFast",
+        "XLNetTokenizer",
+        "XLNetTokenizerFast",
+        "AlbertTokenizer",
+        "AlbertTokenizerFast",
     ]
 
     charset_stats = {
@@ -42,6 +51,16 @@ def zh_vocab_check(model_name:str, debug=False):
             'map': [0 for _ in range(len(chars))]
         } for name, chars in charset.items()
     }
+
+    if debug:
+        print('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
+            tokenizer.cls_token_id,
+            tokenizer.sep_token_id,
+            tokenizer.pad_token_id,
+            tokenizer.unk_token_id,
+            tokenizer.mask_token_id
+        ))
+
     for name, chars in charset.items():
         for i, c in enumerate(chars):
             # 编码
@@ -52,9 +71,18 @@ def zh_vocab_check(model_name:str, debug=False):
             if tn in tokenizers_with_warp_token:
                 # 对有头尾token的编码，去掉头尾token
                 tokens_ids = tokens_ids[1:-1]
+                if tokens_ids[0] in [6, 13]:
+                    # sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+                    # 模型的tokenizer会在开始前缀一个'6'，后面的id已经足够可以解码为给定汉字了，因此去除前缀
+                    # albert-base-v2 会在开始前缀一个'13'
+                    tokens_ids = tokens_ids[1:]
+                if tokens_ids[-1] == tokenizer.sep_token_id:
+                    # 对有sep_token的编码，去掉尾部的sep_token
+                    tokens_ids = tokens_ids[:-1]
             elif tn == "ChatGLMTokenizer":
                 tokens_ids = tokens_ids[:-2]
                 if tokens_ids[0] == 5:
+                    # 有时候会在开始前缀一个'5'
                     tokens_ids = tokens_ids[1:]
             elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
                 # TODO: 不使用 hardcode 的数值

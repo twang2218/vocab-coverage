@@ -3,7 +3,8 @@
 - [语言模型中文识字率分析](#语言模型中文识字率分析)
   - [项目介绍](#项目介绍)
   - [分析结果](#分析结果)
-    - [中文支持较差的模型](#中文支持较差的模型)
+    - [原生的BERT类的模型](#原生的bert类的模型)
+    - [Sentence BERT 提供的模型](#sentence-bert-提供的模型)
     - [基于 bert-base-chinese 字表的模型](#基于-bert-base-chinese-字表的模型)
     - [ERNIE](#ernie)
     - [基于原生 LLaMA 的模型](#基于原生-llama-的模型)
@@ -34,11 +35,25 @@
 
 ## 分析结果
 
-### 中文支持较差的模型
+### 原生的BERT类的模型
 
 |                   |                     |
 |-------------------|---------------------|
 |![](images/bert-base-cased.png)|![](images/roberta-large.png)|
+|![](images/xlnet-base-cased.png)|![](images/albert-base-v2.png)|
+|![](images/google_flan-t5-base.png)|![](images/google_electra-base-discriminator.png)|
+
+### Sentence BERT 提供的模型
+
+|                                                       |                                                        |
+|-------------------------------------------------------|--------------------------------------------------------|
+|![](images/sentence-transformers_all-MiniLM-L6-v2.png) | ![](images/sentence-transformers_all-mpnet-base-v2.png)|
+|![](images/sentence-transformers_all-roberta-large-v1.png) | ![](images/sentence-transformers_paraphrase-MiniLM-L6-v2.png)|
+|![](images/sentence-transformers_distiluse-base-multilingual-cased-v2.png) | ![](images/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)|
+|![](images/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png) | ![](images/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)|
+
+
+
 
 ### 基于 bert-base-chinese 字表的模型
 
