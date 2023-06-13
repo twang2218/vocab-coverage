@@ -15,6 +15,12 @@ def zh_vocab_check(model_name:str, debug=False):
         if "LLaMATokenizer" in e.args[0]:
             from transformers import LlamaTokenizer
             tokenizer = LlamaTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        elif "aquila" in e.args[0]:
+            from flagai.data.tokenizer import Tokenizer
+            name = 'aquila-7b'
+            cache_dir = os.path.join('./model', name)
+            tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
+            tokenizer.unk_token_id = 0
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
             return
