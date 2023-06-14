@@ -61,7 +61,7 @@
 |----------------------------------------|---------------------------------------------|
 |![](images/bert-base-chinese.png)       |![](images/hfl_chinese-bert-wwm-ext.png)       |
 |![](images/hfl_chinese-macbert-base.png)|![](images/hfl_chinese-legal-electra-base-generator.png)|
-|![](images/shibing624_text2vec-base-chinese.png)| |
+|![](images/shibing624_text2vec-base-chinese.png)|![](images/moka-ai_m3e-base.png) |
 
 ### ERNIE
 

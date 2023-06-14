@@ -7,6 +7,7 @@ MODELS_BERT = \
 	google/flan-t5-base \
 	google/electra-base-discriminator \
 	bert-base-chinese \
+	moka-ai/m3e-base \
 	hfl/chinese-bert-wwm-ext \
 	hfl/chinese-macbert-base \
 	hfl/chinese-legal-electra-base-generator
