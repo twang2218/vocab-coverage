@@ -11,6 +11,7 @@
     - [基于汉字扩表后的 LLaMA 的模型](#基于汉字扩表后的-llama-的模型)
     - [中文大语言模型](#中文大语言模型)
     - [其它大语言模型](#其它大语言模型)
+    - [OpenAI 模型](#openai-模型)
 
 ## 项目介绍
 
@@ -103,3 +104,10 @@
 |![](images/nomic-ai_gpt4all-j.png)      | ![](images/mosaicml_mpt-7b-instruct.png)    |
 |![](images/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png) |                      |
 
+### OpenAI 模型
+
+|                                        |                                             |
+|----------------------------------------|---------------------------------------------|
+|![](images/OpenAI_text-embedding-ada-002.png)    | ![](images/OpenAI_text-davinci-003.png)   |
+|![](images/OpenAI_gpt-3.5-turbo.png)      | ![](images/OpenAI_gpt-4.png)    |
+|![](images/OpenAI_gpt2.png)      | ![](images/OpenAI_text-ada-001.png)    |

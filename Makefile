@@ -60,7 +60,9 @@ MODELS_OPENAI = \
 	OpenAI/gpt-4 \
 	OpenAI/gpt-3.5-turbo \
 	OpenAI/text-embedding-ada-002 \
-	OpenAI/text-davinci-003
+	OpenAI/text-davinci-003 \
+	OpenAI/gpt2 \
+	OpenAI/text-ada-001
 
 install-deps:
 	pip install -r requirements.txt
