@@ -55,6 +55,11 @@ MODELS_SHIBING624 = \
 	shibing624/prompt-t5-base-chinese \
 	shibing624/mengzi-t5-base-chinese-correction
 
+MODELS_OPENAI = \
+	OpenAI/gpt-4 \
+	OpenAI/gpt-3.5-turbo \
+	OpenAI/text-embedding-ada-002 \
+	OpenAI/text-davinci-003
 
 install-deps:
 	pip install -r requirements.txt
@@ -97,3 +102,7 @@ run-shibing624:
 		python vocab_check.py --model_name $$model; \
 	done
 
+run-openai:
+	@for model in $(MODELS_OPENAI); do \
+		python vocab_check.py --model_name $$model; \
+	done

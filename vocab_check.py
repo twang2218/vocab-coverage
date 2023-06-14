@@ -21,6 +21,12 @@ def zh_vocab_check(model_name:str, debug=False):
             cache_dir = os.path.join('./model', name)
             tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
             tokenizer.unk_token_id = 0
+        elif "OpenAI" in e.args[0]:
+            import tiktoken
+            name = model_name.split("/")[-1]
+            tokenizer = tiktoken.encoding_for_model(name)
+            if debug:
+                print(tokenizer._special_tokens)
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
             return
@@ -59,13 +65,14 @@ def zh_vocab_check(model_name:str, debug=False):
     }
 
     if debug:
-        print('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
-            tokenizer.cls_token_id,
-            tokenizer.sep_token_id,
-            tokenizer.pad_token_id,
-            tokenizer.unk_token_id,
-            tokenizer.mask_token_id
-        ))
+        if hasattr(tokenizer, 'cls_token_id'):
+            print('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
+                tokenizer.cls_token_id,
+                tokenizer.sep_token_id,
+                tokenizer.pad_token_id,
+                tokenizer.unk_token_id,
+                tokenizer.mask_token_id
+            ))
 
     for name, chars in charset.items():
         for i, c in enumerate(chars):
@@ -99,7 +106,7 @@ def zh_vocab_check(model_name:str, debug=False):
                     tokens_ids = tokens_ids[2:]
 
             # 识字程度判断
-            if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and tokens_ids[0] == tokenizer.unk_token_id):
+            if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and hasattr(tokenizer, 'unk_token_id') and tokens_ids[0] == tokenizer.unk_token_id):
                 # 未识别的字
                 charset_stats[name]['map'][i] = 0
             elif len(tokens_ids) == 1:

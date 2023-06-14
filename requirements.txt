@@ -25,6 +25,7 @@ sentencepiece==0.1.99
 six==1.16.0
 soupsieve==2.4.1
 sympy==1.12
+tiktoken==0.4.0
 tokenizers==0.13.3
 torch==2.0.1
 tqdm==4.65.0
