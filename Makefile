@@ -70,7 +70,7 @@ update-deps:
 charsets:
 	python generate_charsets.py
 
-run: run-bert run-ernie run-llama run-llm run-shibing624
+run: run-bert run-sbert run-ernie run-llama run-llm run-shibing624 run-openai
 
 run-bert:
 	@for model in $(MODELS_BERT); do \

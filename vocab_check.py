@@ -21,10 +21,12 @@ def zh_vocab_check(model_name:str, debug=False):
             cache_dir = os.path.join('./model', name)
             tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
             tokenizer.unk_token_id = 0
+            tokenizer.vocab_size = tokenizer.num_tokens
         elif "OpenAI" in e.args[0]:
             import tiktoken
             name = model_name.split("/")[-1]
             tokenizer = tiktoken.encoding_for_model(name)
+            tokenizer.vocab_size = tokenizer.n_vocab
             if debug:
                 print(tokenizer._special_tokens)
         else:
@@ -33,6 +35,7 @@ def zh_vocab_check(model_name:str, debug=False):
 
     if debug:
         print(tokenizer)
+        print(tokenizer.vocab_size)
 
     tokenizers_with_warp_token = [
         "BertTokenizer",
@@ -84,17 +87,17 @@ def zh_vocab_check(model_name:str, debug=False):
             if tn in tokenizers_with_warp_token:
                 # 对有头尾token的编码，去掉头尾token
                 tokens_ids = tokens_ids[1:-1]
-                if tokens_ids[0] in [6, 13]:
+                if len(tokens_ids) > 0 and tokens_ids[0] in [6, 13]:
                     # sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
                     # 模型的tokenizer会在开始前缀一个'6'，后面的id已经足够可以解码为给定汉字了，因此去除前缀
                     # albert-base-v2 会在开始前缀一个'13'
                     tokens_ids = tokens_ids[1:]
-                if tokens_ids[-1] == tokenizer.sep_token_id:
+                if len(tokens_ids) > 0 and tokens_ids[-1] == tokenizer.sep_token_id:
                     # 对有sep_token的编码，去掉尾部的sep_token
                     tokens_ids = tokens_ids[:-1]
             elif tn == "ChatGLMTokenizer":
                 tokens_ids = tokens_ids[:-2]
-                if tokens_ids[0] == 5:
+                if len(tokens_ids) > 0 and tokens_ids[0] == 5:
                     # 有时候会在开始前缀一个'5'
                     tokens_ids = tokens_ids[1:]
             elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
@@ -126,7 +129,7 @@ def zh_vocab_check(model_name:str, debug=False):
     # 生成字表图
     filename = model_name.replace("/", "_") + ".png"
     filename = os.path.join("images", filename)
-    draw_vocab_graph(model_name, charset_stats, filename, width=150)
+    draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, filename, width=150)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

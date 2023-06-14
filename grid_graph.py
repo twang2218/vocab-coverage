@@ -17,7 +17,7 @@ for font_path in font_paths:
     except IOError:
         continue  # 如果加载失败，继续尝试下一个字体
 
-def draw_vocab_graph(model_name: str, charset_stats:dict, filename: str, width=100, height=100, cell_size=10, margin=40, palette=default_palette):
+def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filename: str, width=100, height=100, cell_size=10, margin=40, palette=default_palette):
     total_chars = sum([s['total'] for s in charset_stats.values()])
 
     # 定义图像大小
@@ -59,6 +59,13 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, filename: str, width=1
         fill="#000000",
         align="right",
         font=ImageFont.truetype("Anonymous Pro", 30))
+    # 在模型名称下方写入字表大小
+    draw.text(
+        (margin + 40, image_height - margin - 20),
+        "vocab size: {:,} ".format(vocab_size),
+        fill="#000000",
+        align="right",
+        font=ImageFont.truetype("Anonymous Pro", 20))
 
     # 在图片右下角写入字表统计信息
     stats_name = ""
