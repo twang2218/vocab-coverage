@@ -93,7 +93,7 @@
 |----------------------------------------|---------------------------------------------|
 |![](images/THUDM_chatglm-6b.png) |![](images/fnlp_moss-moon-003-sft.png)             |
 |![](images/shibing624_mengzi-t5-base-chinese-correction.png) | ![](images/shibing624_prompt-t5-base-chinese.png) |
-|![](images/BAAI_aquila-7b.png)  |  |
+|![](images/BAAI_aquila-7b.png)  | ![](images/baichuan-inc_baichuan-7B.png)  |
 
 
 ### 其它大语言模型

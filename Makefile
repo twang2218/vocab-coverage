@@ -43,6 +43,7 @@ MODELS_LLAMA = \
 MODELS_LLM = \
 	THUDM/chatglm-6b \
 	fnlp/moss-moon-003-sft \
+	baichuan-inc/baichuan-7B \
 	bigscience/bloom-7b1 \
 	mosaicml/mpt-7b-instruct \
 	tiiuae/falcon-7b-instruct \
