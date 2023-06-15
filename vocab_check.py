@@ -83,6 +83,12 @@ def zh_vocab_check(model_name:str, debug=False):
                 # 对有头部特殊token的编码，去掉头部特殊token
                 tokens_ids = tokens_ids[1:]
 
+            # 验证编码
+            if len(tokens_ids) > 1:
+                c2 = tokenizer.decode(tokens_ids)
+                if c != c2:
+                    print("[{}] 编码字 {}({}) 失败：{} != {}".format(tn, c, tokens_ids, c, c2))
+                    
             # 识字程度判断
             if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and hasattr(tokenizer, 'unk_token_id') and tokens_ids[0] == tokenizer.unk_token_id):
                 # 未识别的字
