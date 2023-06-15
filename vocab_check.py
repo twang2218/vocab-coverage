@@ -20,43 +20,23 @@ def zh_vocab_check(model_name:str, debug=False):
             name = 'aquila-7b'
             cache_dir = os.path.join('./model', name)
             tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
-            tokenizer.unk_token_id = 0
+            tokenizer.cls_token_id = tokenizer.token_start_id
+            tokenizer.sep_token_id = tokenizer.token_end_id
+            tokenizer.unk_token_id = tokenizer.token_unk_id if hasattr(tokenizer, 'token_unk_id') else None
+            tokenizer.pad_token_id = tokenizer.token_pad_id if hasattr(tokenizer, 'token_pad_id') else None
+            tokenizer.mask_token_id = tokenizer.token_mask_id if hasattr(tokenizer, 'token_mask_id') else None
             tokenizer.vocab_size = tokenizer.num_tokens
         elif "OpenAI" in e.args[0]:
             import tiktoken
             name = model_name.split("/")[-1]
             tokenizer = tiktoken.encoding_for_model(name)
             tokenizer.vocab_size = tokenizer.n_vocab
+            tokenizer.cls_token_id = tokenizer.encode_single_token('<|endoftext|>')
             if debug:
                 print(tokenizer._special_tokens)
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
             return
-
-    if debug:
-        print(tokenizer)
-        print(tokenizer.vocab_size)
-
-    tokenizers_with_warp_token = [
-        "BertTokenizer",
-        "BertTokenizerFast",
-        "RobertaTokenizer",
-        "RobertaTokenizerFast",
-        "ElectraTokenizer",
-        "ElectraTokenizerFast",
-        "T5Tokenizer",
-        "T5TokenizerFast",
-        "MPNetTokenizer",
-        "MPNetTokenizerFast",
-        "DistilBertTokenizer",
-        "DistilBertTokenizerFast",
-        "XLMRobertaTokenizer",
-        "XLMRobertaTokenizerFast",
-        "XLNetTokenizer",
-        "XLNetTokenizerFast",
-        "AlbertTokenizer",
-        "AlbertTokenizerFast",
-    ]
 
     charset_stats = {
         name: {
@@ -68,45 +48,40 @@ def zh_vocab_check(model_name:str, debug=False):
     }
 
     if debug:
+        print(tokenizer)
+        print('vocab size:', tokenizer.vocab_size)
         if hasattr(tokenizer, 'cls_token_id'):
             print('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
-                tokenizer.cls_token_id,
-                tokenizer.sep_token_id,
-                tokenizer.pad_token_id,
-                tokenizer.unk_token_id,
-                tokenizer.mask_token_id
+                tokenizer.cls_token_id if hasattr(tokenizer, 'cls_token_id') else None,
+                tokenizer.sep_token_id if hasattr(tokenizer, 'sep_token_id') else None,
+                tokenizer.pad_token_id if hasattr(tokenizer, 'pad_token_id') else None,
+                tokenizer.unk_token_id if hasattr(tokenizer, 'unk_token_id') else None,
+                tokenizer.mask_token_id if hasattr(tokenizer, 'mask_token_id') else None
             ))
+
+    try:
+        # 对于 ChatGLM 等模型，有特殊的头部token，需要特殊处理
+        prefix_token = tokenizer.convert_tokens_to_ids('▁')
+    except:
+        prefix_token = tokenizer.cls_token_id
 
     for name, chars in charset.items():
         for i, c in enumerate(chars):
             # 编码
-            tokens_ids = tokenizer.encode(c)
+            try:
+                tokens_ids = tokenizer.encode(c, add_special_tokens=False)
+            except Exception as e:
+                if "add_special_tokens" in e.args[0]:
+                    tokens_ids = tokenizer.encode(c)
+                else:
+                    print("编码字 {} 失败：{}".format(c, e))
+                    continue
 
             # 编码预处理
             tn = type(tokenizer).__name__
-            if tn in tokenizers_with_warp_token:
-                # 对有头尾token的编码，去掉头尾token
-                tokens_ids = tokens_ids[1:-1]
-                if len(tokens_ids) > 0 and tokens_ids[0] in [6, 13]:
-                    # sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-                    # 模型的tokenizer会在开始前缀一个'6'，后面的id已经足够可以解码为给定汉字了，因此去除前缀
-                    # albert-base-v2 会在开始前缀一个'13'
-                    tokens_ids = tokens_ids[1:]
-                if len(tokens_ids) > 0 and tokens_ids[-1] == tokenizer.sep_token_id:
-                    # 对有sep_token的编码，去掉尾部的sep_token
-                    tokens_ids = tokens_ids[:-1]
-            elif tn == "ChatGLMTokenizer":
-                tokens_ids = tokens_ids[:-2]
-                if len(tokens_ids) > 0 and tokens_ids[0] == 5:
-                    # 有时候会在开始前缀一个'5'
-                    tokens_ids = tokens_ids[1:]
-            elif tn == "LlamaTokenizer" or tn == "LlamaTokenizerFast":
-                # TODO: 不使用 hardcode 的数值
-                # 汉字(一)被拆分了，编码为[1, 29871, 30287]
-                # 汉字(溻)被拆分了，编码为[0, 29871, 233, 189, 190]
-                # 汉字(一)被拆分了，编码为[1, 31822, 231, 187, 131]
-                if tokens_ids[0] in [0,1] and tokens_ids[1] in [29871, 31822]:
-                    tokens_ids = tokens_ids[2:]
+            if len(tokens_ids) > 0 and tokens_ids[0] == prefix_token:
+                # 对有头部特殊token的编码，去掉头部特殊token
+                tokens_ids = tokens_ids[1:]
 
             # 识字程度判断
             if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and hasattr(tokenizer, 'unk_token_id') and tokens_ids[0] == tokenizer.unk_token_id):
