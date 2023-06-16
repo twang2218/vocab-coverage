@@ -78,7 +78,13 @@ update-deps:
 	pip freeze > requirements.txt
 
 package:
+	@echo "[ Clean up... ]"
+	rm -rf dist build vocab_coverage.egg-info
+	@echo "[ Build package... ]"
 	python setup.py sdist bdist_wheel
+	twine check dist/*
+	@echo "[ Upload package... ]"
+	twine upload dist/* --verbose
 
 ENV_TEST_NAME = vocab_package_test
 test-env:
@@ -86,7 +92,7 @@ test-env:
 		conda env remove -n $(ENV_TEST_NAME) -y; \
 	fi
 	conda create -n $(ENV_TEST_NAME) python=3.10 -y
-	echo "conda activate $(ENV_TEST_NAME)"
+	@echo "conda activate $(ENV_TEST_NAME)"
 
 test-package:
 	pip install -e .; \

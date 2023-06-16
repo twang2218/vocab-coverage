@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vocab-coverage',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
     install_requires=[
         'Pillow',
@@ -21,6 +21,7 @@ setup(
         ],
     },
     description='A Python package designed to perform coverage analysis on Chinese vocabulary for language models.',
+    long_description_content_type="text/markdown",
     long_description=open('README.md').read(),
     author='Tao Wang',
     author_email='twang2218@gmail.com',
@@ -40,7 +41,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'model-vocab-coverage = vocab_coverage.model:main',
+            'vocab-coverage = vocab_coverage.model:main',
         ],
     },
 )
