@@ -65,9 +65,9 @@ MODELS_OPENAI = \
 	OpenAI/gpt2 \
 	OpenAI/text-ada-001
 
-define model_vocab_coverage
+define vocab_coverage_model
 	@for model in $(1); do \
-		python vocab_coverage/model.py --model_name $$model; \
+		python vocab_coverage/main.py model --model_name $$model; \
 	done
 endef
 
@@ -96,30 +96,30 @@ test-env:
 
 test-package:
 	pip install -e .; \
-	model-vocab-coverage --help
+	vocab-coverage --help
 
 charsets:
-	python vocab_coverage/charsets.py --charset_file charset.json
+	python vocab_coverage/main.py charset --charset_file charset.json
 
 model: model-bert model-sbert model-ernie model-llama model-llm model-shibing624 model-openai
 
 model-bert:
-	$(call model_vocab_coverage, $(MODELS_BERT))
+	$(call vocab_coverage_model, $(MODELS_BERT))
 
 model-sbert:
-	$(call model_vocab_coverage, $(MODELS_SBERT))
+	$(call vocab_coverage_model, $(MODELS_SBERT))
 
 model-ernie:
-	$(call model_vocab_coverage, $(MODELS_ERNIE))
+	$(call vocab_coverage_model, $(MODELS_ERNIE))
 
 model-llama:
-	$(call model_vocab_coverage, $(MODELS_LLAMA))
+	$(call vocab_coverage_model, $(MODELS_LLAMA))
 
 model-llm:
-	$(call model_vocab_coverage, $(MODELS_LLM))
+	$(call vocab_coverage_model, $(MODELS_LLM))
 
 model-shibing624:
-	$(call model_vocab_coverage, $(MODELS_SHIBING624))
+	$(call vocab_coverage_model, $(MODELS_SHIBING624))
 
 model-openai:
-	$(call model_vocab_coverage, $(MODELS_OPENAI))
+	$(call vocab_coverage_model, $(MODELS_OPENAI))

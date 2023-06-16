@@ -7,9 +7,6 @@ import sys
 
 from transformers import AutoTokenizer
 
-if __name__ == "__main__":
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from vocab_coverage.draw import draw_vocab_graph
 
 def model_check(charsets, model_name:str, output_dir:str, debug=False):
@@ -117,17 +114,3 @@ def model_check(charsets, model_name:str, output_dir:str, debug=False):
     os.mkdir(output_dir) if not os.path.exists(output_dir) else None
     filename = os.path.join(output_dir, filename)
     draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, filename, width=150)
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese")
-    parser.add_argument("--charset_file", type=str, default="charset.json", help="字表文件")
-    parser.add_argument("--output_dir", type=str, default="images", help="输出目录")
-    parser.add_argument("--debug", action='store_true', help="是否打印调试信息")
-    args = parser.parse_args()
-    charsets = json.load(open(args.charset_file, 'r'))
-    model_check(charsets, args.model_name, args.output_dir, args.debug)
-
-if __name__ == "__main__":
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    main()

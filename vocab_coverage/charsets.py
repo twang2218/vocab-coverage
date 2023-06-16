@@ -101,9 +101,3 @@ def generate_charsets(filename:str):
     # 保存到JSON文件
     with open(filename, 'w') as f:
         json.dump(charset, f, ensure_ascii=False, indent=4)
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--charset_file", type=str, default="charset.json", help="字表文件")
-    args = parser.parse_args()
-    generate_charsets(args.charset_file)
