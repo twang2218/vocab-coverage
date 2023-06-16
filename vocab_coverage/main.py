@@ -20,7 +20,7 @@ def main():
     cmdModel.add_argument("--debug", action='store_true', help="是否打印调试信息")
 
     cmdCharset = subcommands.add_parser('charset', help='生成用以统计识字率的字表文件')
-    cmdCharset.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件")
+    cmdCharset.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
 
     args = parser.parse_args()
 
