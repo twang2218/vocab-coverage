@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vocab-coverage',
-    version='0.2',
+    version='0.3',
     packages=find_packages(),
     install_requires=[
         'Pillow',
@@ -25,7 +25,7 @@ setup(
     long_description=open('README.md').read(),
     author='Tao Wang',
     author_email='twang2218@gmail.com',
-    url='https://github.com/twang2218/model-vocab-check',
+    url='https://github.com/twang2218/vocab-coverage',
     license='Apache License 2.0',
     classifiers=[
         'Development Status :: 3 - Alpha',
