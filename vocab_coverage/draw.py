@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import random
 from typing import List
 from PIL import Image, ImageDraw, ImageColor, ImageFont

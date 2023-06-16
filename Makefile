@@ -65,48 +65,55 @@ MODELS_OPENAI = \
 	OpenAI/gpt2 \
 	OpenAI/text-ada-001
 
+define model_vocab_coverage
+	@for model in $(1); do \
+		python vocab_coverage/model.py --model_name $$model; \
+	done
+endef
+
 install-deps:
 	pip install -r requirements.txt
 
 update-deps:
 	pip freeze > requirements.txt
 
+package:
+	python setup.py sdist bdist_wheel
+
+ENV_TEST_NAME = vocab_package_test
+test-env:
+	if conda env list | grep -q "^$(ENV_TEST_NAME) "; then \
+		conda env remove -n $(ENV_TEST_NAME) -y; \
+	fi
+	conda create -n $(ENV_TEST_NAME) python=3.10 -y
+	echo "conda activate $(ENV_TEST_NAME)"
+
+test-package:
+	pip install -e .; \
+	model-vocab-coverage --help
+
 charsets:
-	python generate_charsets.py
+	python vocab_coverage/charsets.py --charset_file charset.json
 
-run: run-bert run-sbert run-ernie run-llama run-llm run-shibing624 run-openai
+model: model-bert model-sbert model-ernie model-llama model-llm model-shibing624 model-openai
 
-run-bert:
-	@for model in $(MODELS_BERT); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-bert:
+	$(call model_vocab_coverage, $(MODELS_BERT))
 
-run-sbert:
-	@for model in $(MODELS_SBERT); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-sbert:
+	$(call model_vocab_coverage, $(MODELS_SBERT))
 
-run-ernie:
-	@for model in $(MODELS_ERNIE); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-ernie:
+	$(call model_vocab_coverage, $(MODELS_ERNIE))
 
-run-llama:
-	@for model in $(MODELS_LLAMA); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-llama:
+	$(call model_vocab_coverage, $(MODELS_LLAMA))
 
-run-llm:
-	@for model in $(MODELS_LLM); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-llm:
+	$(call model_vocab_coverage, $(MODELS_LLM))
 
-run-shibing624:
-	@for model in $(MODELS_SHIBING624); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-shibing624:
+	$(call model_vocab_coverage, $(MODELS_SHIBING624))
 
-run-openai:
-	@for model in $(MODELS_OPENAI); do \
-		python vocab_check.py --model_name $$model; \
-	done
+model-openai:
+	$(call model_vocab_coverage, $(MODELS_OPENAI))

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import argparse
 import json
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -51,7 +54,7 @@ def generate_cnc_chars():
         charset.append(chars)
     return charset
 
-if __name__ == '__main__':
+def generate_charsets(filename:str):
     charset = {}
     # 获取《通用规范汉字表》中一级、二级、三级字表'
     s1 = get_chinese_chars()
@@ -96,5 +99,11 @@ if __name__ == '__main__':
     print(f"共有{sum([len(c) for c in charset.values()])}个汉字")
 
     # 保存到JSON文件
-    with open('charset.json', 'w') as f:
+    with open(filename, 'w') as f:
         json.dump(charset, f, ensure_ascii=False, indent=4)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--charset_file", type=str, default="charset.json", help="字表文件")
+    args = parser.parse_args()
+    generate_charsets(args.charset_file)

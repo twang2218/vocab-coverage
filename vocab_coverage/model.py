@@ -1,13 +1,18 @@
+# -*- coding: utf-8 -*-
+
+import argparse
 import json
 import os
+import sys
+
 from transformers import AutoTokenizer
-from grid_graph import draw_vocab_graph
-import argparse
 
-# 加载字表
-charset = json.load(open('charset.json', 'r'))
+if __name__ == "__main__":
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def zh_vocab_check(model_name:str, debug=False):
+from vocab_coverage.draw import draw_vocab_graph
+
+def model_check(charsets, model_name:str, output_dir:str, debug=False):
     print("检查模型 {} 的字表".format(model_name))
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
@@ -44,7 +49,7 @@ def zh_vocab_check(model_name:str, debug=False):
             'total': len(chars),
             'chars': chars,
             'map': [0 for _ in range(len(chars))]
-        } for name, chars in charset.items()
+        } for name, chars in charsets.items()
     }
 
     if debug:
@@ -65,7 +70,7 @@ def zh_vocab_check(model_name:str, debug=False):
     except:
         prefix_token = tokenizer.cls_token_id
 
-    for name, chars in charset.items():
+    for name, chars in charsets.items():
         for i, c in enumerate(chars):
             # 编码
             try:
@@ -109,12 +114,20 @@ def zh_vocab_check(model_name:str, debug=False):
 
     # 生成字表图
     filename = model_name.replace("/", "_") + ".png"
-    filename = os.path.join("images", filename)
+    os.mkdir(output_dir) if not os.path.exists(output_dir) else None
+    filename = os.path.join(output_dir, filename)
     draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, filename, width=150)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese")
-    parser.add_argument("--debug", type=bool, default=False)
+    parser.add_argument("--charset_file", type=str, default="charset.json", help="字表文件")
+    parser.add_argument("--output_dir", type=str, default="images", help="输出目录")
+    parser.add_argument("--debug", action='store_true', help="是否打印调试信息")
     args = parser.parse_args()
-    zh_vocab_check(args.model_name, args.debug)
+    charsets = json.load(open(args.charset_file, 'r'))
+    model_check(charsets, args.model_name, args.output_dir, args.debug)
+
+if __name__ == "__main__":
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    main()
