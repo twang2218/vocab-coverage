@@ -114,18 +114,18 @@ $ vocab-coverage model --model_name=THUDM/chatglm-6b
 
 |                   |                     |
 |-------------------|---------------------|
-|![](images/bert-base-cased.png)|![](images/roberta-large.png)|
-|![](images/xlnet-base-cased.png)|![](images/albert-base-v2.png)|
-|![](images/google_flan-t5-base.png)|![](images/google_electra-base-discriminator.png)|
+|![](images/coverage/bert-base-cased.png)|![](images/coverage/roberta-large.png)|
+|![](images/coverage/xlnet-base-cased.png)|![](images/coverage/albert-base-v2.png)|
+|![](images/coverage/google_flan-t5-base.png)|![](images/coverage/google_electra-base-discriminator.png)|
 
 ### Sentence BERT 提供的模型
 
 |                                                       |                                                        |
 |-------------------------------------------------------|--------------------------------------------------------|
-|![](images/sentence-transformers_all-MiniLM-L6-v2.png) | ![](images/sentence-transformers_all-mpnet-base-v2.png)|
-|![](images/sentence-transformers_all-roberta-large-v1.png) | ![](images/sentence-transformers_paraphrase-MiniLM-L6-v2.png)|
-|![](images/sentence-transformers_distiluse-base-multilingual-cased-v2.png) | ![](images/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)|
-|![](images/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png) | ![](images/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)|
+|![](images/coverage/sentence-transformers_all-MiniLM-L6-v2.png) | ![](images/coverage/sentence-transformers_all-mpnet-base-v2.png)|
+|![](images/coverage/sentence-transformers_all-roberta-large-v1.png) | ![](images/coverage/sentence-transformers_paraphrase-MiniLM-L6-v2.png)|
+|![](images/coverage/sentence-transformers_distiluse-base-multilingual-cased-v2.png) | ![](images/coverage/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)|
+|![](images/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png) | ![](images/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)|
 
 
 
@@ -134,54 +134,54 @@ $ vocab-coverage model --model_name=THUDM/chatglm-6b
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/bert-base-chinese.png)       |![](images/hfl_chinese-bert-wwm-ext.png)       |
-|![](images/hfl_chinese-macbert-base.png)|![](images/hfl_chinese-legal-electra-base-generator.png)|
-|![](images/shibing624_text2vec-base-chinese.png)|![](images/moka-ai_m3e-base.png) |
+|![](images/coverage/bert-base-chinese.png)       |![](images/coverage/hfl_chinese-bert-wwm-ext.png)       |
+|![](images/coverage/hfl_chinese-macbert-base.png)|![](images/coverage/hfl_chinese-legal-electra-base-generator.png)|
+|![](images/coverage/shibing624_text2vec-base-chinese.png)|![](images/coverage/moka-ai_m3e-base.png) |
 
 ### ERNIE
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/nghuyong_ernie-1.0-base-zh.png)   |![](images/nghuyong_ernie-2.0-base-en.png)       |
-|![](images/nghuyong_ernie-3.0-nano-zh.png)|![](images/nghuyong_ernie-3.0-xbase-zh.png)|
-|![](images/nghuyong_ernie-health-zh.png)|![](images/nghuyong_ernie-gram-zh.png)|
+|![](images/coverage/nghuyong_ernie-1.0-base-zh.png)   |![](images/coverage/nghuyong_ernie-2.0-base-en.png)       |
+|![](images/coverage/nghuyong_ernie-3.0-nano-zh.png)|![](images/coverage/nghuyong_ernie-3.0-xbase-zh.png)|
+|![](images/coverage/nghuyong_ernie-health-zh.png)|![](images/coverage/nghuyong_ernie-gram-zh.png)|
 
 ### 基于原生 LLaMA 的模型
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/decapoda-research_llama-7b-hf.png)       | ![](images/TheBloke_koala-7B-HF.png)    |
-|![](images/lmsys_vicuna-7b-delta-v1.1.png)       | ![](images/TheBloke_guanaco-7B-HF.png)    |
-|![](images/TheBloke_wizardLM-7B-HF.png)       | ![](images/togethercomputer_RedPajama-INCITE-7B-Chat.png)    |
-|![](images/openlm-research_open_llama_7b.png)       |    |
+|![](images/coverage/decapoda-research_llama-7b-hf.png)       | ![](images/coverage/TheBloke_koala-7B-HF.png)    |
+|![](images/coverage/lmsys_vicuna-7b-delta-v1.1.png)       | ![](images/coverage/TheBloke_guanaco-7B-HF.png)    |
+|![](images/coverage/TheBloke_wizardLM-7B-HF.png)       | ![](images/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.png)    |
+|![](images/coverage/openlm-research_open_llama_7b.png)       |    |
 
 ### 基于汉字扩表后的 LLaMA 的模型
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/shibing624_chinese-alpaca-plus-7b-hf.png)       | ![](images/shibing624_chinese-alpaca-plus-13b-hf.png)     |
+|![](images/coverage/shibing624_chinese-alpaca-plus-7b-hf.png)       | ![](images/coverage/shibing624_chinese-alpaca-plus-13b-hf.png)     |
 
 ### 中文大语言模型
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/THUDM_chatglm-6b.png) |![](images/fnlp_moss-moon-003-sft.png)             |
-|![](images/shibing624_mengzi-t5-base-chinese-correction.png) | ![](images/shibing624_prompt-t5-base-chinese.png) |
-|![](images/BAAI_aquila-7b.png)  | ![](images/baichuan-inc_baichuan-7B.png)  |
+|![](images/coverage/THUDM_chatglm-6b.png) |![](images/coverage/fnlp_moss-moon-003-sft.png)             |
+|![](images/coverage/shibing624_mengzi-t5-base-chinese-correction.png) | ![](images/coverage/shibing624_prompt-t5-base-chinese.png) |
+|![](images/coverage/BAAI_aquila-7b.png)  | ![](images/coverage/baichuan-inc_baichuan-7B.png)  |
 
 
 ### 其它大语言模型
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/bigscience_bloom-7b1.png)    | ![](images/tiiuae_falcon-7b-instruct.png)   |
-|![](images/nomic-ai_gpt4all-j.png)      | ![](images/mosaicml_mpt-7b-instruct.png)    |
-|![](images/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png) |                      |
+|![](images/coverage/bigscience_bloom-7b1.png)    | ![](images/coverage/tiiuae_falcon-7b-instruct.png)   |
+|![](images/coverage/nomic-ai_gpt4all-j.png)      | ![](images/coverage/mosaicml_mpt-7b-instruct.png)    |
+|![](images/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png) |                      |
 
 ### OpenAI 模型
 
 |                                        |                                             |
 |----------------------------------------|---------------------------------------------|
-|![](images/OpenAI_text-embedding-ada-002.png)    | ![](images/OpenAI_text-davinci-003.png)   |
-|![](images/OpenAI_gpt-3.5-turbo.png)      | ![](images/OpenAI_gpt-4.png)    |
-|![](images/OpenAI_gpt2.png)      | ![](images/OpenAI_text-ada-001.png)    |
+|![](images/coverage/OpenAI_text-embedding-ada-002.png)    | ![](images/coverage/OpenAI_text-davinci-003.png)   |
+|![](images/coverage/OpenAI_gpt-3.5-turbo.png)      | ![](images/coverage/OpenAI_gpt-4.png)    |
+|![](images/coverage/OpenAI_gpt2.png)      | ![](images/coverage/OpenAI_text-ada-001.png)    |
