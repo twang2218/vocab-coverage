@@ -6,7 +6,7 @@ import json
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from vocab_coverage import model_check
+from vocab_coverage import model_check, embedding_analysis
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,6 +19,13 @@ def main():
     cmdModel.add_argument("--output_dir", type=str, default="images", help="生成的图像文件的输出目录（默认为 images）")
     cmdModel.add_argument("--debug", action='store_true', help="是否打印调试信息")
 
+    cmdEmbedding = subcommands.add_parser('embedding', help='词向量可视化分析')
+    cmdEmbedding.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese", help="模型在 HuggingFace Hub 上的名称（默认为 shibing624/text2vec-base-chinese）")
+    cmdEmbedding.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
+    cmdEmbedding.add_argument("--output_dir", type=str, default="images", help="生成的图像文件的输出目录（默认为 images）")
+    cmdEmbedding.add_argument("--is_detail", action='store_true', help="是否对汉字进行详细分类（默认为 False）")
+    cmdEmbedding.add_argument("--debug", action='store_true', help="是否打印调试信息（默认为 False）")
+
     cmdCharset = subcommands.add_parser('charset', help='生成用以统计识字率的字表文件')
     cmdCharset.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
 
@@ -30,8 +37,11 @@ def main():
         return
     elif args.command == 'model':
         charsets = json.load(open(args.charset_file, 'r'))
-        model_check(charsets, args.model_name, args.output_dir, args.debug)
+        model_check(args.model_name, charsets, args.output_dir, args.debug)
         return
+    elif args.command == 'embedding':
+        charsets = json.load(open(args.charset_file, 'r'))
+        embedding_analysis(args.model_name, charsets, args.output_dir, args.is_detail, args.debug)
     else:
         parser.print_help()
         return

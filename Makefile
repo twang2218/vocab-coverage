@@ -65,11 +65,20 @@ MODELS_OPENAI = \
 	OpenAI/gpt2 \
 	OpenAI/text-ada-001
 
+REMOTE_HOST = vast
+
 define vocab_coverage_model
 	@for model in $(1); do \
 		python vocab_coverage/main.py model --model_name $$model; \
 	done
 endef
+
+define vocab_embeddings_model
+	@for model in $(1); do \
+		python vocab_coverage/main.py embedding --model_name $$model --debug; \
+	done
+endef
+
 
 install-deps:
 	pip install -r requirements.txt
@@ -101,6 +110,7 @@ test-package:
 charsets:
 	python vocab_coverage/main.py charset --charset_file charset.json
 
+# model vocab coverage
 model: model-bert model-sbert model-ernie model-llama model-llm model-shibing624 model-openai
 
 model-bert:
@@ -123,3 +133,42 @@ model-shibing624:
 
 model-openai:
 	$(call vocab_coverage_model, $(MODELS_OPENAI))
+
+# model embedding analysis
+
+embedding: embedding-bert embedding-sbert embedding-ernie embedding-llama embedding-llm embedding-shibing624
+
+embedding-bert:
+	$(call vocab_embeddings_model, $(MODELS_BERT))
+
+embedding-sbert:
+	$(call vocab_embeddings_model, $(MODELS_SBERT))
+
+embedding-ernie:
+	$(call vocab_embeddings_model, $(MODELS_ERNIE))
+
+embedding-llama:
+	$(call vocab_embeddings_model, $(MODELS_LLAMA))
+
+embedding-llm:
+	$(call vocab_embeddings_model, $(MODELS_LLM))
+
+embedding-shibing624:
+	$(call vocab_embeddings_model, $(MODELS_SHIBING624))
+
+# remote
+
+remote-sync:
+	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' . $(REMOTE_HOST):/root/vocab-coverage
+
+remote-provision: remote-sync
+	ssh $(REMOTE_HOST) 'cd vocab-coverage && bash provision.sh install'
+
+gpu:
+	watch -n 1 nvidia-smi
+
+cpu:
+	gotop
+
+jupyter:
+	jupyter lab --port=7860 --allow-root

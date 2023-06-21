@@ -9,7 +9,7 @@ from transformers import AutoTokenizer
 
 from vocab_coverage.draw import draw_vocab_graph
 
-def model_check(charsets, model_name:str, output_dir:str, debug=False):
+def model_check(model_name:str, charsets, output_dir:str, debug=False):
     print("检查模型 {} 的字表".format(model_name))
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
@@ -109,8 +109,12 @@ def model_check(charsets, model_name:str, output_dir:str, debug=False):
     for name, stats in charset_stats.items():
         print("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
 
-    # 生成字表图
-    filename = model_name.replace("/", "_") + ".png"
-    os.mkdir(output_dir) if not os.path.exists(output_dir) else None
+    # 生成文件名
+    filename = model_name.replace('/', '_') + '.png'
+    filename = 'coverage_' + filename
+    output_dir = os.path.join(output_dir, 'coverage')
+    os.makedirs(output_dir, exist_ok=True)
     filename = os.path.join(output_dir, filename)
+
+    # 生成字表图
     draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, filename, width=150)
