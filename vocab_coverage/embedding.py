@@ -38,21 +38,45 @@ def load_tokenizer(model_name):
                 print(tokenizer._special_tokens)
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
-            return
+            exit(1)
     return tokenizer
 
 def load_model(model_name):
     # 加载预训练模型
     tokenizer = load_tokenizer(model_name)
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    try:
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    except Exception as e:
+        if isinstance(e.args, (list, tuple)) and "AutoModel" in e.args[0]:
+            from transformers import AutoModelForCausalLM
+            model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+        elif isinstance(e.args, (list, tuple)) and "aquila" in e.args[0]:
+            from flagai.model.aquila_model import AQUILAModel
+            # cache_dir = os.path.join('./model', 'aquila-7b')
+            # print(f"cache_dir: {os.path.abspath(cache_dir)}")
+            model = AQUILAModel.from_pretrain(model_name='aquila-7b', download_path='./model')
+        else:
+            print("加载模型 {} 失败：{}".format(model_name, e))
+            exit(1)
     model.eval()
     return model, tokenizer
 
-def get_vocab_embeddings(model, tokenizer):
+def get_vocab_embeddings(model, tokenizer, debug=False):
     # get embeddings
     vocab_index = np.arange(0, model.config.vocab_size, 1)
-    vocab_embedding_func = model.get_input_embeddings()
+    if hasattr(model, 'get_input_embeddings'):
+        vocab_embedding_func = model.get_input_embeddings()
+    elif hasattr(model, 'tok_embeddings'):
+        # BAAI/aquila-7b
+        vocab_embedding_func = model.tok_embeddings
     vocab_embeddings = vocab_embedding_func(torch.tensor(vocab_index)).detach().numpy()
+
+
+    if debug:
+        if hasattr(tokenizer, 'convert_tokens_to_string'):
+            print(f"tokenizer {tokenizer.__class__.__name__} has convert_tokens_to_string()")
+        if hasattr(tokenizer, 'text_tokenizer') and hasattr(tokenizer.text_tokenizer, 'convert_tokens_to_string'):
+            print(f"tokenizer {tokenizer.__class__.__name__} has text_tokenizer.convert_tokens_to_string()")
 
     # get vocab
     vocab = [''] * (model.config.vocab_size)
@@ -60,7 +84,17 @@ def get_vocab_embeddings(model, tokenizer):
         if v >= model.config.vocab_size:
             print(f"out of range: {k}, {v}")
             continue
-        vocab[v] = k
+        try:
+            if hasattr(tokenizer, 'convert_tokens_to_string'):
+                vocab[v] = tokenizer.convert_tokens_to_string([k])
+            elif hasattr(tokenizer, 'text_tokenizer') and hasattr(tokenizer.text_tokenizer, 'convert_tokens_to_string'):
+                # BAAI/aquila-7b
+                vocab[v] = tokenizer.text_tokenizer.convert_tokens_to_string([k])
+            else:
+                vocab[v] = k
+        except Exception as e:
+            print(f"convert_tokens_to_string({k}) failed: {e}")
+            vocab[v] = k
 
     return vocab, vocab_embeddings
 
@@ -155,7 +189,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, is_detail=
         # 'model': model,
         # 'tokenizer': tokenizer,
     }
-    vocab, embeddings = get_vocab_embeddings(m, t)
+    vocab, embeddings = get_vocab_embeddings(m, t, debug)
     del m, t
     model['vocab'] = vocab
     model['embeddings'] = embeddings
@@ -165,7 +199,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, is_detail=
     if debug:
         print(f"draw embeddings {model['embeddings_2d'].shape}...")
     image = draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=is_detail, debug=debug)
-    
+
     # 生成文件名
     filename = model_name.replace('/', '_') + '.jpg'
     filename = 'embeddings_' + filename

@@ -123,6 +123,7 @@ class CharsetClassifier:
 
     @staticmethod
     def is_japanese_kana(word:str):
+        word = word.strip()
         for character in word:
             unicode_value = ord(character)
             if (unicode_value >= 0x3040 and unicode_value <= 0x309F) or \
@@ -133,6 +134,7 @@ class CharsetClassifier:
 
     @staticmethod
     def is_korean(word:str):
+        word = word.strip()
         for character in word:
             unicode_value = ord(character)
             if unicode_value >= 0xAC00 and unicode_value <= 0xD7A3:
@@ -142,6 +144,7 @@ class CharsetClassifier:
 
     @staticmethod
     def is_english(word:str):
+        word = word.strip()
         for char in word:
             if not char.isalpha():
                 return False
@@ -149,12 +152,14 @@ class CharsetClassifier:
 
     @staticmethod
     def is_numeric(word:str):
+        word = word.strip()
         for char in word:
             if not char.isdigit():
                 return False
         return True
 
     def is_chinese(self, word:str, category:str):
+        word = word.strip()
         if category == '《通用规范汉字表》一级汉字':
             return word[0] in self.charsets['《通用规范汉字表》一级汉字']
         elif category == '《通用规范汉字表》二级汉字':
@@ -182,6 +187,7 @@ class CharsetClassifier:
             return False
 
     def get_word_type(self, word:str):
+        word = word.strip()
         if len(word) == 0:
             return '其他'
         elif word.startswith('##'):

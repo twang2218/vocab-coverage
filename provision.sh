@@ -29,6 +29,7 @@ install() {
     dpkg -i gotop.deb
     rm gotop.deb
     apt install -y htop tree make
+    apt install -y fonts-noto-cjk fonts-anonymous-pro fonts-noto-color-emoji
 
     # create environment
     conda create -n ${PROJECT_NAME} -y python=3.10

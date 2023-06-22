@@ -8,6 +8,7 @@ MODELS_BERT = \
 	google/electra-base-discriminator \
 	bert-base-chinese \
 	moka-ai/m3e-base \
+	junnyu/wobert_chinese_plus_base \
 	hfl/chinese-bert-wwm-ext \
 	hfl/chinese-macbert-base \
 	hfl/chinese-legal-electra-base-generator
@@ -159,7 +160,10 @@ embedding-shibing624:
 # remote
 
 remote-sync:
-	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' . $(REMOTE_HOST):/root/vocab-coverage
+	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' --exclude='images' . $(REMOTE_HOST):./vocab-coverage
+
+remote-download-images:
+	rsync -avzP $(REMOTE_HOST):./vocab-coverage/images/ ./images/
 
 remote-provision: remote-sync
 	ssh $(REMOTE_HOST) 'cd vocab-coverage && bash provision.sh install'

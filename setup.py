@@ -16,6 +16,7 @@ setup(
         'pandas',
         'requests',
         'scikit-learn',
+        'accelerate',
     ],
     description='语言模型中文识字率分析\nA Python package designed to perform coverage analysis on Chinese vocabulary for language models.',
     long_description_content_type="text/markdown",
