@@ -157,6 +157,18 @@ embedding-llm:
 embedding-shibing624:
 	$(call vocab_embeddings_model, $(MODELS_SHIBING624))
 
+embedding-resize:
+	@input_dir="images/embeddings"; \
+	mkdir -p "$$input_dir/70"; \
+	mkdir -p "$$input_dir/small"; \
+	for file in "$$input_dir"/*.jpg; do \
+		filename=$$(basename "$$file"); \
+		echo "Processing $$filename"; \
+		output_file="$$output_dir/$$filename"; \
+		convert "$$file" -quality 70 "$$input_dir/70/$$filename" || exit 1 ;\
+		convert "$$file" -quality 20 -resize 30% "$$input_dir/small/$$filename" || exit 2 ; \
+	done
+
 # remote
 
 remote-sync:

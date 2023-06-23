@@ -169,25 +169,25 @@ save to images/embeddings/embeddings_THUDM-chatglm-6b.jpg...
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |-------------------|---------------------|
-|[![](images/coverage/bert-base-cased.png)](images/coverage/bert-base-cased.png) | [![](images/embeddings/embeddings_bert-base-cased.jpg)](images/embeddings/embeddings_bert-base-cased.jpg) |
-|[![](images/coverage/roberta-large.png)](images/coverage/roberta-large.png) |[![](images/embeddings/embeddings_roberta-large.jpg)](images/embeddings/embeddings_roberta-large.jpg)|
-|[![](images/coverage/xlnet-base-cased.png)](images/coverage/xlnet-base-cased.png) | [![](images/embeddings/embeddings_xlnet-base-cased.jpg)](images/embeddings/embeddings_xlnet-base-cased.jpg)|
-|[![](images/coverage/albert-base-v2.png)](images/coverage/albert-base-v2.png) | [![](images/embeddings/embeddings_albert-base-v2.jpg)](images/embeddings/embeddings_albert-base-v2.jpg)|
-|[![](images/coverage/google_flan-t5-base.png)](images/coverage/google_flan-t5-base.png) | [![](images/embeddings/embeddings_google_flan-t5-base.jpg)](images/embeddings/embeddings_google_flan-t5-base.jpg)|
-|[![](images/coverage/google_electra-base-discriminator.png)](images/coverage/google_electra-base-discriminator.png) | [![](images/embeddings/embeddings_google_electra-base-discriminator.jpg)](images/embeddings/embeddings_google_electra-base-discriminator.jpg)|
+|[![](images/coverage/bert-base-cased.png)](images/coverage/bert-base-cased.png) | [![](images/embeddings/small/embeddings_bert-base-cased.jpg)](images/embeddings/embeddings_bert-base-cased.jpg) |
+|[![](images/coverage/roberta-large.png)](images/coverage/roberta-large.png) |[![](images/embeddings/small/embeddings_roberta-large.jpg)](images/embeddings/embeddings_roberta-large.jpg)|
+|[![](images/coverage/xlnet-base-cased.png)](images/coverage/xlnet-base-cased.png) | [![](images/embeddings/small/embeddings_xlnet-base-cased.jpg)](images/embeddings/embeddings_xlnet-base-cased.jpg)|
+|[![](images/coverage/albert-base-v2.png)](images/coverage/albert-base-v2.png) | [![](images/embeddings/small/embeddings_albert-base-v2.jpg)](images/embeddings/embeddings_albert-base-v2.jpg)|
+|[![](images/coverage/google_flan-t5-base.png)](images/coverage/google_flan-t5-base.png) | [![](images/embeddings/small/embeddings_google_flan-t5-base.jpg)](images/embeddings/embeddings_google_flan-t5-base.jpg)|
+|[![](images/coverage/google_electra-base-discriminator.png)](images/coverage/google_electra-base-discriminator.png) | [![](images/embeddings/small/embeddings_google_electra-base-discriminator.jpg)](images/embeddings/embeddings_google_electra-base-discriminator.jpg)|
 
 ### Sentence BERT 提供的模型
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |-------------------------------------------------------|--------------------------------------------------------|
-|[![](images/coverage/sentence-transformers_all-MiniLM-L6-v2.png)](images/coverage/sentence-transformers_all-MiniLM-L6-v2.png) | [![](images/embeddings/embeddings_sentence-transformers_all-MiniLM-L6-v2.jpg)](images/embeddings/embeddings_sentence-transformers_all-MiniLM-L6-v2.jpg)|
-|[![](images/coverage/sentence-transformers_all-mpnet-base-v2.png)](images/coverage/sentence-transformers_all-mpnet-base-v2.png)| [![](images/embeddings/embeddings_sentence-transformers_all-mpnet-base-v2.jpg)](images/embeddings/embeddings_sentence-transformers_all-mpnet-base-v2.jpg)|
-|[![](images/coverage/sentence-transformers_all-roberta-large-v1.png)](images/coverage/sentence-transformers_all-roberta-large-v1.png) | [![](images/embeddings/embeddings_sentence-transformers_all-roberta-large-v1.jpg)](images/embeddings/embeddings_sentence-transformers_all-roberta-large-v1.jpg)|
-| [![](images/coverage/sentence-transformers_paraphrase-MiniLM-L6-v2.png)](images/coverage/sentence-transformers_paraphrase-MiniLM-L6-v2.png)| [![](images/embeddings/embeddings_sentence-transformers_paraphrase-MiniLM-L6-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-MiniLM-L6-v2.jpg)|
-|[![](images/coverage/sentence-transformers_distiluse-base-multilingual-cased-v2.png)](images/coverage/sentence-transformers_distiluse-base-multilingual-cased-v2.png) | [![](images/embeddings/embeddings_sentence-transformers_distiluse-base-multilingual-cased-v2.jpg)](images/embeddings/embeddings_sentence-transformers_distiluse-base-multilingual-cased-v2.jpg)|
-| [![](images/coverage/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)](images/coverage/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)| [![](images/embeddings/embeddings_sentence-transformers_multi-qa-mpnet-base-dot-v1.jpg)](images/embeddings/embeddings_sentence-transformers_multi-qa-mpnet-base-dot-v1.jpg)|
-|[![](images/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png)](images/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png) | [![](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.jpg)|
-| [![](images/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)](images/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)| [![](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-mpnet-base-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-mpnet-base-v2.jpg)|
+|[![](images/coverage/sentence-transformers_all-MiniLM-L6-v2.png)](images/coverage/sentence-transformers_all-MiniLM-L6-v2.png) | [![](images/embeddings/small/embeddings_sentence-transformers_all-MiniLM-L6-v2.jpg)](images/embeddings/embeddings_sentence-transformers_all-MiniLM-L6-v2.jpg)|
+|[![](images/coverage/sentence-transformers_all-mpnet-base-v2.png)](images/coverage/sentence-transformers_all-mpnet-base-v2.png)| [![](images/embeddings/small/embeddings_sentence-transformers_all-mpnet-base-v2.jpg)](images/embeddings/embeddings_sentence-transformers_all-mpnet-base-v2.jpg)|
+|[![](images/coverage/sentence-transformers_all-roberta-large-v1.png)](images/coverage/sentence-transformers_all-roberta-large-v1.png) | [![](images/embeddings/small/embeddings_sentence-transformers_all-roberta-large-v1.jpg)](images/embeddings/embeddings_sentence-transformers_all-roberta-large-v1.jpg)|
+| [![](images/coverage/sentence-transformers_paraphrase-MiniLM-L6-v2.png)](images/coverage/sentence-transformers_paraphrase-MiniLM-L6-v2.png)| [![](images/embeddings/small/embeddings_sentence-transformers_paraphrase-MiniLM-L6-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-MiniLM-L6-v2.jpg)|
+|[![](images/coverage/sentence-transformers_distiluse-base-multilingual-cased-v2.png)](images/coverage/sentence-transformers_distiluse-base-multilingual-cased-v2.png) | [![](images/embeddings/small/embeddings_sentence-transformers_distiluse-base-multilingual-cased-v2.jpg)](images/embeddings/embeddings_sentence-transformers_distiluse-base-multilingual-cased-v2.jpg)|
+| [![](images/coverage/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)](images/coverage/sentence-transformers_multi-qa-mpnet-base-dot-v1.png)| [![](images/embeddings/small/embeddings_sentence-transformers_multi-qa-mpnet-base-dot-v1.jpg)](images/embeddings/embeddings_sentence-transformers_multi-qa-mpnet-base-dot-v1.jpg)|
+|[![](images/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png)](images/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.png) | [![](images/embeddings/small/embeddings_sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.jpg)|
+| [![](images/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)](images/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.png)| [![](images/embeddings/small/embeddings_sentence-transformers_paraphrase-multilingual-mpnet-base-v2.jpg)](images/embeddings/embeddings_sentence-transformers_paraphrase-multilingual-mpnet-base-v2.jpg)|
 
 
 
@@ -196,66 +196,66 @@ save to images/embeddings/embeddings_THUDM-chatglm-6b.jpg...
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/bert-base-chinese.png)](images/coverage/bert-base-chinese.png)|[![](images/embeddings/embeddings_bert-base-chinese.jpg)](images/embeddings/embeddings_bert-base-chinese.jpg)|
-|[![](images/coverage/hfl_chinese-bert-wwm-ext.png)](images/coverage/hfl_chinese-bert-wwm-ext.png)|[![](images/embeddings/embeddings_hfl_chinese-bert-wwm-ext.jpg)](images/embeddings/embeddings_hfl_chinese-bert-wwm-ext.jpg)|
-|[![](images/coverage/hfl_chinese-macbert-base.png)](images/coverage/hfl_chinese-macbert-base.png)|[![](images/embeddings/embeddings_hfl_chinese-macbert-base.jpg)](images/embeddings/embeddings_hfl_chinese-macbert-base.jpg)|
-|[![](images/coverage/hfl_chinese-legal-electra-base-generator.png)](images/coverage/hfl_chinese-legal-electra-base-generator.png)|[![](images/embeddings/embeddings_hfl_chinese-legal-electra-base-generator.jpg)](images/embeddings/embeddings_hfl_chinese-legal-electra-base-generator.jpg)|
-|[![](images/coverage/shibing624_text2vec-base-chinese.png)](images/coverage/shibing624_text2vec-base-chinese.png)|[![](images/embeddings/embeddings_shibing624_text2vec-base-chinese.jpg)](images/embeddings/embeddings_shibing624_text2vec-base-chinese.jpg)|
-|[![](images/coverage/moka-ai_m3e-base.png)](images/coverage/moka-ai_m3e-base.png) |[![](images/embeddings/embeddings_moka-ai_m3e-base.jpg)](images/embeddings/embeddings_moka-ai_m3e-base.jpg)|
-|[![](images/coverage/coverage_junnyu_wobert_chinese_plus_base.png)](images/coverage/coverage_junnyu_wobert_chinese_plus_base.png) |[![](images/embeddings/embeddings_junnyu_wobert_chinese_plus_base.jpg)](images/embeddings/embeddings_junnyu_wobert_chinese_plus_base.jpg)|
+|[![](images/coverage/bert-base-chinese.png)](images/coverage/bert-base-chinese.png)|[![](images/embeddings/small/embeddings_bert-base-chinese.jpg)](images/embeddings/embeddings_bert-base-chinese.jpg)|
+|[![](images/coverage/hfl_chinese-bert-wwm-ext.png)](images/coverage/hfl_chinese-bert-wwm-ext.png)|[![](images/embeddings/small/embeddings_hfl_chinese-bert-wwm-ext.jpg)](images/embeddings/embeddings_hfl_chinese-bert-wwm-ext.jpg)|
+|[![](images/coverage/hfl_chinese-macbert-base.png)](images/coverage/hfl_chinese-macbert-base.png)|[![](images/embeddings/small/embeddings_hfl_chinese-macbert-base.jpg)](images/embeddings/embeddings_hfl_chinese-macbert-base.jpg)|
+|[![](images/coverage/hfl_chinese-legal-electra-base-generator.png)](images/coverage/hfl_chinese-legal-electra-base-generator.png)|[![](images/embeddings/small/embeddings_hfl_chinese-legal-electra-base-generator.jpg)](images/embeddings/embeddings_hfl_chinese-legal-electra-base-generator.jpg)|
+|[![](images/coverage/shibing624_text2vec-base-chinese.png)](images/coverage/shibing624_text2vec-base-chinese.png)|[![](images/embeddings/small/embeddings_shibing624_text2vec-base-chinese.jpg)](images/embeddings/embeddings_shibing624_text2vec-base-chinese.jpg)|
+|[![](images/coverage/moka-ai_m3e-base.png)](images/coverage/moka-ai_m3e-base.png) |[![](images/embeddings/small/embeddings_moka-ai_m3e-base.jpg)](images/embeddings/embeddings_moka-ai_m3e-base.jpg)|
+|[![](images/coverage/coverage_junnyu_wobert_chinese_plus_base.png)](images/coverage/coverage_junnyu_wobert_chinese_plus_base.png) |[![](images/embeddings/small/embeddings_junnyu_wobert_chinese_plus_base.jpg)](images/embeddings/embeddings_junnyu_wobert_chinese_plus_base.jpg)|
 
 
 ### ERNIE
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/nghuyong_ernie-1.0-base-zh.png)](images/coverage/nghuyong_ernie-1.0-base-zh.png)|[![](images/embeddings/embeddings_nghuyong_ernie-1.0-base-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-1.0-base-zh.jpg)|
-|[![](images/coverage/nghuyong_ernie-2.0-base-en.png)](images/coverage/nghuyong_ernie-2.0-base-en.png)|[![](images/embeddings/embeddings_nghuyong_ernie-2.0-base-en.jpg)](images/embeddings/embeddings_nghuyong_ernie-2.0-base-en.jpg)|
-|[![](images/coverage/nghuyong_ernie-3.0-nano-zh.png)](images/coverage/nghuyong_ernie-3.0-nano-zh.png)|[![](images/embeddings/embeddings_nghuyong_ernie-3.0-nano-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-3.0-nano-zh.jpg)|
-|[![](images/coverage/nghuyong_ernie-3.0-xbase-zh.png)](images/coverage/nghuyong_ernie-3.0-xbase-zh.png)|[![](images/embeddings/embeddings_nghuyong_ernie-3.0-xbase-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-3.0-xbase-zh.jpg)|
-|[![](images/coverage/nghuyong_ernie-health-zh.png)](images/coverage/nghuyong_ernie-health-zh.png)|[![](images/embeddings/embeddings_nghuyong_ernie-health-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-health-zh.jpg)|
-|[![](images/coverage/nghuyong_ernie-gram-zh.png)](images/coverage/nghuyong_ernie-gram-zh.png)|[![](images/embeddings/embeddings_nghuyong_ernie-gram-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-gram-zh.jpg)|
+|[![](images/coverage/nghuyong_ernie-1.0-base-zh.png)](images/coverage/nghuyong_ernie-1.0-base-zh.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-1.0-base-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-1.0-base-zh.jpg)|
+|[![](images/coverage/nghuyong_ernie-2.0-base-en.png)](images/coverage/nghuyong_ernie-2.0-base-en.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-2.0-base-en.jpg)](images/embeddings/embeddings_nghuyong_ernie-2.0-base-en.jpg)|
+|[![](images/coverage/nghuyong_ernie-3.0-nano-zh.png)](images/coverage/nghuyong_ernie-3.0-nano-zh.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-3.0-nano-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-3.0-nano-zh.jpg)|
+|[![](images/coverage/nghuyong_ernie-3.0-xbase-zh.png)](images/coverage/nghuyong_ernie-3.0-xbase-zh.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-3.0-xbase-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-3.0-xbase-zh.jpg)|
+|[![](images/coverage/nghuyong_ernie-health-zh.png)](images/coverage/nghuyong_ernie-health-zh.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-health-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-health-zh.jpg)|
+|[![](images/coverage/nghuyong_ernie-gram-zh.png)](images/coverage/nghuyong_ernie-gram-zh.png)|[![](images/embeddings/small/embeddings_nghuyong_ernie-gram-zh.jpg)](images/embeddings/embeddings_nghuyong_ernie-gram-zh.jpg)|
 
 ### 基于原生 LLaMA 的模型
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/decapoda-research_llama-7b-hf.png)](images/coverage/decapoda-research_llama-7b-hf.png)|[![](images/embeddings/embeddings_decapoda-research_llama-7b-hf.jpg)](images/embeddings/embeddings_decapoda-research_llama-7b-hf.jpg)|
-| [![](images/coverage/TheBloke_koala-7B-HF.png)](images/coverage/TheBloke_koala-7B-HF.png)    |   [![](images/embeddings/embeddings_TheBloke_koala-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_koala-7B-HF.jpg)|
-|[![](images/coverage/lmsys_vicuna-7b-delta-v1.1.png)](images/coverage/lmsys_vicuna-7b-delta-v1.1.png)      | [![](images/embeddings/embeddings_lmsys_vicuna-7b-delta-v1.1.jpg)](images/embeddings/embeddings_lmsys_vicuna-7b-delta-v1.1.jpg)    |
-| [![](images/coverage/TheBloke_guanaco-7B-HF.png)](images/coverage/TheBloke_guanaco-7B-HF.png)    |  [![](images/embeddings/embeddings_TheBloke_guanaco-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_guanaco-7B-HF.jpg)|
-|[![](images/coverage/TheBloke_wizardLM-7B-HF.png)](images/coverage/TheBloke_wizardLM-7B-HF.png)     | [![](images/embeddings/embeddings_TheBloke_wizardLM-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_wizardLM-7B-HF.jpg)    |
-| [![](images/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.png)](images/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.png)    | [![](images/embeddings/embeddings_togethercomputer_RedPajama-INCITE-7B-Chat.jpg)](images/embeddings/embeddings_togethercomputer_RedPajama-INCITE-7B-Chat.jpg)|
-|[![](images/coverage/openlm-research_open_llama_7b.png)](images/coverage/openlm-research_open_llama_7b.png)       |  [![](images/embeddings/embeddings_openlm-research_open_llama_7b.jpg)](images/embeddings/embeddings_openlm-research_open_llama_7b.jpg)   |
+|[![](images/coverage/decapoda-research_llama-7b-hf.png)](images/coverage/decapoda-research_llama-7b-hf.png)|[![](images/embeddings/small/embeddings_decapoda-research_llama-7b-hf.jpg)](images/embeddings/embeddings_decapoda-research_llama-7b-hf.jpg)|
+| [![](images/coverage/TheBloke_koala-7B-HF.png)](images/coverage/TheBloke_koala-7B-HF.png)    |   [![](images/embeddings/small/embeddings_TheBloke_koala-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_koala-7B-HF.jpg)|
+|[![](images/coverage/lmsys_vicuna-7b-delta-v1.1.png)](images/coverage/lmsys_vicuna-7b-delta-v1.1.png)      | [![](images/embeddings/small/embeddings_lmsys_vicuna-7b-delta-v1.1.jpg)](images/embeddings/embeddings_lmsys_vicuna-7b-delta-v1.1.jpg)    |
+| [![](images/coverage/TheBloke_guanaco-7B-HF.png)](images/coverage/TheBloke_guanaco-7B-HF.png)    |  [![](images/embeddings/small/embeddings_TheBloke_guanaco-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_guanaco-7B-HF.jpg)|
+|[![](images/coverage/TheBloke_wizardLM-7B-HF.png)](images/coverage/TheBloke_wizardLM-7B-HF.png)     | [![](images/embeddings/small/embeddings_TheBloke_wizardLM-7B-HF.jpg)](images/embeddings/embeddings_TheBloke_wizardLM-7B-HF.jpg)    |
+| [![](images/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.png)](images/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.png)    | [![](images/embeddings/small/embeddings_togethercomputer_RedPajama-INCITE-7B-Chat.jpg)](images/embeddings/embeddings_togethercomputer_RedPajama-INCITE-7B-Chat.jpg)|
+|[![](images/coverage/openlm-research_open_llama_7b.png)](images/coverage/openlm-research_open_llama_7b.png)       |  [![](images/embeddings/small/embeddings_openlm-research_open_llama_7b.jpg)](images/embeddings/embeddings_openlm-research_open_llama_7b.jpg)   |
 
 ### 基于汉字扩表后的 LLaMA 的模型
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/shibing624_chinese-alpaca-plus-7b-hf.png)](images/coverage/shibing624_chinese-alpaca-plus-7b-hf.png) | [![](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-7b-hf.jpg)](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-7b-hf.jpg)|
-| [![](images/coverage/shibing624_chinese-alpaca-plus-13b-hf.png)](images/coverage/shibing624_chinese-alpaca-plus-13b-hf.png) | [![](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-13b-hf.jpg)](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-13b-hf.jpg)|
+|[![](images/coverage/shibing624_chinese-alpaca-plus-7b-hf.png)](images/coverage/shibing624_chinese-alpaca-plus-7b-hf.png) | [![](images/embeddings/small/embeddings_shibing624_chinese-alpaca-plus-7b-hf.jpg)](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-7b-hf.jpg)|
+| [![](images/coverage/shibing624_chinese-alpaca-plus-13b-hf.png)](images/coverage/shibing624_chinese-alpaca-plus-13b-hf.png) | [![](images/embeddings/small/embeddings_shibing624_chinese-alpaca-plus-13b-hf.jpg)](images/embeddings/embeddings_shibing624_chinese-alpaca-plus-13b-hf.jpg)|
 
 ### 中文大语言模型
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/THUDM_chatglm-6b.png)](images/coverage/THUDM_chatglm-6b.png)|[![](images/embeddings/embeddings_THUDM_chatglm-6b.jpg)](images/embeddings/embeddings_THUDM_chatglm-6b.jpg)|
-|[![](images/coverage/fnlp_moss-moon-003-sft.png)](images/coverage/fnlp_moss-moon-003-sft.png)|[![](images/embeddings/embeddings_fnlp_moss-moon-003-sft.jpg)](images/embeddings/embeddings_fnlp_moss-moon-003-sft.jpg)|
-|[![](images/coverage/shibing624_mengzi-t5-base-chinese-correction.png)](images/coverage/shibing624_mengzi-t5-base-chinese-correction.png)|[![](images/embeddings/embeddings_shibing624_mengzi-t5-base-chinese-correction.jpg)](images/embeddings/embeddings_shibing624_mengzi-t5-base-chinese-correction.jpg)|
-|[![](images/coverage/shibing624_prompt-t5-base-chinese.png)](images/coverage/shibing624_prompt-t5-base-chinese.png) |[![](images/embeddings/embeddings_shibing624_prompt-t5-base-chinese.jpg)](images/embeddings/embeddings_shibing624_prompt-t5-base-chinese.jpg)|
-|[![](images/coverage/BAAI_aquila-7b.png)](images/coverage/BAAI_aquila-7b.png)|[![](images/embeddings/embeddings_BAAI_aquila-7b.jpg)](images/embeddings/embeddings_BAAI_aquila-7b.jpg)|
-|[![](images/coverage/baichuan-inc_baichuan-7B.png)](images/coverage/baichuan-inc_baichuan-7B.png)|[![](images/embeddings/embeddings_baichuan-inc_baichuan-7B.jpg)](images/embeddings/embeddings_baichuan-inc_baichuan-7B.jpg)|
+|[![](images/coverage/THUDM_chatglm-6b.png)](images/coverage/THUDM_chatglm-6b.png)|[![](images/embeddings/small/embeddings_THUDM_chatglm-6b.jpg)](images/embeddings/embeddings_THUDM_chatglm-6b.jpg)|
+|[![](images/coverage/fnlp_moss-moon-003-sft.png)](images/coverage/fnlp_moss-moon-003-sft.png)|[![](images/embeddings/small/embeddings_fnlp_moss-moon-003-sft.jpg)](images/embeddings/embeddings_fnlp_moss-moon-003-sft.jpg)|
+|[![](images/coverage/shibing624_mengzi-t5-base-chinese-correction.png)](images/coverage/shibing624_mengzi-t5-base-chinese-correction.png)|[![](images/embeddings/small/embeddings_shibing624_mengzi-t5-base-chinese-correction.jpg)](images/embeddings/embeddings_shibing624_mengzi-t5-base-chinese-correction.jpg)|
+|[![](images/coverage/shibing624_prompt-t5-base-chinese.png)](images/coverage/shibing624_prompt-t5-base-chinese.png) |[![](images/embeddings/small/embeddings_shibing624_prompt-t5-base-chinese.jpg)](images/embeddings/embeddings_shibing624_prompt-t5-base-chinese.jpg)|
+|[![](images/coverage/BAAI_aquila-7b.png)](images/coverage/BAAI_aquila-7b.png)|[![](images/embeddings/small/embeddings_BAAI_aquila-7b.jpg)](images/embeddings/embeddings_BAAI_aquila-7b.jpg)|
+|[![](images/coverage/baichuan-inc_baichuan-7B.png)](images/coverage/baichuan-inc_baichuan-7B.png)|[![](images/embeddings/small/embeddings_baichuan-inc_baichuan-7B.jpg)](images/embeddings/embeddings_baichuan-inc_baichuan-7B.jpg)|
 
 
 ### 其它大语言模型
 
 | Coverage ![](images/empty.png)                  | Embeddings ![](images/empty.png)                     |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/bigscience_bloom-7b1.png)](images/coverage/bigscience_bloom-7b1.png)|[![](images/embeddings/embeddings_bigscience_bloom-7b1.jpg)](images/embeddings/embeddings_bigscience_bloom-7b1.jpg)|
-|[![](images/coverage/tiiuae_falcon-7b-instruct.png)](images/coverage/tiiuae_falcon-7b-instruct.png)|[![](images/embeddings/embeddings_tiiuae_falcon-7b-instruct.jpg)](images/embeddings/embeddings_tiiuae_falcon-7b-instruct.jpg)|
-|[![](images/coverage/nomic-ai_gpt4all-j.png)](images/coverage/nomic-ai_gpt4all-j.png)|[![](images/embeddings/embeddings_nomic-ai_gpt4all-j.jpg)](images/embeddings/embeddings_nomic-ai_gpt4all-j.jpg)|
-|[![](images/coverage/mosaicml_mpt-7b-instruct.png)](images/coverage/mosaicml_mpt-7b-instruct.png)|[![](images/embeddings/embeddings_mosaicml_mpt-7b-instruct.jpg)](images/embeddings/embeddings_mosaicml_mpt-7b-instruct.jpg)|
-|[![](images/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png)](images/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png) |[![](images/embeddings/embeddings_OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.jpg)](images/embeddings/embeddings_OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.jpg)|
+|[![](images/coverage/bigscience_bloom-7b1.png)](images/coverage/bigscience_bloom-7b1.png)|[![](images/embeddings/small/embeddings_bigscience_bloom-7b1.jpg)](images/embeddings/embeddings_bigscience_bloom-7b1.jpg)|
+|[![](images/coverage/tiiuae_falcon-7b-instruct.png)](images/coverage/tiiuae_falcon-7b-instruct.png)|[![](images/embeddings/small/embeddings_tiiuae_falcon-7b-instruct.jpg)](images/embeddings/embeddings_tiiuae_falcon-7b-instruct.jpg)|
+|[![](images/coverage/nomic-ai_gpt4all-j.png)](images/coverage/nomic-ai_gpt4all-j.png)|[![](images/embeddings/small/embeddings_nomic-ai_gpt4all-j.jpg)](images/embeddings/embeddings_nomic-ai_gpt4all-j.jpg)|
+|[![](images/coverage/mosaicml_mpt-7b-instruct.png)](images/coverage/mosaicml_mpt-7b-instruct.png)|[![](images/embeddings/small/embeddings_mosaicml_mpt-7b-instruct.jpg)](images/embeddings/embeddings_mosaicml_mpt-7b-instruct.jpg)|
+|[![](images/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png)](images/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.png) |[![](images/embeddings/small/embeddings_OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.jpg)](images/embeddings/embeddings_OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.jpg)|
 
 ### OpenAI 模型
 

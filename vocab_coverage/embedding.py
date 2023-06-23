@@ -212,6 +212,6 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, is_detail=
     # save to file
     if debug:
         print(f"save to {filename}...")
-    image.save(filename, quality=90, optimize=True, progressive=True)
+    image.save(filename, quality=80, optimize=True, progressive=True)
 
     return model
