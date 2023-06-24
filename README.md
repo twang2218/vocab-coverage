@@ -50,9 +50,35 @@
 pip install vocab-coverage
 ```
 
+由于图中有汉字，因此需要中文字体，这里我使用了 `Noto Sans CJK` 字体用于中文，以及 `Anonymous Pro`字体，建议安装该字体。
+
+**Linux**
+
+如 Ubuntu，可以通过以下命令安装：
+
+```bash
+sudo apt install fonts-noto-cjk fonts-anonymous-pro
+```
+
+**Mac**
+
+如 MacOS，可以通过以下命令安装：
+
+```bash
+brew install font-noto-sans-cjk font-noto-serif-cjk font-anonymous-pro
+```
+
+**Windows**
+
+如 Windows，可以通过以下命令安装：
+
+```bash
+choco install noto anonymouspro
+```
+
 ### 使用
 
-`vocab-coverage` 它有两个子命令：`charset` 和 `model`。
+`vocab-coverage` 它有三个子命令：`charset`、 `model` 和 `embedding`。
 
 #### `charset` 子命令
 
