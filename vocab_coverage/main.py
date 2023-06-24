@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import json
+from dotenv import load_dotenv
 
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -47,4 +48,5 @@ def main():
         return
 
 if __name__ == "__main__":
+    load_dotenv()
     main()

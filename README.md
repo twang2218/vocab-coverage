@@ -259,8 +259,9 @@ save to images/embeddings/embeddings_THUDM-chatglm-6b.jpg...
 
 ### OpenAI 模型
 
-|                                        |                                             |
+| ![](images/empty.png)                                       |   ![](images/empty.png)                                          |
 |----------------------------------------|---------------------------------------------|
-|[![](images/coverage/OpenAI_text-embedding-ada-002.png)](images/coverage/OpenAI_text-embedding-ada-002.png)    | [![](images/coverage/OpenAI_text-davinci-003.png)](images/coverage/OpenAI_text-davinci-003.png)   |
-|[![](images/coverage/OpenAI_gpt-3.5-turbo.png)](images/coverage/OpenAI_gpt-3.5-turbo.png)      | [![](images/coverage/OpenAI_gpt-4.png)](images/coverage/OpenAI_gpt-4.png)    |
-|[![](images/coverage/OpenAI_gpt2.png)](images/coverage/OpenAI_gpt2.png)      | [![](images/coverage/OpenAI_text-ada-001.png)](images/coverage/OpenAI_text-ada-001.png)    |
+|[![](images/coverage/OpenAI_text-embedding-ada-002.png)](images/coverage/OpenAI_text-embedding-ada-002.png)    | [![](images/embeddings/small/embeddings_OpenAI_text-embedding-ada-002.jpg)](images/embeddings/embeddings_OpenAI_text-embedding-ada-002.jpg)    |
+|[![](images/coverage/OpenAI_text-davinci-003.png)](images/coverage/OpenAI_text-davinci-003.png)   |[![](images/coverage/OpenAI_gpt-3.5-turbo.png)](images/coverage/OpenAI_gpt-3.5-turbo.png)      |
+|[![](images/coverage/OpenAI_gpt-4.png)](images/coverage/OpenAI_gpt-4.png)    |[![](images/coverage/OpenAI_gpt2.png)](images/coverage/OpenAI_gpt2.png)      |
+|[![](images/coverage/OpenAI_text-ada-001.png)](images/coverage/OpenAI_text-ada-001.png)    | |

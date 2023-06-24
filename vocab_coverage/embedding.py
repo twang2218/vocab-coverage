@@ -61,7 +61,14 @@ def load_model(model_name):
     model.eval()
     return model, tokenizer
 
-def get_vocab_embeddings(model, tokenizer, debug=False):
+def get_vocab_embeddings(model_name:str, debug=False):
+    if "OpenAI" in model_name:
+        model_name = model_name.split("/")[-1]
+        vocab = get_openai_vocab(model_name, debug=debug)
+        vocab_embeddings = get_openai_vocab_embeddings(vocab, model_name, batch=2000, debug=debug)
+        return vocab, vocab_embeddings
+
+    model, tokenizer = load_model(model_name)
     # get embeddings
     vocab_index = np.arange(0, model.config.vocab_size, 1)
     if hasattr(model, 'get_input_embeddings'):
@@ -98,6 +105,39 @@ def get_vocab_embeddings(model, tokenizer, debug=False):
 
     return vocab, vocab_embeddings
 
+def get_openai_vocab(model_name:str, debug=False):
+    import tiktoken
+    t = tiktoken.encoding_for_model('gpt-3.5-turbo')
+    count_except = 0
+    vocab = []
+    for k in t._mergeable_ranks.keys():
+        try:
+            vocab.append(str(k, encoding='utf-8'))
+        except:
+            # print(str(k))
+            count_except += 1
+            vocab.append(str(k))
+    if debug:
+        print(f"vocab: {len(vocab)}")
+        print(f"count_except: {count_except}")
+    return vocab
+
+def get_openai_vocab_embeddings(vocab:list, model='text-embedding-ada-002', batch=10, debug=False):
+    import openai
+    embeds = []
+    for i in range(0, len(vocab), batch):
+        if debug:
+            print(f"get_openai_vocab_embeddings(): {i}")
+        ee = openai.Embedding.create(input = vocab[i:i+batch], model=model)['data']
+        ee = [e['embedding'] for e in ee]
+        if debug:
+            print(f"Retrieved {len(ee)} embeddings for {vocab[i:i+batch]}")
+        embeds.extend(ee)
+
+    if debug:
+        print(f"embeds: {len(embeds)}")
+    return np.array(embeds)
+
 def reduce_to_2d_tsne(embeddings, debug=False):
     from sklearn.manifold import TSNE
     tsne_model = TSNE(n_components=2,
@@ -109,59 +149,6 @@ def reduce_to_2d_tsne(embeddings, debug=False):
         random_state=42,
         n_jobs=-1)
     embeddings_2d = tsne_model.fit_transform(embeddings)
-
-    # from openTSNE import TSNE
-    # tsne_model = TSNE(n_components=2,
-    #     early_exaggeration=12,
-    #     metric='cosine',
-    #     verbose=debug,
-    #     n_iter=5000)
-    # tsne_model = tsne_model.fit(embeddings)
-    # embeddings_2d = tsne_model.transform(embeddings)
-
-    # from tsnecuda import TSNE
-    # tsne_model = TSNE(n_components=2,
-    #     early_exaggeration=12,
-    #     metric='euclidean',
-    #     init='random',
-    #     verbose=2 if debug else 0,
-    #     n_iter=5000)
-    # embeddings_2d = tsne_model.fit_transform(embeddings)
-
-    # cuML
-    # pip install cudf-cu11 cuml-cu11 --extra-index-url=https://pypi.nvidia.com
-    # from cuml.manifold import TSNE
-    # tsne_model = TSNE(n_components=2,
-    #     early_exaggeration=12,
-    #     metric='cosine',
-    #     init='pca',
-    #     verbose=2 if debug else 0,
-    #     n_iter=5000)
-    # embeddings_2d = tsne_model.fit_transform(embeddings)
-
-    # from vocab_coverage.tsne import TorchTSNE
-    # if torch.cuda.is_available():
-    #     torch.cuda.empty_cache()
-    #     print(f"device: {torch.cuda.get_device_name(0)}")
-    # tsne_model = TorchTSNE(n_components=2,
-    #                        verbose=debug,
-    #                        n_iter=5000)
-    # embeddings_2d = tsne_model.fit_transform(embeddings)
-
-    # sudo apt-get install build-essential
-    # pip install git+https://github.com/DmitryUlyanov/Multicore-TSNE
-    # from MulticoreTSNE import MulticoreTSNE as TSNE
-    # import psutil
-    # n_cores = psutil.cpu_count()
-    # print(f"n_cores: {n_cores}")
-    # tsne_model = TSNE(n_components=2,
-    #     early_exaggeration=12,
-    #     metric='cosine',
-    #     init='random',
-    #     verbose=2 if debug else 0,
-    #     n_iter=20,
-    #     n_jobs=n_cores)
-    # embeddings_2d = tsne_model.fit_transform(embeddings)
 
     return embeddings_2d
 
@@ -183,14 +170,10 @@ def reduce_to_2d_umap(embeddings, debug=False):
 def embedding_analysis(model_name:str, charsets:dict, output_dir:str, is_detail=False, debug=False):
     print("对模型 {} 的 embedding 进行可视化...".format(model_name))
 
-    m, t = load_model(model_name)
     model = {
         'model_name': model_name,
-        # 'model': model,
-        # 'tokenizer': tokenizer,
     }
-    vocab, embeddings = get_vocab_embeddings(m, t, debug)
-    del m, t
+    vocab, embeddings = get_vocab_embeddings(model_name, debug)
     model['vocab'] = vocab
     model['embeddings'] = embeddings
     if debug:

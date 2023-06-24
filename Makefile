@@ -66,6 +66,9 @@ MODELS_OPENAI = \
 	OpenAI/gpt2 \
 	OpenAI/text-ada-001
 
+MODELS_OPENAI_EMBEDDING = \
+	OpenAI/text-embedding-ada-002
+
 REMOTE_HOST = vast
 
 define vocab_coverage_model
@@ -137,7 +140,7 @@ model-openai:
 
 # model embedding analysis
 
-embedding: embedding-bert embedding-sbert embedding-ernie embedding-llama embedding-llm embedding-shibing624
+embedding: embedding-bert embedding-sbert embedding-ernie embedding-llama embedding-llm embedding-shibing624 embedding-openai
 
 embedding-bert:
 	$(call vocab_embeddings_model, $(MODELS_BERT))
@@ -156,6 +159,14 @@ embedding-llm:
 
 embedding-shibing624:
 	$(call vocab_embeddings_model, $(MODELS_SHIBING624))
+
+# 如果不存在 .env 文件，也没有OPENAI_API_KEY环境变量，会报错
+embedding-openai:
+	if [ ! -f .env ] && [ -z "$$OPENAI_API_KEY" ]; then \
+		echo "Please set OPENAI_API_KEY in .env file or environment variable"; \
+		exit 1; \
+	fi
+	$(call vocab_embeddings_model, $(MODELS_OPENAI_EMBEDDING))
 
 embedding-resize:
 	@input_dir="images/embeddings"; \
