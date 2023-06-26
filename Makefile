@@ -183,13 +183,13 @@ embedding-resize:
 # remote
 
 remote-sync:
-	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' --exclude='images' . $(REMOTE_HOST):./vocab-coverage
+	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' --exclude='images' . $(REMOTE_HOST):./vocab
 
 remote-download-images:
-	rsync -avzP $(REMOTE_HOST):./vocab-coverage/images/ ./images/
+	rsync -avzP $(REMOTE_HOST):./vocab/images/ ./images/
 
 remote-provision: remote-sync
-	ssh $(REMOTE_HOST) 'cd vocab-coverage && bash provision.sh install'
+	ssh $(REMOTE_HOST) 'cd vocab && bash provision.sh install'
 
 gpu:
 	watch -n 1 nvidia-smi

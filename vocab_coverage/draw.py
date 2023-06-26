@@ -122,7 +122,11 @@ from vocab_coverage.charsets import CharsetClassifier
 import math
 
 # model: {model_name, model, tokenizer, vocab, embeddings, embeddings_2d}
-def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=False, debug=False):
+# def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=False, debug=False):
+def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab:List[str], charsets:List[str],
+                        embedding_type:str, width=8000, height=8000, is_detailed=False, debug=False):
+    vocab_size = len(vocab)
+
     # calculate image size, margin, etc.
     margin = int(width / 20)
     image_width = width + margin * (2+2) # outer + inner margin
@@ -130,7 +134,7 @@ def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=Fa
 
     # normalize embeddings
     scaler = MinMaxScaler()
-    embeddings_2d_norm = scaler.fit_transform(model['embeddings_2d'])
+    embeddings_2d_norm = scaler.fit_transform(embeddings_2d)
 
     # draw embeddings
     image = Image.new('RGB', (image_width, image_height), (255, 255, 255))
@@ -138,23 +142,23 @@ def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=Fa
     draw.rectangle((margin, margin, width + (3*margin), height + (3*margin)), fill='#F0F0F0')
 
     # CharsetClassifier
-    classifier = CharsetClassifier(charsets=charsets, is_detail=is_detail)
+    classifier = CharsetClassifier(charsets=charsets, is_detailed=is_detailed)
     word_type_count = {k: 0 for k in classifier.get_types()}
     palette = classifier.get_palette(with_prefix_palette=True)
 
     if debug:
-        print(f"palette: {palette}")
-        print(f"draw embedding point: {len(model['vocab'])}")
+        # print(f"palette: {palette}")
+        print(f"[{model_name}]: draw embedding point: {vocab_size}")
 
     # draw embedding point
     # clip font size to [12, margin]
-    font_size = int(margin * 2000 / len(model['vocab']))
+    font_size = int(margin * 2000 / vocab_size)
     font_size = int(min(max(font_size, 12), margin))
     zh_font = get_chinese_font(font_size)
     if debug:
         print(f"font size: {font_size}, font: {zh_font.getname()}")
     for i, (x, y) in enumerate(embeddings_2d_norm):
-        word = model['vocab'][i]
+        word = vocab[i]
         word_type = classifier.get_word_type(word)
         word_type_count[word_type] += 1
 
@@ -169,20 +173,26 @@ def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=Fa
         try:
             draw.text((x, y), word, fill=c, stroke_width=1, stroke_fill='#F0F0F0', font=zh_font)
         except Exception as e:
-            print(f"Warning: draw text error: {e}")
+            print(f"[{model_name}]: warning: draw text error: {e}")
 
     if debug:
-        print(f"token type counts: {word_type_count}")
+        print(f"[{model_name}]: token type counts: {word_type_count}")
     # draw model name
     font_size = int(margin / 2)
     draw.text((margin, image_height - (3*margin)),
-        f'[ {model["model_name"]} ]',
+        f'[ {model_name} ]',
         fill='#000000',
         font=get_english_font(font_size))
 
+    # draw embedding type
+    draw.text((margin, image_height - int(2.3*margin)),
+        f"[ {embedding_type} embeddings ]",
+        fill='#000000',
+        font=get_english_font(int(font_size/1.5)))
+
     # draw vocab size
-    draw.text((margin+font_size, image_height - int(2.3*margin)),
-        f'vocab size: {len(model["vocab"])}',
+    draw.text((margin, image_height - int(1.8*margin)),
+        "[ vocab size: {:,} ]".format(vocab_size),
         fill='#000000',
         font=get_english_font(int(font_size/1.5)))
 

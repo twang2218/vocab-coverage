@@ -116,9 +116,9 @@ def lighten_color(color, amount=0.2):
     return adjusted_color
 
 class CharsetClassifier:
-    def __init__(self, charsets:dict, is_detail=False):
+    def __init__(self, charsets:dict, is_detailed=False):
         self.charsets = charsets
-        self.is_detail = is_detail
+        self.is_detailed = is_detailed
         self.palette = None
 
     @staticmethod
@@ -203,7 +203,7 @@ class CharsetClassifier:
         elif self.is_korean(word):
             return '韩文'
         else:
-            if self.is_detail:
+            if self.is_detailed:
                 cats = [
                     '《通用规范汉字表》一级汉字',
                     '《通用规范汉字表》二级汉字',
@@ -243,7 +243,7 @@ class CharsetClassifier:
             self.palette.update(prefix_palette)
             return self.palette
 
-        if self.is_detail:
+        if self.is_detailed:
             self.palette = {
                 '《通用规范汉字表》一级汉字': '#B04759',
                 '《通用规范汉字表》二级汉字': '#E76161',
@@ -270,7 +270,7 @@ class CharsetClassifier:
         return self.palette
 
     def get_types(self):
-        if self.is_detail:
+        if self.is_detailed:
             return [
                 '《通用规范汉字表》一级汉字',
                 '《通用规范汉字表》二级汉字',
