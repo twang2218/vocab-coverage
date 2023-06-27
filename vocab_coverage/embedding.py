@@ -153,7 +153,16 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
 def get_sentences_embeddings(model, tokenizer, sentences:List[str], max_length=256):
     # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
     inputs_ids = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
-    outputs = model(**inputs_ids, output_hidden_states=True)
+    try:
+        outputs = model(**inputs_ids, output_hidden_states=True)
+    except Exception as e:
+        # google/flan-t5-base
+        if hasattr(model, 'get_encoder'):
+            outputs = model.get_encoder()(**inputs_ids, output_hidden_states=True)
+        else:
+            print(f"get_sentences_embeddings() failed: {e}")
+            print(model)
+            exit(1)
     token_embeddings = outputs.hidden_states[-1].detach().clone()
     del outputs
     input_mask_expanded = inputs_ids['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
