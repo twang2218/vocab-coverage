@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import traceback
 from typing import List
 
 import numpy as np
@@ -43,6 +44,22 @@ def load_tokenizer(model_name:str, debug:bool=False):
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
             exit(1)
+
+    # https://github.com/huggingface/transformers/issues/24514
+    from transformers import LlamaTokenizerFast
+    if isinstance(tokenizer, LlamaTokenizerFast):
+        tokenizer.model_input_names = ["input_ids", "attention_mask"]
+
+    # https://github.com/huggingface/transformers/issues/22312
+    if (not hasattr(tokenizer, 'pad_token')) or (tokenizer.pad_token is None) or (len(tokenizer.pad_token) == 0):
+        tokenizer.bos_token = '<s>'
+        tokenizer.eos_token = '</s>'
+        tokenizer.unk_token = '<unk>'
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if debug:
+        print(tokenizer)
+
     return tokenizer
 
 def load_model(model_name:str, debug:bool=False):
@@ -51,8 +68,19 @@ def load_model(model_name:str, debug:bool=False):
         return None
 
     # 加载预训练模型
+    is_large_model = False
+    for large_model in ['6b', '7b', '12b', '13b', 'llama', 'gpt', 'aquila', 'moss']:
+        # print(f"[{model_name}]: large_model: {large_model} in {model_name.lower()}? {large_model in model_name.lower()}")
+        if large_model in model_name.lower():
+            is_large_model = True
+            break
+
     try:
-        model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+        kwargs = {}
+        if is_large_model:
+            kwargs['torch_dtype'] = torch.float16
+            print(f"[{model_name}]: load model with torch_dtype: {kwargs['torch_dtype']}")
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True, **kwargs)
     except Exception as e:
         if isinstance(e.args, (list, tuple)) and "AutoModel" in e.args[0]:
             from transformers import AutoModelForCausalLM
@@ -65,19 +93,20 @@ def load_model(model_name:str, debug:bool=False):
         else:
             print("加载 AutoModel 模型 {} 失败：{}".format(model_name, e))
             exit(1)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
     model.eval()
+    print(f"[{model_name}]: model loaded on device: {model.device}")
     return model
 
-def get_vocab(model_name:str, debug=False):
+def get_vocab(model_name:str, tokenizer, debug=False):
     if "OpenAI" in model_name:
         model_name = model_name.split("/")[-1]
         return get_vocab_openai(model_name, debug=debug)
 
-    tokenizer = load_tokenizer(model_name)
-
     vocab_size = max([id for id in tokenizer.get_vocab().values()]) + 1
     if debug:
-        print(f"[{model_name}] vocab_size: {vocab_size}")
+        print(f"[{model_name}]: vocab_size: {vocab_size}")
 
     # get vocab
     vocab = [''] * (vocab_size)
@@ -138,35 +167,46 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
             print(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
             print(model)
             exit(1)
+
         if debug:
             print(f"[{model_name}]: get_input_embeddings(): {input_embedding_func}")
+
         token_ids = torch.tensor(np.arange(0, len(vocab), 1)).to(model.device)
         input_embeddings = input_embedding_func(token_ids)
+        if input_embeddings.is_cuda:
+            input_embeddings = input_embeddings.cpu()
+        input_embeddings = input_embeddings.detach().numpy()
+
         if debug:
             print(f"[{model_name}]: input_embeddings: {input_embeddings.shape}")
     except Exception as e:
         print(f"[{model_name}]: get_input_embeddings failed: {e}")
+        traceback.print_exc()
         print(model)
         exit(1)
     return input_embeddings
 
 def get_sentences_embeddings(model, tokenizer, sentences:List[str], max_length=256):
     # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
-    inputs_ids = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
+    inputs = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
     try:
-        outputs = model(**inputs_ids, output_hidden_states=True)
+        outputs = model(**inputs, output_hidden_states=True)
     except Exception as e:
         # google/flan-t5-base
         if hasattr(model, 'get_encoder'):
-            outputs = model.get_encoder()(**inputs_ids, output_hidden_states=True)
+            outputs = model.get_encoder()(**inputs, output_hidden_states=True)
         else:
             print(f"get_sentences_embeddings() failed: {e}")
+            traceback.print_exc()
             print(model)
             exit(1)
     token_embeddings = outputs.hidden_states[-1].detach().clone()
     del outputs
-    input_mask_expanded = inputs_ids['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
+    input_mask_expanded = inputs['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
     embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    if embeddings.is_cuda:
+        embeddings = embeddings.cpu()
+    embeddings = embeddings.detach().numpy()
     return embeddings
 
 def get_sentences_embedding_in_batch(model, tokenizer, sentences:List[str], batch_size=32, max_length=256):
@@ -176,7 +216,7 @@ def get_sentences_embedding_in_batch(model, tokenizer, sentences:List[str], batc
         if i == 0:
             embeddings = batch_embeddings
         else:
-            embeddings = torch.cat((embeddings, batch_embeddings), dim=0)
+            embeddings = np.concatenate((embeddings, batch_embeddings))
         print(f"batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
     return embeddings
 
@@ -201,12 +241,17 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             # BERT-like models
             if debug:
                 print(f"[{model_name}]: get_output_embeddings(): {get_sentences_embedding_in_batch}")
-            output_embeddings = get_sentences_embedding_in_batch(model, tokenizer, vocab, batch_size=1000, max_length=5)
+                print(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
+            batch_size = 1000
+            if model.num_parameters() > 1e8:
+                batch_size = 50
+            output_embeddings = get_sentences_embedding_in_batch(model, tokenizer, vocab, batch_size=batch_size, max_length=30)
 
         if debug:
                 print(f"[{model_name}]: output_embeddings: {np.shape(output_embeddings)}")
     except Exception as e:
         print(f"[{model_name}]: get_output_embedding failed: {e}")
+        traceback.print_exc()
         print(model)
         exit(1)
     return output_embeddings
@@ -300,15 +345,13 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
 
     workdir = os.path.join(output_dir, 'embeddings')
 
+    tokenizer = load_tokenizer(model_name, debug=debug)
+    model = load_model(model_name, debug=debug)
+    vocab = get_vocab(model_name, tokenizer=tokenizer, debug=debug)
+
     for etype in embedding_type:
-        tokenizer = load_tokenizer(model_name, debug=debug)
-        model = load_model(model_name, debug=debug)
-        vocab = get_vocab(model_name, debug=debug)
         embeddings = get_embeddings(model_name, model, tokenizer, vocab, embedding_type=etype, debug=debug)
         if embeddings is not None and len(embeddings) > 0:
-            if isinstance(embeddings, torch.Tensor):
-                embeddings = embeddings.detach().numpy()
-
             do_embedding_analysis(
                 model_name=model_name,
                 embeddings=embeddings,
