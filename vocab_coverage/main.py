@@ -26,8 +26,8 @@ def main():
     cmdEmbedding.add_argument("--output_dir", type=str, default="images", help="生成的图像文件的输出目录（默认为 images）")
     cmdEmbedding.add_argument("--is_detailed", action='store_true', help="是否对汉字进行详细分类（默认为 False）")
     cmdEmbedding.add_argument("--debug", action='store_true', help="是否打印调试信息（默认为 False）")
-    cmdEmbedding.add_argument("--input_embeddings", type=bool, default=True, help="是否计算输入层的词向量（默认为 True）")
-    cmdEmbedding.add_argument("--output_embeddings", action='store_true', help="是否计算输出层的词向量（默认为 False）")
+    cmdEmbedding.add_argument("--no_input_embeddings", action='store_true', help="不计算输入层的词向量")
+    cmdEmbedding.add_argument("--output_embeddings", action='store_true', help="计算输出层的词向量")
 
     cmdCharset = subcommands.add_parser('charset', help='生成用以统计识字率的字表文件')
     cmdCharset.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
@@ -45,7 +45,7 @@ def main():
     elif args.command == 'embedding':
         charsets = json.load(open(args.charset_file, 'r'))
         etypes = []
-        if args.input_embeddings:
+        if not args.no_input_embeddings:
             etypes.append('input')
         if args.output_embeddings:
             etypes.append('output')

@@ -150,6 +150,27 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         exit(1)
     return input_embeddings
 
+def get_sentences_embeddings(model, tokenizer, sentences:List[str], max_length=256):
+    # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
+    inputs_ids = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
+    outputs = model(**inputs_ids, output_hidden_states=True)
+    token_embeddings = outputs.hidden_states[-1].detach().clone()
+    del outputs
+    input_mask_expanded = inputs_ids['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
+    embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    return embeddings
+
+def get_sentences_embedding_in_batch(model, tokenizer, sentences:List[str], batch_size=32, max_length=256):
+    for i in range(0, len(sentences), batch_size):
+        batch_sentences = sentences[i:i+batch_size]
+        batch_embeddings = get_sentences_embeddings(model, tokenizer, batch_sentences, max_length=max_length)
+        if i == 0:
+            embeddings = batch_embeddings
+        else:
+            embeddings = torch.cat((embeddings, batch_embeddings), dim=0)
+        print(f"batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
+    return embeddings
+
 def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
     output_embeddings = []
     try:
@@ -158,27 +179,22 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             return get_output_embeddings_openai(model_name, vocab, batch=2000, debug=debug)
 
         if hasattr(model, 'get_output_embeddings'):
-            print(f"[{model_name}]: get_output_embeddings(): {model.get_output_embeddings()}")
             # THUDM/chatglm-6b
             vocab_embedding_func = model.get_output_embeddings()
             if vocab_embedding_func is None:
                 print(f"[{model_name}]: 'model.get_output_embeddings()' is None")
             else:
+                print(f"[{model_name}]: 'get_output_embeddings()': {vocab_embedding_func}")
                 token_ids = torch.tensor(np.arange(0, len(vocab), 1)).to(model.device)
                 output_embeddings = vocab_embedding_func(token_ids)
 
         if len(output_embeddings) == 0:
             # BERT-like models
-            from text2vec import SentenceModel
-            sm = SentenceModel('bert-base-chinese') # TODO: this model will be replaced by real model
-            sm.model_name_or_path = model_name
-            sm.tokenizer = tokenizer
-            sm.bert = model
-            sm.bert.to(sm.device)
             if debug:
-                print(f"[{model_name}]: get_output_embeddings(): {sm.encode}")
-            output_embeddings = sm.encode(vocab, batch_size=1000)
-            if debug:
+                print(f"[{model_name}]: get_output_embeddings(): {get_sentences_embedding_in_batch}")
+            output_embeddings = get_sentences_embedding_in_batch(model, tokenizer, vocab, batch_size=1000, max_length=5)
+
+        if debug:
                 print(f"[{model_name}]: output_embeddings: {np.shape(output_embeddings)}")
     except Exception as e:
         print(f"[{model_name}]: get_output_embedding failed: {e}")
@@ -283,8 +299,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
         if embeddings is not None and len(embeddings) > 0:
             if isinstance(embeddings, torch.Tensor):
                 embeddings = embeddings.detach().numpy()
-            # vocab = vocab[:1000]
-            # embeddings = embeddings[:1000]
+
             do_embedding_analysis(
                 model_name=model_name,
                 embeddings=embeddings,

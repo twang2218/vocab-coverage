@@ -1,6 +1,7 @@
 
 MODELS_BERT = \
 	bert-base-cased \
+	bert-base-multilingual-cased \
 	roberta-large \
 	xlnet-base-cased \
 	albert-base-v2 \
@@ -53,10 +54,13 @@ MODELS_LLM = \
 
 MODELS_SHIBING624 = \
 	shibing624/text2vec-base-chinese \
+	shibing624/text2vec-base-chinese-sentence \
+	shibing624/text2vec-base-chinese-paragraph \
+	shibing624/text2vec-base-chinese-multilingual \
+	shibing624/prompt-t5-base-chinese \
+	shibing624/mengzi-t5-base-chinese-correction \
 	shibing624/chinese-alpaca-plus-7b-hf \
 	shibing624/chinese-alpaca-plus-13b-hf \
-	shibing624/prompt-t5-base-chinese \
-	shibing624/mengzi-t5-base-chinese-correction
 
 MODELS_OPENAI = \
 	OpenAI/gpt-4 \
@@ -73,13 +77,28 @@ REMOTE_HOST = vast
 
 define vocab_coverage_model
 	@for model in $(1); do \
+		filename=$$(echo $$model | sed 's/\//_/g'); \
+		image_coverage=images/coverage/coverage.$$filename.jpg; \
+		if [ -f $$image_coverage ]; then \
+			echo "[$$model]: 词表中文识别率图文件已存在，跳过生成。"; \
+		else \
+			python vocab_coverage/main.py model --model_name $$model; \
+		fi; \
+
 		python vocab_coverage/main.py model --model_name $$model; \
 	done
 endef
 
 define vocab_embeddings_model
 	@for model in $(1); do \
-		python vocab_coverage/main.py embedding --model_name $$model --debug; \
+		filename=$$(echo $$model | sed 's/\//_/g'); \
+		image_input_embeddings=images/embeddings/embeddings.$$filename.input.jpg; \
+		image_output_embeddings=images/embeddings/embeddings.$$filename.output.jpg; \
+		if [ -f $$image_input_embeddings ] && [ -f $$image_output_embeddings ]; then \
+			echo "[$$model]: 词向量分布图文件已存在，跳过生成。"; \
+		else \
+			python vocab_coverage/main.py embedding --model_name $$model --debug --output_embeddings ; \
+		fi; \
 	done
 endef
 

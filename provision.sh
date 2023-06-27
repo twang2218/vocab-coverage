@@ -36,6 +36,7 @@ install() {
     conda activate ${PROJECT_NAME}
 
     pip install -r ~/${PROJECT_NAME}/requirements.txt
+    pip install jupyterlab
 }
 
 run_make() {
