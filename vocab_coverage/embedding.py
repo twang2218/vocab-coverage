@@ -52,10 +52,15 @@ def load_tokenizer(model_name:str, debug:bool=False):
 
     # https://github.com/huggingface/transformers/issues/22312
     if (not hasattr(tokenizer, 'pad_token')) or (tokenizer.pad_token is None) or (len(tokenizer.pad_token) == 0):
-        tokenizer.bos_token = '<s>'
-        tokenizer.eos_token = '</s>'
-        tokenizer.unk_token = '<unk>'
-        tokenizer.pad_token = tokenizer.eos_token
+        if tokenizer.eos_token is not None and len(tokenizer.eos_token) > 0:
+            print(f"[{model_name}]: 'tokenizer.pad_token' is None, set tokenizer.pad_token = tokenizer.eos_token ({tokenizer.eos_token}))")
+            tokenizer.pad_token = tokenizer.eos_token
+        else:
+            print(f"[{model_name}]: 'tokenizer.pad_token' and 'tokenizer.eos_token' are None, set tokenizer.pad_token = '</s>'")
+            tokenizer.bos_token = '<s>'
+            tokenizer.eos_token = '</s>'
+            tokenizer.unk_token = '<unk>'
+            tokenizer.pad_token = tokenizer.eos_token
 
     if debug:
         print(tokenizer)
@@ -68,6 +73,8 @@ def load_model(model_name:str, debug:bool=False):
         return None
 
     # 加载预训练模型
+
+    # 判断是否是大模型
     is_large_model = False
     for large_model in ['6b', '7b', '12b', '13b', 'llama', 'gpt', 'aquila', 'moss']:
         # print(f"[{model_name}]: large_model: {large_model} in {model_name.lower()}? {large_model in model_name.lower()}")
@@ -75,11 +82,34 @@ def load_model(model_name:str, debug:bool=False):
             is_large_model = True
             break
 
+    # 判断是否应以 4bit 模型加载
+    should_use_4bit = False
+    for large_model in ['oasst', 'int4']:
+        if large_model in model_name.lower():
+            should_use_4bit = True
+            break
+    
     try:
         kwargs = {}
-        if is_large_model:
-            kwargs['torch_dtype'] = torch.float16
+        if is_large_model and not should_use_4bit:
+            if "chatglm-6b" in model_name:
+                # THUDM/chatglm-6b
+                kwargs['torch_dtype'] = torch.half
+            if "falcon-7b" in model_name or "mpt-7b" in model_name:
+                # tiiuae/falcon-7b-instruct
+                # mosaicml/mpt-7b-instruct
+                kwargs['torch_dtype'] = torch.bfloat16
+            else:
+                kwargs['torch_dtype'] = torch.float16
             print(f"[{model_name}]: load model with torch_dtype: {kwargs['torch_dtype']}")
+            kwargs['device_map'] = "auto"
+            print(f"[{model_name}]: load model with device_map: {kwargs['device_map']}")
+
+        if should_use_4bit:
+            kwargs['load_in_4bit'] = True
+            print(f"[{model_name}]: load model with load_in_4bit: {kwargs['load_in_4bit']}")
+            kwargs['device_map'] = "auto"
+            print(f"[{model_name}]: load model with device_map: {kwargs['device_map']}")
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True, **kwargs)
     except Exception as e:
         if isinstance(e.args, (list, tuple)) and "AutoModel" in e.args[0]:
@@ -93,10 +123,30 @@ def load_model(model_name:str, debug:bool=False):
         else:
             print("加载 AutoModel 模型 {} 失败：{}".format(model_name, e))
             exit(1)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
+
+    if debug:
+        print(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
+
+    # ValueError: `.to` is not supported for `4-bit` or `8-bit` models. Please use the model as it is, since the model has already been set to the correct devices and casted to the correct `dtype`.
+    #   fnlp/moss-moon-003-sft-int4
+    #   OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
+    if not should_use_4bit:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
     model.eval()
-    print(f"[{model_name}]: model loaded on device: {model.device}")
+
+    print(f"[{model_name}]: {model.__class__.__name__} model loaded on device: {model.device}")
+
+    if debug:
+        if torch.cuda.is_available():
+            # 获取当前设备
+            device = torch.cuda.current_device()
+            # 获取显存信息
+            memory_info = torch.cuda.memory_stats(device=device)
+            # 获取显存使用量
+            memory_used = memory_info["allocated_bytes.all.current"] / 1024 ** 2
+            print(f"[{model_name}]: GPU Memory usage: {memory_used:,.0f} MiB")
+
     return model
 
 def get_vocab(model_name:str, tokenizer, debug=False):
@@ -186,38 +236,69 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         exit(1)
     return input_embeddings
 
-def get_sentences_embeddings(model, tokenizer, sentences:List[str], max_length=256):
+def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], max_length=256):
     # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
     inputs = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
     try:
+        if "/falcon-" in model_name:
+            # tiiuae/falcon-7b-instruct
+            del inputs['token_type_ids']
         outputs = model(**inputs, output_hidden_states=True)
     except Exception as e:
         # google/flan-t5-base
         if hasattr(model, 'get_encoder'):
             outputs = model.get_encoder()(**inputs, output_hidden_states=True)
         else:
-            print(f"get_sentences_embeddings() failed: {e}")
+            print(f"[{model_name}]: get_sentences_embeddings() failed: {e}")
             traceback.print_exc()
             print(model)
             exit(1)
+
+    # get attention_mask and token_embeddings
+    print(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
+    attention_mask = inputs['attention_mask']
+    del inputs
     token_embeddings = outputs.hidden_states[-1].detach().clone()
     del outputs
-    input_mask_expanded = inputs['attention_mask'].unsqueeze(-1).expand(token_embeddings.size()).float()
+
+    if 'chatglm-6b' in model_name:
+        # THUDM/chatglm-6b
+        #   attention_mask.shape: [50, 1, 4, 4] => [50, 4]
+        old_shape = attention_mask.shape
+        attention_mask = torch.where(attention_mask[:, 0, -1], torch.tensor(0), torch.tensor(1))
+        print(f"[{model_name}]: fix attention_mask: {old_shape} => {attention_mask.shape}")
+        #   token_embeddings.shape: [4, 50, 4096] => [50, 4, 4096]
+        old_shape = token_embeddings.shape
+        token_embeddings = token_embeddings.permute(1, 0, 2)
+        print(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
+    elif 'chatglm2-6b' in model_name:
+        # THUDM/chatglm2-6b
+        #   attention_mask.shape: [50, 7]
+        #   token_embeddings.shape: [7, 50, 4096] => [50, 7, 4096]
+        old_shape = token_embeddings.shape
+        token_embeddings = token_embeddings.permute(1, 0, 2)
+        print(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
+
+    # Calculate of Sentences Embedding by the averaging the all token vectors
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
     embeddings = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+    # Convert to numpy
     if embeddings.is_cuda:
         embeddings = embeddings.cpu()
     embeddings = embeddings.detach().numpy()
+
     return embeddings
 
-def get_sentences_embedding_in_batch(model, tokenizer, sentences:List[str], batch_size=32, max_length=256):
+def get_sentences_embedding_in_batch(model_name, model, tokenizer, sentences:List[str], batch_size=32, max_length=256):
     for i in range(0, len(sentences), batch_size):
         batch_sentences = sentences[i:i+batch_size]
-        batch_embeddings = get_sentences_embeddings(model, tokenizer, batch_sentences, max_length=max_length)
+        batch_embeddings = get_sentences_embeddings(model_name, model, tokenizer, batch_sentences, max_length=max_length)
         if i == 0:
             embeddings = batch_embeddings
         else:
             embeddings = np.concatenate((embeddings, batch_embeddings))
-        print(f"batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
+        print(f"[{model_name}]: batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
     return embeddings
 
 def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
@@ -227,25 +308,10 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             model_name = model_name.split("/")[-1]
             return get_output_embeddings_openai(model_name, vocab, batch=2000, debug=debug)
 
-        if hasattr(model, 'get_output_embeddings'):
-            # THUDM/chatglm-6b
-            vocab_embedding_func = model.get_output_embeddings()
-            if vocab_embedding_func is None:
-                print(f"[{model_name}]: 'model.get_output_embeddings()' is None")
-            else:
-                print(f"[{model_name}]: 'get_output_embeddings()': {vocab_embedding_func}")
-                token_ids = torch.tensor(np.arange(0, len(vocab), 1)).to(model.device)
-                output_embeddings = vocab_embedding_func(token_ids)
-
-        if len(output_embeddings) == 0:
-            # BERT-like models
-            if debug:
-                print(f"[{model_name}]: get_output_embeddings(): {get_sentences_embedding_in_batch}")
-                print(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
-            batch_size = 1000
-            if model.num_parameters() > 1e8:
-                batch_size = 50
-            output_embeddings = get_sentences_embedding_in_batch(model, tokenizer, vocab, batch_size=batch_size, max_length=30)
+        batch_size = 1000
+        if model.num_parameters() > 1e8:
+            batch_size = 50
+        output_embeddings = get_sentences_embedding_in_batch(model_name, model, tokenizer, vocab, batch_size=batch_size, max_length=5)
 
         if debug:
                 print(f"[{model_name}]: output_embeddings: {np.shape(output_embeddings)}")

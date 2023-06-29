@@ -44,7 +44,8 @@ MODELS_LLAMA = \
 
 MODELS_LLM = \
 	THUDM/chatglm-6b \
-	fnlp/moss-moon-003-sft \
+	THUDM/chatglm2-6b \
+	fnlp/moss-moon-003-sft-int4 \
 	baichuan-inc/baichuan-7B \
 	bigscience/bloom-7b1 \
 	mosaicml/mpt-7b-instruct \
@@ -94,19 +95,31 @@ define vocab_embeddings_model
 		filename=$$(echo $$model | sed 's/\//_/g'); \
 		image_input_embeddings=images/embeddings/embeddings.$$filename.input.jpg; \
 		image_output_embeddings=images/embeddings/embeddings.$$filename.output.jpg; \
-		if [ -f $$image_input_embeddings ] && [ -f $$image_output_embeddings ]; then \
-			echo "[$$model]: 词向量分布图文件已存在，跳过生成。"; \
+		ARGS=""; \
+		if [ -f $$image_input_embeddings ]; then \
+			echo "[$$model]: Input 词向量分布图文件已存在，跳过生成。"; \
+			ARGS="--skip_input_embeddings" ; \
+		fi; \
+		if [ -f $$image_output_embeddings ]; then \
+			echo "[$$model]: Output 词向量分布图文件已存在，跳过生成。"; \
 		else \
-			python vocab_coverage/main.py embedding --model_name $$model --debug --output_embeddings ; \
+			ARGS="$${ARGS} --output_embeddings" ; \
+		fi; \
+		if [ "$$ARGS" = "--skip_input_embeddings" ]; then \
+			echo "[$$model]: 全部词向量分布图文件已存在，跳过生成。"; \
+		else \
+			python vocab_coverage/main.py embedding --debug $$ARGS --model_name $$model ; \
 		fi; \
 	done
 endef
 
 
-install-deps:
+create-env:
+	conda create -n vocab python=3.10 -y ; \
+	conda activate vocab ; \
 	pip install -r requirements.txt
 
-update-deps:
+update-env:
 	pip freeze > requirements.txt
 
 package:
