@@ -1,6 +1,6 @@
 [
     {
-        "key": "bert",
+        "group": "bert",
         "name": "原生的BERT类的模型",
         "models": [
             "bert-base-cased",
@@ -13,14 +13,14 @@
         ]
     },
     {
-        "key": "t5",
+        "group": "t5",
         "name": "Google T5 系列模型 (Encoder-Decoder)",
         "models": [
             "google/flan-t5-base"
         ]
     },
     {
-        "key": "sbert",
+        "group": "sbert",
         "name": "Sentence Transformers 提供的模型",
         "models": [
             "sentence-transformers/all-MiniLM-L6-v2",
@@ -34,7 +34,7 @@
         ]
     },
     {
-        "key": "ernie",
+        "group": "ernie",
         "name": "百度 ERNIE 系列模型",
         "models": [
             "nghuyong/ernie-1.0-base-zh",
@@ -46,7 +46,7 @@
         ]
     },
     {
-        "key": "bert-zh",
+        "group": "bert-zh",
         "name": "BERT 中文模型",
         "models": [
             "bert-base-chinese",
@@ -55,7 +55,7 @@
         ]
     },
     {
-        "key": "hfl",
+        "group": "hfl",
         "name": "哈工大 HFL 提供的模型",
         "models": [
             "hfl/chinese-bert-wwm-ext",
@@ -64,7 +64,7 @@
         ]
     },
     {
-        "key": "shibing624",
+        "group": "shibing624",
         "name": "徐明提供的模型",
         "models": [
             "shibing624/text2vec-base-chinese",
@@ -77,7 +77,7 @@
         ]
     },
     {
-        "key": "llama",
+        "group": "llama",
         "name": "LLAMA 及衍生模型",
         "models": [
             "decapoda-research/llama-7b-hf",
@@ -90,7 +90,7 @@
         ]
     },
     {
-        "key": "llm-zh",
+        "group": "llm-zh",
         "name": "中文大语言模型",
         "models": [
             "THUDM/chatglm-6b",
@@ -101,7 +101,7 @@
         ]
     },
     {
-        "key": "llm",
+        "group": "llm",
         "name": "其他大语言模型",
         "models": [
             "bigscience/bloom-7b1",
@@ -112,7 +112,7 @@
         ]
     },
     {
-        "key": "openai",
+        "group": "openai",
         "name": "OpenAI 提供的模型",
         "models": [
             "OpenAI/gpt-4",

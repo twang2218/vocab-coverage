@@ -126,25 +126,33 @@ def generate_markdown(models:List[dict], output:str="graphs.md"):
                 # print("\n")
             f.write("\n\n")
 
-def generate_coverage(models:List[dict], charsets:dict, folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
+def generate_coverage(models:List[dict], charsets:dict, group:str='', folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:
+        if group != '' and section['group'] != group:
+            if debug:
+                print(f"Skip group {section['group']}")
+            continue
         for model_name in section["models"]:
             try:
                 coverage = find_coverage_file(model_name)
                 if coverage is not None:
                     if debug:
-                        print(f"Coverage for {model_name} already exists ({coverage}).")
+                        print(f"Nothing to generate for {model_name} coverage. ({coverage}).")
                     continue
                 # generate coverage
                 coverage_analysis(model_name, charsets, folder, debug)
-                print(f"Generating coverage for {model_name}")
+                print(f"Generated coverage for {model_name}")
             except Exception as e:
                 print(f"Error in {model_name}")
                 traceback.print_exc()
                 continue
 
-def generate_embedding(models:List[dict], charsets:dict, folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
+def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:
+        if group != '' and section['group'] != group:
+            if debug:
+                print(f"Skip group {section['group']}")
+            continue
         for model_name in section["models"]:
             try:
                 embedding_types = []
@@ -156,11 +164,11 @@ def generate_embedding(models:List[dict], charsets:dict, folder=DEFAULT_IMAGE_FO
                     embedding_types.append("output")
                 if len(embedding_types) == 0:
                     if debug:
-                        print(f"Nothing to generate for {model_name} embedding")
+                        print(f"Nothing to generate for {model_name} embedding. ({input_embedding}, {output_embedding}))")
                     continue
                 if "openai" not in model_name.lower() or "/text-embedding-ada-002" not in model_name.lower():
                     if debug:
-                        print(f"Cannot load embedding for analysis for {model_name}")
+                        print(f"Do not support embedding analysis for {model_name}")
                     continue
                 if 'openai' in model_name.lower():
                     print(f'embedding_types: {embedding_types}')
@@ -212,11 +220,13 @@ def main():
     cmdMarkdown.add_argument("--markdown", type=str, default="graphs.md")
 
     cmdCoverage = subcommands.add_parser('coverage', help='Generate coverage graphs')
+    cmdCoverage.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
     cmdCoverage.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
     cmdCoverage.add_argument("--debug", action="store_true", help="是否输出调试信息")
     cmdCoverage.add_argument("--folder", type=str, default=DEFAULT_IMAGE_FOLDER, help="输出文件夹（默认为 images）")
 
     cmdEmbedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
+    cmdEmbedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
     cmdEmbedding.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
     cmdEmbedding.add_argument("--folder", type=str, default=DEFAULT_IMAGE_FOLDER, help="输出文件夹（默认为 images）")
     cmdEmbedding.add_argument("--debug", action="store_true", help="是否输出调试信息")
@@ -229,10 +239,10 @@ def main():
 
     if args.command == "coverage":
         charsets = json.load(open(args.charset_file, 'r'))
-        generate_coverage(models, charsets, folder=args.folder, debug=args.debug)
+        generate_coverage(models, charsets, group=args.group, folder=args.folder, debug=args.debug)
     elif args.command == "embedding":
         charsets = json.load(open(args.charset_file, 'r'))
-        generate_embedding(models, charsets, folder=args.folder, debug=args.debug)
+        generate_embedding(models, charsets, group=args.group, folder=args.folder, debug=args.debug)
     elif args.command == "thumbnails":
         generate_embedding_thumbnails(models, folder=args.folder, debug=args.debug)
     elif args.command == "markdown":
