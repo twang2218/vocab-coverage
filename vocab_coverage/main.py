@@ -14,11 +14,11 @@ def main():
 
     subcommands = parser.add_subparsers(dest='command')
 
-    cmdModel = subcommands.add_parser('model', help='模型汉字识字率分析')
-    cmdModel.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese", help="模型在 HuggingFace Hub 上的名称（默认为 shibing624/text2vec-base-chinese）")
-    cmdModel.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
-    cmdModel.add_argument("--output_dir", type=str, default="images", help="生成的图像文件的输出目录（默认为 images）")
-    cmdModel.add_argument("--debug", action='store_true', help="是否打印调试信息")
+    cmdCoverage = subcommands.add_parser('coverage', help='模型汉字识字率分析')
+    cmdCoverage.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese", help="模型在 HuggingFace Hub 上的名称（默认为 shibing624/text2vec-base-chinese）")
+    cmdCoverage.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
+    cmdCoverage.add_argument("--output_dir", type=str, default="images", help="生成的图像文件的输出目录（默认为 images）")
+    cmdCoverage.add_argument("--debug", action='store_true', help="是否打印调试信息")
 
     cmdEmbedding = subcommands.add_parser('embedding', help='词向量可视化分析')
     cmdEmbedding.add_argument("--model_name", type=str, default="shibing624/text2vec-base-chinese", help="模型在 HuggingFace Hub 上的名称（默认为 shibing624/text2vec-base-chinese）")
@@ -45,7 +45,7 @@ def main():
             exit(1)
         generate_charsets(args.charset_file)
         return
-    elif args.command == 'model':
+    elif args.command == 'coverage':
         charsets = json.load(open(charset_file, 'r'))
         coverage_analysis(args.model_name, charsets, args.output_dir, args.debug)
         return
