@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from vocab_coverage import model_check, embedding_analysis
+from vocab_coverage import coverage_analysis, embedding_analysis
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,7 +40,7 @@ def main():
         return
     elif args.command == 'model':
         charsets = json.load(open(args.charset_file, 'r'))
-        model_check(args.model_name, charsets, args.output_dir, args.debug)
+        coverage_analysis(args.model_name, charsets, args.output_dir, args.debug)
         return
     elif args.command == 'embedding':
         charsets = json.load(open(args.charset_file, 'r'))

@@ -5,6 +5,7 @@ MODELS_BERT = \
 	roberta-large \
 	xlnet-base-cased \
 	albert-base-v2 \
+	xlm-roberta-base \
 	google/flan-t5-base \
 	google/electra-base-discriminator \
 	bert-base-chinese \
@@ -26,12 +27,12 @@ MODELS_SBERT = \
 
 MODELS_ERNIE = \
 	nghuyong/ernie-1.0-base-zh \
-	nghuyong/ernie-2.0-base-en \
+	swtx/ernie-2.0-base-chinese \
 	nghuyong/ernie-3.0-nano-zh \
+	nghuyong/ernie-3.0-base-zh \
 	nghuyong/ernie-3.0-xbase-zh \
 	nghuyong/ernie-health-zh \
 	nghuyong/ernie-gram-zh \
-	swtx/ernie-2.0-base-chinese
 
 MODELS_LLAMA = \
 	decapoda-research/llama-7b-hf \
@@ -56,12 +57,12 @@ MODELS_LLM = \
 MODELS_SHIBING624 = \
 	shibing624/text2vec-base-chinese \
 	shibing624/text2vec-base-chinese-sentence \
-	shibing624/text2vec-base-chinese-paragraph \
-	shibing624/text2vec-base-chinese-multilingual \
+	shibing624/text2vec-base-chinese-paraphrase \
+	shibing624/text2vec-base-multilingual \
 	shibing624/prompt-t5-base-chinese \
 	shibing624/mengzi-t5-base-chinese-correction \
 	shibing624/chinese-alpaca-plus-7b-hf \
-	shibing624/chinese-alpaca-plus-13b-hf \
+	shibing624/chinese-alpaca-plus-13b-hf
 
 MODELS_OPENAI = \
 	OpenAI/gpt-4 \
@@ -200,16 +201,16 @@ embedding-openai:
 	fi
 	$(call vocab_embeddings_model, $(MODELS_OPENAI_EMBEDDING))
 
-embedding-resize:
+embedding-thumbnails:
 	@input_dir="images/embeddings"; \
-	mkdir -p "$$input_dir/70"; \
-	mkdir -p "$$input_dir/small"; \
+	mkdir -p "$$input_dir/thumbnails"; \
 	for file in "$$input_dir"/*.jpg; do \
 		filename=$$(basename "$$file"); \
-		echo "Processing $$filename"; \
-		output_file="$$output_dir/$$filename"; \
-		convert "$$file" -quality 70 "$$input_dir/70/$$filename" || exit 1 ;\
-		convert "$$file" -quality 20 -resize 30% "$$input_dir/small/$$filename" || exit 2 ; \
+		thumbnail_file="$$input_dir/thumbnails/$$filename"; \
+		if [ ! -f $$thumbnail_file ]; then \
+			echo "Creating thumbnail for $$filename"; \
+			convert "$$file" -quality 20 -resize 30% "$$input_dir/thumbnails/$$filename" || exit 2 ; \
+		fi; \
 	done
 
 # remote

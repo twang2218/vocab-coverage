@@ -9,7 +9,7 @@ from transformers import AutoTokenizer
 
 from vocab_coverage.draw import draw_vocab_graph
 
-def model_check(model_name:str, charsets, output_dir:str, debug=False):
+def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False):
     print("检查模型 {} 的字表".format(model_name))
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
@@ -110,8 +110,9 @@ def model_check(model_name:str, charsets, output_dir:str, debug=False):
         print("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
 
     # 生成文件名
-    filename = model_name.replace('/', '_') + '.png'
-    filename = 'coverage_' + filename
+    filename = model_name.replace('/', '_') + '.coverage.png'
+    if output_dir is None:
+        output_dir = os.getcwd()
     output_dir = os.path.join(output_dir, 'coverage')
     os.makedirs(output_dir, exist_ok=True)
     filename = os.path.join(output_dir, filename)

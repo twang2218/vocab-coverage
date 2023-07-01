@@ -52,7 +52,7 @@ def load_tokenizer(model_name:str, debug:bool=False):
 
     # https://github.com/huggingface/transformers/issues/22312
     if (not hasattr(tokenizer, 'pad_token')) or (tokenizer.pad_token is None) or (len(tokenizer.pad_token) == 0):
-        if tokenizer.eos_token is not None and len(tokenizer.eos_token) > 0:
+        if hasattr(tokenizer, 'eos_token') and tokenizer.eos_token is not None and len(tokenizer.eos_token) > 0:
             print(f"[{model_name}]: 'tokenizer.pad_token' is None, set tokenizer.pad_token = tokenizer.eos_token ({tokenizer.eos_token}))")
             tokenizer.pad_token = tokenizer.eos_token
         else:
@@ -221,7 +221,11 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         if debug:
             print(f"[{model_name}]: get_input_embeddings(): {input_embedding_func}")
 
-        token_ids = torch.tensor(np.arange(0, len(vocab), 1)).to(model.device)
+        vocab_size = len(vocab)
+        if hasattr(input_embedding_func, 'weight'):
+            # shibing624/prompt-t5-base-chinese: tokenizer.vocab_size=32228, get_input_embeddings().weight=(32128, 768)
+            vocab_size = min(input_embedding_func.weight.shape[0], vocab_size)
+        token_ids = torch.tensor(np.arange(0, vocab_size, 1)).to(model.device)
         input_embeddings = input_embedding_func(token_ids)
         if input_embeddings.is_cuda:
             input_embeddings = input_embeddings.cpu()
@@ -238,7 +242,14 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
 
 def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], max_length=256):
     # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
-    inputs = tokenizer(sentences, max_length=max_length, padding=True, truncation=True, return_tensors="pt").to(model.device)
+    kwargs = {
+        'max_length': max_length,
+        'padding': True,
+        'truncation': True,
+        'add_special_tokens': False,
+        'return_tensors': 'pt'
+    }
+    inputs = tokenizer(sentences, **kwargs).to(model.device)
     try:
         if "/falcon-" in model_name:
             # tiiuae/falcon-7b-instruct
@@ -255,7 +266,7 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
             exit(1)
 
     # get attention_mask and token_embeddings
-    print(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
+    # print(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
     attention_mask = inputs['attention_mask']
     del inputs
     token_embeddings = outputs.hidden_states[-1].detach().clone()
@@ -309,7 +320,7 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             return get_output_embeddings_openai(model_name, vocab, batch=2000, debug=debug)
 
         batch_size = 1000
-        if model.num_parameters() > 1e8:
+        if model.num_parameters() > 1_000_000_000:
             batch_size = 50
         output_embeddings = get_sentences_embedding_in_batch(model_name, model, tokenizer, vocab, batch_size=batch_size, max_length=5)
 
@@ -409,11 +420,24 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
 def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False):
     print("对模型 {} 的 embedding 进行可视化...".format(model_name))
 
+    if '/' in model_name:
+        org, name = model_name.split('/')
+        if org.lower() == 'openai' and name != 'text-embedding-ada-002':
+            print(f"Skip {model_name}, only 'text-embedding-ada-002' is supported...")
+            return
+
     workdir = os.path.join(output_dir, 'embeddings')
 
     tokenizer = load_tokenizer(model_name, debug=debug)
     model = load_model(model_name, debug=debug)
     vocab = get_vocab(model_name, tokenizer=tokenizer, debug=debug)
+
+    if hasattr(model, 'get_input_embeddings') and hasattr(model.get_input_embeddings(), 'weight'):
+        tokenizer_vocab_size = len(vocab)
+        model_vocab_size = model.get_input_embeddings().weight.shape[0]
+        if tokenizer_vocab_size > model_vocab_size:
+            print(f"[{model_name}]: tokenizer_vocab_size({tokenizer_vocab_size}) > model_vocab_size({model_vocab_size}), will truncate the model vocab_size...")
+            vocab = vocab[:model_vocab_size]
 
     for etype in embedding_type:
         embeddings = get_embeddings(model_name, model, tokenizer, vocab, embedding_type=etype, debug=debug)
