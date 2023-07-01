@@ -132,6 +132,10 @@ package:
 	@echo "[ Upload package... ]"
 	twine upload dist/* --verbose
 
+package-clean:
+	python setup.py clean --all
+	rm -rf dist build vocab_coverage.egg-info
+
 ENV_TEST_NAME = vocab_package_test
 test-env:
 	if conda env list | grep -q "^$(ENV_TEST_NAME) "; then \

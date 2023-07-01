@@ -23,6 +23,7 @@ setup(
     description='语言模型中文识字率分析\nA Python package designed to perform coverage analysis on Chinese vocabulary for language models.',
     long_description_content_type="text/markdown",
     long_description=open('README.md').read(),
+    include_package_data=True,
     author='Tao Wang',
     author_email='twang2218@gmail.com',
     url='https://github.com/twang2218/vocab-coverage',

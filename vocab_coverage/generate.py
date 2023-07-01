@@ -145,7 +145,6 @@ def generate_coverage(models:List[dict], charsets:dict, group:str='', folder=DEF
             except Exception as e:
                 print(f"Error in {model_name}")
                 traceback.print_exc()
-                continue
 
 def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:
@@ -207,7 +206,6 @@ def generate_embedding_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER
             except Exception as e:
                 print(f"Error in {model_name}")
                 traceback.print_exc()
-                continue
 
 def main():
     models = load_model_list()
@@ -216,18 +214,18 @@ def main():
     subcommands = parser.add_subparsers(dest='command')
 
     cmdMarkdown = subcommands.add_parser('markdown', help='Generate markdown file for graphs')
-    cmdMarkdown.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
+    cmdMarkdown.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为使用内置字符集文件）")
     cmdMarkdown.add_argument("--markdown", type=str, default="graphs.md")
 
     cmdCoverage = subcommands.add_parser('coverage', help='Generate coverage graphs')
     cmdCoverage.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
-    cmdCoverage.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
+    cmdCoverage.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为使用内置字符集文件）")
     cmdCoverage.add_argument("--debug", action="store_true", help="是否输出调试信息")
     cmdCoverage.add_argument("--folder", type=str, default=DEFAULT_IMAGE_FOLDER, help="输出文件夹（默认为 images）")
 
     cmdEmbedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
     cmdEmbedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
-    cmdEmbedding.add_argument("--charset_file", type=str, default="charset.json", help="用以统计识字率的字表文件（默认为 charset.json）")
+    cmdEmbedding.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为使用内置字符集文件）")
     cmdEmbedding.add_argument("--folder", type=str, default=DEFAULT_IMAGE_FOLDER, help="输出文件夹（默认为 images）")
     cmdEmbedding.add_argument("--debug", action="store_true", help="是否输出调试信息")
 
@@ -236,6 +234,10 @@ def main():
     cmdThumbnails.add_argument("--debug", action="store_true", help="是否输出调试信息")
 
     args = parser.parse_args()
+
+    if len(args.charset_file) == 0:
+        # 使用内置字符集文件
+        args.charset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'charsets.json')
 
     if args.command == "coverage":
         charsets = json.load(open(args.charset_file, 'r'))
