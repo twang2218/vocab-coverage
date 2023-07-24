@@ -50,7 +50,7 @@
 
 |   识字率分析图  |  颜色对应关系 |
 |:----------------:|:----------------|
-|[![](images/coverage/OpenAI_text-embedding-ada-002.coverage.png)](images/coverage/OpenAI_text-embedding-ada-002.coverage.png) | ![](images/assets/empty.1000.png)<font color="#B04759">█  深红色</font>：《通用规范汉字表》一级汉字<br><font color="#E76161">█  红　色</font>：《通用规范汉字表》二级汉字<br><font color="#F99B7D">█  橘黄色</font>：《通用规范汉字表》三级汉字<br><font color="#146C94">█  深蓝色</font>：《常用國字標準字體表》甲表汉字<br><font color="#19A7CE">█  浅蓝色</font>：《常用國字標準字體表》乙表汉字<br><font color="#E893CF">█  粉　色</font>：《Unicode中日韩统一表意文字》区段汉字|
+|[![](images/coverage/OpenAI_text-embedding-ada-002.coverage.png)](images/coverage/OpenAI_text-embedding-ada-002.coverage.png) | ![](images/assets/empty.1000.png) ![#B04759](https://placehold.co/15x15/B04759/B04759.png)  深红色：《通用规范汉字表》一级汉字<br>![#E76161](https://placehold.co/15x15/E76161/E76161.png)  红　色：《通用规范汉字表》二级汉字<br>![#F99B7D](https://placehold.co/15x15/F99B7D/F99B7D.png)  橘黄色：《通用规范汉字表》三级汉字<br>![#146C94](https://placehold.co/15x15/146C94/146C94.png)  深蓝色：《常用國字標準字體表》甲表汉字<br>![#19A7CE](https://placehold.co/15x15/19A7CE/19A7CE.png)  浅蓝色：《常用國字標準字體表》乙表汉字<br>![#E893CF](https://placehold.co/15x15/E893CF/E893CF.png)  粉　色：《Unicode中日韩统一表意文字》区段汉字|
 
 
 
@@ -98,7 +98,7 @@
 
 | 词向量分布图 | 颜色对应关系 |
 | ------------ | ------------ |
-| [![](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | ![](images/assets/empty.1000.png)<font color="#D50000">█</font> 汉字（常用字）<br><font color="#7B1FA2">█</font> 汉字（生僻字）<br><font color="#827717">█</font> 日文<br><font color="#FFA000">█</font> 韩文<br><font color="#2E7D32">█</font> 英文<br><font color="#01579B">█</font> 数字<br><font color="#212121">█</font> 其他<br> |
+| [![](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | ![](images/assets/empty.1000.png)![#D50000](https://placehold.co/15x15/D50000/D50000.png)  汉字（常用字）<br>![#7B1FA2](https://placehold.co/15x15/7B1FA2/7B1FA2.png)  汉字（生僻字）<br>![#827717](https://placehold.co/15x15/827717/827717.png)  日文<br>![#FFA000](https://placehold.co/15x15/FFA000/FFA000.png)  韩文<br>![#2E7D32](https://placehold.co/15x15/2E7D32/2E7D32.png)  英文<br>![#01579B](https://placehold.co/15x15/01579B/01579B.png)  数字<br>![#212121](https://placehold.co/15x15/212121/212121.png)  其他<br> |
 
 ##### 后缀子词
 
@@ -225,6 +225,9 @@
 | <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b> | ![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/coverage/shibing624_text2vec-base-chinese-sentence.coverage.png) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.output.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.output.jpg) |
 | <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b> | ![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/coverage/shibing624_text2vec-base-chinese-paraphrase.coverage.png) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-paraphrase.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-paraphrase.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-paraphrase.embeddings.output.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-paraphrase.embeddings.output.jpg) |
 
+这一组基座模型和微调模型的对比很有意思，后一组两个模型都是基于 **nghuyong/ernie-3.0-base-zh** 模型微调而来，但是输出端的词向量分布却有很大的差异。而且这两个模型之间的微调其实非常接近。paraphrase 模型用来训练的语料库其实是在 sentence 模型的语料库基础上增加了 6051 个句子段落对，这部分里有4k左右的长文本。目前不太清楚是否是因为 **这 4k 的长文本**，导致了输出端词向量分布的巨大差异。
+
+![](images/assets/sentence-vs-paraphrase.dataset_length.png)
 
 ### paraphrase-multilingual-MiniLM-L12-v2 模型及其衍生的模型对比
 

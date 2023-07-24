@@ -52,6 +52,9 @@ generate-markdown:
 
 generate: generate-coverage generate-embedding generate-thumbnails generate-markdown
 
+clean-cache:
+	rm -rf ~/.cache/huggingface/hub/*
+
 # remote
 
 remote-sync:
