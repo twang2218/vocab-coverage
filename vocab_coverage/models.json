@@ -64,6 +64,16 @@
         ]
     },
     {
+        "group": "hfl-llama",
+        "name": "哈工大 HFL 提供的 LLaMA 类的中文模型",
+        "models": [
+            "minlik/chinese-llama-7b-merged",
+            "minlik/chinese-llama-plus-7b-merged",
+            "minlik/chinese-alpaca-7b-merged",
+            "minlik/chinese-alpaca-plus-7b-merged"
+        ]
+    },
+    {
         "group": "shibing624",
         "name": "徐明提供的模型",
         "models": [
@@ -71,7 +81,6 @@
             "shibing624/text2vec-base-chinese-sentence",
             "shibing624/text2vec-base-chinese-paraphrase",
             "shibing624/text2vec-base-multilingual",
-            "shibing624/prompt-t5-base-chinese",
             "shibing624/mengzi-t5-base-chinese-correction",
             "shibing624/chinese-alpaca-plus-7b-hf"
         ]
@@ -87,6 +96,31 @@
             "lmsys/vicuna-7b-delta-v1.1",
             "togethercomputer/RedPajama-INCITE-7B-Chat",
             "openlm-research/open_llama_7b"
+        ]
+    },
+    {
+        "group": "llama2",
+        "name": "LLAMA 2 及衍生模型",
+        "models": [
+            "meta-llama/Llama-2-7b-hf",
+            "meta-llama/Llama-2-7b-chat-hf",
+            "TheBloke/koala-7B-HF",
+            "TheBloke/wizardLM-7B-HF",
+            "lmsys/vicuna-7b-delta-v1.1",
+            "togethercomputer/RedPajama-INCITE-7B-Chat",
+            "openlm-research/open_llama_7b"
+        ]
+    },
+    {
+        "group": "llama2-zh",
+        "name": "LLAMA 2 中文衍生模型",
+        "models": [
+            "FlagAlpha/Llama2-Chinese-7b-Chat",
+            "RicardoLee/Llama2-chat-Chinese-50W",
+            "RicardoLee/Llama2-base-7B-Chinese-50W-pre_release",
+            "RicardoLee/Llama2-base-7B-Chinese-50W-Full2LoRA",
+            "wenge-research/yayi-7b-llama2",
+            "LinkSoul/Chinese-Llama-2-7b"
         ]
     },
     {
