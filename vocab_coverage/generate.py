@@ -207,7 +207,7 @@ def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DE
                         print(f"Nothing to generate for {model_name} embedding. ({input_embedding}, {output_embedding}))")
                     continue
                 # check special case for OpenAI
-                if "openai" not in model_name.lower() or "/text-embedding-ada-002" not in model_name.lower():
+                if "openai" in model_name.lower() and "text-embedding-ada-002" not in model_name.lower():
                     if debug:
                         print(f"Do not support embedding analysis for {model_name}")
                     continue
@@ -237,7 +237,7 @@ def generate_thumbnail(filename:str, folder=DEFAULT_IMAGE_FOLDER, debug:bool=Fal
         ret = os.system(f"convert {filename} -quality 20 -resize 30% {thumbnail_filename}")
         if ret != 0:
             print(f"Failed to create thumbnail for {filename}")
-            exit(1)
+            raise Exception(f"Failed to create thumbnail for {filename}")
 
 def generate_embedding_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:

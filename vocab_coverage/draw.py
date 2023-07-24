@@ -48,7 +48,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filena
     # 定义图像大小
     image_width = width * cell_size + 1 + margin * 2
     height = total_chars // width + 1
-    image_height = height * cell_size + 1 + margin * 6
+    image_height = height * cell_size + 1 + margin * 7
 
     # 创建新的空白图像
     image = Image.new("RGBA", (image_width, image_height), "#EEEEEE")
@@ -98,7 +98,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filena
     for name in charset_stats.keys():
         stats_name += "{}:\n".format(name)
     draw.text(
-        (image_width - margin - 700, image_height - margin - 140),
+        (image_width - margin - 700, image_height - margin - 180),
         stats_name,
         fill="#000000",
         align="left",
@@ -108,7 +108,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filena
     for s in charset_stats.values():
         stats_value += "{:4} / {:4}  ({:.2%})\n".format(s['known'], s['total'], float(s['known'])/s['total'])
     draw.text(
-        (image_width - margin - 270, image_height - margin - 140),
+        (image_width - margin - 270, image_height - margin - 180),
         stats_value,
         fill="#000000",
         align="right",

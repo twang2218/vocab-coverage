@@ -17,12 +17,17 @@ EMBEDDING_TYPE_OUTPUT = 'output'
 
 def load_tokenizer(model_name:str, debug:bool=False):
     try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    except Exception as e:
-        if "LLaMATokenizer" in e.args[0]:
+        kwargs = {}
+        kwargs['trust_remote_code'] = True
+        if 'llama' in model_name.lower():
+            # https://github.com/LianjiaTech/BELLE/issues/242#issuecomment-1514330432
+            # Avoid LlamaTokenizerFast conversion
             from transformers import LlamaTokenizer
-            tokenizer = LlamaTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        elif "aquila" in e.args[0]:
+            tokenizer = LlamaTokenizer.from_pretrained(model_name, **kwargs)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
+    except Exception as e:
+        if "aquila" in e.args[0]:
             from flagai.data.tokenizer import Tokenizer
             name = 'aquila-7b'
             cache_dir = os.path.join('./model', name)
@@ -43,7 +48,7 @@ def load_tokenizer(model_name:str, debug:bool=False):
                 print(tokenizer._special_tokens)
         else:
             print("加载模型 {} 失败：{}".format(model_name, e))
-            exit(1)
+            raise e
 
     # https://github.com/huggingface/transformers/issues/24514
     from transformers import LlamaTokenizerFast
@@ -85,6 +90,10 @@ def load_model(model_name:str, debug:bool=False):
     # 判断是否应以 4bit 模型加载
     should_use_4bit = False
     for large_model in ['oasst', 'int4']:
+        if 'chatglm' in model_name.lower():
+            # THUDM/chatglm-6b-int4
+            # THUDM/chatglm2-6b-int4
+            break
         if large_model in model_name.lower():
             should_use_4bit = True
             break
@@ -95,34 +104,42 @@ def load_model(model_name:str, debug:bool=False):
             if "chatglm-6b" in model_name:
                 # THUDM/chatglm-6b
                 kwargs['torch_dtype'] = torch.half
-            if "falcon-7b" in model_name or "mpt-7b" in model_name:
+                # kwargs['device_map'] = "auto"
+            elif "chatglm2" in model_name:
+                # THUDM/chatglm2-6b
+                pass
+            elif "falcon-7b" in model_name or "mpt-7b" in model_name:
                 # tiiuae/falcon-7b-instruct
                 # mosaicml/mpt-7b-instruct
                 kwargs['torch_dtype'] = torch.bfloat16
+                kwargs['device_map'] = "auto"
             else:
                 kwargs['torch_dtype'] = torch.float16
-            print(f"[{model_name}]: load model with torch_dtype: {kwargs['torch_dtype']}")
-            kwargs['device_map'] = "auto"
-            print(f"[{model_name}]: load model with device_map: {kwargs['device_map']}")
+                kwargs['device_map'] = "auto"
 
         if should_use_4bit:
             kwargs['load_in_4bit'] = True
-            print(f"[{model_name}]: load model with load_in_4bit: {kwargs['load_in_4bit']}")
             kwargs['device_map'] = "auto"
-            print(f"[{model_name}]: load model with device_map: {kwargs['device_map']}")
+
+        if debug:
+            print(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs})")
+
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True, **kwargs)
+
     except Exception as e:
-        if isinstance(e.args, (list, tuple)) and "AutoModel" in e.args[0]:
+        if debug:
+            print(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs}) failed: {e}, args: {e.args}")
+        if isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "AutoModel" in e.args[0]:
             from transformers import AutoModelForCausalLM
             model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
-        elif isinstance(e.args, (list, tuple)) and "aquila" in e.args[0]:
+        elif isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "aquila" in e.args[0]:
             from flagai.model.aquila_model import AQUILAModel
             # cache_dir = os.path.join('./model', 'aquila-7b')
             # print(f"cache_dir: {os.path.abspath(cache_dir)}")
             model = AQUILAModel.from_pretrain(model_name='aquila-7b', download_path='./model')
         else:
             print("加载 AutoModel 模型 {} 失败：{}".format(model_name, e))
-            exit(1)
+            raise e
 
     if debug:
         print(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
@@ -138,16 +155,32 @@ def load_model(model_name:str, debug:bool=False):
     print(f"[{model_name}]: {model.__class__.__name__} model loaded on device: {model.device}")
 
     if debug:
-        if torch.cuda.is_available():
-            # 获取当前设备
-            device = torch.cuda.current_device()
-            # 获取显存信息
-            memory_info = torch.cuda.memory_stats(device=device)
-            # 获取显存使用量
-            memory_used = memory_info["allocated_bytes.all.current"] / 1024 ** 2
-            print(f"[{model_name}]: GPU Memory usage: {memory_used:,.0f} MiB")
+        show_gpu_usage(model_name)
 
     return model
+
+def show_gpu_usage(name:str = ""):
+    if torch.cuda.is_available():
+        # 获取当前设备
+        device = torch.cuda.current_device()
+        # 获取显存信息
+        memory_info = torch.cuda.memory_stats(device=device)
+        # 获取显存使用量
+        memory_used = memory_info["allocated_bytes.all.current"] / 1024 ** 2
+        # 获取总共显存量
+        memory_total = torch.cuda.get_device_properties(device=device).total_memory / 1024 ** 2
+        # 获取剩余可用显存
+        memory_free = memory_total - memory_used
+        if len(name) > 0:
+            name = f"[{name}]: "
+        else:
+            name = "> "
+        print(f"{name} GPU Memory usage: {memory_used:,.0f} MiB")
+        print(f"{name} GPU Memory free: {memory_free:,.0f} MiB")
+        return {"total": memory_total, "used": memory_used, "free": memory_free}
+    else:
+        print("GPU not available.")
+        return {"total": 0, "used": 0, "free": 0}
 
 def get_vocab(model_name:str, tokenizer, debug=False):
     if "OpenAI" in model_name:
@@ -216,7 +249,7 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         else:
             print(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
             print(model)
-            exit(1)
+            raise Exception(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
 
         if debug:
             print(f"[{model_name}]: get_input_embeddings(): {input_embedding_func}")
@@ -237,10 +270,10 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         print(f"[{model_name}]: get_input_embeddings failed: {e}")
         traceback.print_exc()
         print(model)
-        exit(1)
+        raise e
     return input_embeddings
 
-def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], max_length=256):
+def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], use_token_id=False, max_length=256):
     # from https://github.com/shibing624/text2vec/blob/master/text2vec/sentence_model.py#L96
     kwargs = {
         'max_length': max_length,
@@ -249,7 +282,21 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
         'add_special_tokens': False,
         'return_tensors': 'pt'
     }
-    inputs = tokenizer(sentences, **kwargs).to(model.device)
+    # To avoid token be split by tokenizer, we construct the inputs by using token ids directly
+    # to do that, we generate the all the value by using unsplittable token, such as 'a',
+    # then replace the id by the real token id
+    if use_token_id:
+        placeholder = ['a'] * len(sentences)
+        inputs = tokenizer(placeholder, **kwargs)
+        sentences_ids = tokenizer.convert_tokens_to_ids(sentences)
+        for i, id in enumerate(sentences_ids):
+            inputs['input_ids'][i][-1] = id
+    else:
+        inputs = tokenizer(sentences, **kwargs)
+
+    # move inputs to device
+    inputs = inputs.to(model.device)
+
     try:
         if "/falcon-" in model_name:
             # tiiuae/falcon-7b-instruct
@@ -263,12 +310,15 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
             print(f"[{model_name}]: get_sentences_embeddings() failed: {e}")
             traceback.print_exc()
             print(model)
-            exit(1)
+            raise e
 
     # get attention_mask and token_embeddings
     # print(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
     attention_mask = inputs['attention_mask']
     del inputs
+    all_hidden_states = []
+    for hs in outputs.hidden_states:
+        all_hidden_states.append(hs.detach().clone())
     token_embeddings = outputs.hidden_states[-1].detach().clone()
     del outputs
 
@@ -299,12 +349,22 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
         embeddings = embeddings.cpu()
     embeddings = embeddings.detach().numpy()
 
+    for i, e in enumerate(embeddings):
+        if np.isnan(e).any():
+            print(f"[{model_name}]: embeddings for {i}:'{sentences[i]}' contains NaN")
+            # print(f"[{model_name}]: > attention_mask({attention_mask[i].shape}):  {attention_mask[i]}")
+            # print(f"[{model_name}]: > token_embeddings({token_embeddings[i].shape}): {token_embeddings[i]}")
+            print(f"[{model_name}]: > all_hidden_states: {len(all_hidden_states)}")
+            for j, hs in enumerate(all_hidden_states):
+                if np.isnan(hs[i]).any():
+                    print(f"[{model_name}]: > all_hidden_states[{j}]({hs[i].shape}): {hs[i]}")
+            # print(f"[{model_name}]: > input_mask_expanded({input_mask_expanded[i].shape}): {input_mask_expanded[i]}")
     return embeddings
 
-def get_sentences_embedding_in_batch(model_name, model, tokenizer, sentences:List[str], batch_size=32, max_length=256):
+def get_sentences_embedding_in_batch(model_name, model, tokenizer, sentences:List[str], batch_size=32, use_token_id=False, max_length=256):
     for i in range(0, len(sentences), batch_size):
         batch_sentences = sentences[i:i+batch_size]
-        batch_embeddings = get_sentences_embeddings(model_name, model, tokenizer, batch_sentences, max_length=max_length)
+        batch_embeddings = get_sentences_embeddings(model_name, model, tokenizer, batch_sentences, use_token_id=use_token_id, max_length=max_length)
         if i == 0:
             embeddings = batch_embeddings
         else:
@@ -319,18 +379,20 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             model_name = model_name.split("/")[-1]
             return get_output_embeddings_openai(model_name, vocab, batch=2000, debug=debug)
 
-        batch_size = 1000
-        if model.num_parameters() > 1_000_000_000:
-            batch_size = 50
-        output_embeddings = get_sentences_embedding_in_batch(model_name, model, tokenizer, vocab, batch_size=batch_size, max_length=5)
+        memory = show_gpu_usage(model_name)
+        if memory['total'] > 0:
+            batch_size = round((memory['free']//12)/200) * 200
+        else:
+            batch_size = 100
+        print(f"[{model_name}]: batch_size: {batch_size}")
 
-        if debug:
-                print(f"[{model_name}]: output_embeddings: {np.shape(output_embeddings)}")
+        output_embeddings = get_sentences_embedding_in_batch(model_name, model, tokenizer, vocab, batch_size=batch_size, use_token_id=True, max_length=5)
+
     except Exception as e:
         print(f"[{model_name}]: get_output_embedding failed: {e}")
         traceback.print_exc()
         print(model)
-        exit(1)
+        raise e
     return output_embeddings
 
 def get_output_embeddings_openai(model_name:str, vocab:List[str], batch=10, debug=False):
@@ -361,15 +423,30 @@ def get_embeddings(model_name:str, model, tokenizer, vocab, embedding_type=EMBED
 def reduce_to_2d_tsne(embeddings, debug=False):
     from sklearn.manifold import TSNE
     tsne_model = TSNE(n_components=2,
-        early_exaggeration=12,
+        # early_exaggeration=12,
+        learning_rate='auto',
         metric='cosine',
         init='pca',
         verbose=2 if debug else 0,
         n_iter=1000,
         random_state=42,
+        method='barnes_hut',
         n_jobs=-1)
     embeddings_2d = tsne_model.fit_transform(embeddings)
+    return embeddings_2d
 
+def reduce_to_2d_tsne_cuml(embeddings, debug=False):
+    from cuml.manifold import TSNE
+    tsne_model = TSNE(n_components=2,
+        # early_exaggeration=12,
+        learning_rate_method='adaptive',
+        metric='cosine',
+        # init='pca',?
+        verbose=debug,
+        n_iter=1000,
+        random_state=42,
+        method='barnes_hut')
+    embeddings_2d = tsne_model.fit_transform(embeddings)
     return embeddings_2d
 
 def reduce_to_2d_umap(embeddings, debug=False):
@@ -405,8 +482,7 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
         debug=debug)
 
     # 生成文件名
-    filename = model_name.replace('/', '_') + f'.{embedding_type}.jpg'
-    filename = 'embeddings.' + filename
+    filename = model_name.replace('/', '_') + f'.embeddings.{embedding_type}.jpg'
     if folder is not None and len(folder) > 0:
         os.makedirs(folder, exist_ok=True)
         filename = os.path.join(folder, filename)
@@ -441,6 +517,16 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
 
     for etype in embedding_type:
         embeddings = get_embeddings(model_name, model, tokenizer, vocab, embedding_type=etype, debug=debug)
+        not_non_embeddings = []
+        not_non_vocab = []
+        for i, e in enumerate(embeddings):
+            if np.isnan(e).any():
+                print(f"[{model_name}]: [{i}]: '{vocab[i]}' embeddings: ({np.shape(e)}): {e}")
+            else:
+                not_non_embeddings.append(e)
+                not_non_vocab.append(vocab[i])
+        embeddings = np.array(not_non_embeddings)
+        vocab = not_non_vocab
         if embeddings is not None and len(embeddings) > 0:
             do_embedding_analysis(
                 model_name=model_name,
