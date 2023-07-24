@@ -218,6 +218,7 @@ def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DE
                                 charsets=charsets,
                                 output_dir=folder,
                                 embedding_type=embedding_types,
+                                clear_cache=True,
                                 debug=debug)
                 print(f"Generated embedding for {model_name}")
             except Exception as e:
