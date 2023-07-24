@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import gc
 import json
 import os
 import traceback
@@ -8,6 +9,7 @@ from typing import List
 
 import numpy as np
 import torch
+import shutil
 
 from transformers import AutoTokenizer, AutoModel
 from vocab_coverage.draw import draw_vocab_embeddings
@@ -19,9 +21,10 @@ def load_tokenizer(model_name:str, debug:bool=False):
     try:
         kwargs = {}
         kwargs['trust_remote_code'] = True
-        if 'llama' in model_name.lower():
+        if 'llama' in model_name.lower() or 'vicuna' in model_name.lower():
             # https://github.com/LianjiaTech/BELLE/issues/242#issuecomment-1514330432
             # Avoid LlamaTokenizerFast conversion
+            # lmsys/vicuna-7b-v1.3
             from transformers import LlamaTokenizer
             tokenizer = LlamaTokenizer.from_pretrained(model_name, **kwargs)
         else:
@@ -493,7 +496,7 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
     image.save(filename, quality=80, optimize=True, progressive=True)
 
 
-def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False):
+def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False, clear_cache=False):
     print("对模型 {} 的 embedding 进行可视化...".format(model_name))
 
     if '/' in model_name:
@@ -537,5 +540,20 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
                 folder=workdir,
                 embedding_type=etype,
                 debug=debug)
+
+    # clean up
+    del tokenizer
+    del model
+    gc.collect()
+
+    if torch.cuda.is_available():
+        print(f"[{model_name}]: releasing GPU memory...")
+        torch.cuda.empty_cache()
+        show_gpu_usage(model_name)
+    if clear_cache:
+        model_path = f"models--{model_name.replace('/', '--')}"
+        cache_dir = os.path.join(os.path.expanduser("~"), ".cache/huggingface/hub", model_path)
+        print(f"[{model_name}]: clean up cache ({cache_dir})...")
+        shutil.rmtree(cache_dir, ignore_errors=True)
 
     return
