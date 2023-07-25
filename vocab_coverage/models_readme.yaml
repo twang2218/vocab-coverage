@@ -39,7 +39,7 @@ xlm-roberta-base:
 llama:
   models:
     - decapoda-research/llama-7b-hf
-    - lmsys/vicuna-7b-delta-v1.1
+    - lmsys/vicuna-7b-v1.3
     - togethercomputer/RedPajama-INCITE-7B-Chat
     - openlm-research/open_llama_7b
     - shibing624/chinese-alpaca-plus-7b-hf
