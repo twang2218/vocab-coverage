@@ -4,6 +4,7 @@ import argparse
 import json
 from bs4 import BeautifulSoup
 import requests
+from vocab_coverage.utils import lighten_color
 
 def get_chinese_chars():
     urls = [
@@ -102,18 +103,6 @@ def generate_charsets(filename:str):
         json.dump(charset, f, ensure_ascii=False, indent=4)
 
 
-from PIL import ImageColor
-
-def lighten_color(color, amount=0.2):
-    if isinstance(color, str):
-        color = ImageColor.getrgb(color)
-
-    white = 255
-    adjusted_color = tuple(
-        int(round(old_value * (1 - amount) + white * amount))
-        for old_value in color
-    )
-    return adjusted_color
 
 class CharsetClassifier:
     def __init__(self, charsets:dict, is_detailed=False):
