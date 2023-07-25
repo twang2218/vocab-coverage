@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
 from vocab_coverage import coverage_analysis, embedding_analysis
 
-DEFAULT_IMAGE_FOLDER = "images"
+DEFAULT_IMAGE_FOLDER = "images/assets"
 
 def load_model_list(filename:str="models.json") -> List[dict]:
     base_dir = os.path.dirname(os.path.abspath(__file__))
