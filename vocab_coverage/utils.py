@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+import shutil
 import torch
 
 def show_gpu_usage(name:str = ""):
@@ -37,3 +39,17 @@ def lighten_color(color, amount=0.2):
         for old_value in color
     )
     return adjusted_color
+
+def release_resource(model_name:str = "", clear_cache=False):
+    if len(model_name) > 0:
+        label = f"[{model_name}]: "
+    if torch.cuda.is_available():
+        print(f"{label}releasing GPU memory...")
+        torch.cuda.empty_cache()
+        show_gpu_usage(model_name)
+    if clear_cache:
+        model_path = f"models--{model_name.replace('/', '--')}"
+        cache_dir = os.path.join(os.path.expanduser("~"), ".cache/huggingface/hub", model_path)
+        print(f"{label}clean up cache ({cache_dir})...")
+        shutil.rmtree(cache_dir, ignore_errors=True)
+

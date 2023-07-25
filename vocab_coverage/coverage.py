@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import gc
 import json
 import os
 import sys
 
-from transformers import AutoTokenizer
+import torch
 
 from vocab_coverage.draw import draw_vocab_graph
 from vocab_coverage.loader import load_tokenizer
+from vocab_coverage.utils import release_resource
 
 def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False):
     print("检查模型 {} 的字表".format(model_name))
@@ -96,4 +98,8 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
 
     # 保存图像
     image.save(filename, quality=80, optimize=True)
+
+    # clean up
+    del tokenizer
+    release_resource(model_name, clear_cache=False)
 

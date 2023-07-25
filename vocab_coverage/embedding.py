@@ -14,7 +14,7 @@ import shutil
 from transformers import AutoTokenizer, AutoModel
 from vocab_coverage.draw import draw_vocab_embeddings
 from vocab_coverage.loader import load_model, load_tokenizer
-from vocab_coverage.utils import show_gpu_usage
+from vocab_coverage.utils import show_gpu_usage, release_resource
 
 EMBEDDING_TYPE_INPUT = 'input'
 EMBEDDING_TYPE_OUTPUT = 'output'
@@ -378,16 +378,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
     # clean up
     del tokenizer
     del model
-    gc.collect()
 
-    if torch.cuda.is_available():
-        print(f"[{model_name}]: releasing GPU memory...")
-        torch.cuda.empty_cache()
-        show_gpu_usage(model_name)
-    if clear_cache:
-        model_path = f"models--{model_name.replace('/', '--')}"
-        cache_dir = os.path.join(os.path.expanduser("~"), ".cache/huggingface/hub", model_path)
-        print(f"[{model_name}]: clean up cache ({cache_dir})...")
-        shutil.rmtree(cache_dir, ignore_errors=True)
+    release_resource(model_name, clear_cache=clear_cache)
 
     return
