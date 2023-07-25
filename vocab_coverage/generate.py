@@ -196,6 +196,13 @@ def generate_coverage_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER,
                 print(f"Error in {model_name}")
                 traceback.print_exc()
 
+def get_oss_url(image) -> str:
+    # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
+    base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
+    if image.startswith("images/assets/"):
+        image = image.replace("images/assets/", "")
+    return base_url + image
+
 def generate_markdown_for_model(model_name:str) -> str:
     coverage = find_coverage_file(model_name)
     if coverage is None:
@@ -224,7 +231,7 @@ def generate_markdown_for_model(model_name:str) -> str:
             if coverage_thumbnail is None:
                 print(f"Cannot find thumbnail file for {coverage}, use the full image instead.")
                 coverage_thumbnail = coverage
-            coverage = f"[![Vocab Coverage for {model_name}]({coverage_thumbnail})]({coverage})"
+            coverage = f"[![Vocab Coverage for {model_name}]({coverage_thumbnail})]({get_oss_url(coverage)})"
         # Input Embedding
         if input_embedding is None or len(input_embedding) == 0:
             input_embedding = " "
@@ -233,7 +240,7 @@ def generate_markdown_for_model(model_name:str) -> str:
             if input_embedding_thumbnail is None:
                 print(f"Cannot find thumbnail file for {input_embedding}, use the full image instead.")
                 input_embedding_thumbnail = input_embedding
-            input_embedding = f"[![input embedding image for {model_name}]({input_embedding_thumbnail})]({input_embedding})"
+            input_embedding = f"[![input embedding image for {model_name}]({input_embedding_thumbnail})]({get_oss_url(input_embedding)})"
         # Output Embedding
         if output_embedding is None or len(output_embedding) == 0:
             output_embedding = " "
@@ -242,7 +249,7 @@ def generate_markdown_for_model(model_name:str) -> str:
             if output_embedding_thumbnail is None:
                 print(f"Cannot find thumbnail file for {output_embedding}, use the full image instead.")
                 output_embedding_thumbnail = output_embedding
-            output_embedding = f"[![output embedding image for {model_name}]({output_embedding_thumbnail})]({output_embedding})"
+            output_embedding = f"[![output embedding image for {model_name}]({output_embedding_thumbnail})]({get_oss_url(output_embedding)})"
         return f"| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n"
 
 def generate_markdown_for_models(models:List[str]) -> str:

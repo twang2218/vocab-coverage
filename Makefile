@@ -55,6 +55,22 @@ generate: generate-coverage generate-embedding generate-thumbnails generate-mark
 clean-cache:
 	rm -rf ~/.cache/huggingface/hub/*
 
+sync-to-oss:
+	aliyun oss cp \
+		--region=ap-southeast-2 \
+		--recursive \
+		--include='*.jpg' \
+		--jobs=10 \
+		images/assets oss://lab99-syd-pub/vocab-coverage/
+
+sync-from-oss:
+	aliyun oss cp \
+		--region=ap-southeast-2 \
+		--recursive \
+		--include='*.jpg' \
+		--jobs=10 \
+		oss://lab99-syd-pub/vocab-coverage/ images/assets
+
 # remote
 
 remote-sync:
