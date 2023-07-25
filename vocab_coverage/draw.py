@@ -4,6 +4,7 @@ import random
 from typing import List
 from PIL import Image, ImageDraw, ImageColor, ImageFont
 from sklearn.preprocessing import MinMaxScaler
+from vocab_coverage.utils import lighten_color
 
 default_palette = [
     '#B04759', '#E76161','#F99B7D',
@@ -42,16 +43,16 @@ def get_english_font(size=14):
     ]
     return get_available_font_from_list(font_paths, size=size)
 
-def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filename: str, width=100, height=100, cell_size=10, margin=40, palette=default_palette):
+def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=100, height=100, cell_size=50, margin=200, palette=default_palette):
     total_chars = sum([s['total'] for s in charset_stats.values()])
 
     # 定义图像大小
     image_width = width * cell_size + 1 + margin * 2
     height = total_chars // width + 1
-    image_height = height * cell_size + 1 + margin * 7
+    image_height = height * cell_size + 1 + margin * 8
 
     # 创建新的空白图像
-    image = Image.new("RGBA", (image_width, image_height), "#EEEEEE")
+    image = Image.new("RGB", (image_width, image_height), "#FFFFFF")
 
     # 获取图像的像素访问对象
     pixels = image.load()
@@ -60,62 +61,82 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, filena
 
     # 根据map绘制栅格
     draw = ImageDraw.Draw(image)
+    # 画上底图
+    draw.rectangle((margin, margin, width * cell_size + margin, height * cell_size + margin), fill='#EEEEEE')
+    # 画每一个方块
     i = 0
     level = 0
+    zh_font = get_chinese_font(int(cell_size*0.7))
     for name, stats in charset_stats.items():
         for j, m in enumerate(stats['map']):
             x = i % width
             y = i // width
             c = ImageColor.getrgb(palette[level])
-            alpha = int(30 + m * 225)
-            c = c[:3] + (alpha,)
+            # 画方块
             draw.rectangle((x * cell_size + 1 + margin,
                 y * cell_size + 1 + margin,
                 x * cell_size + (cell_size-1) + margin,
                 y * cell_size + (cell_size-1) + margin
-                ), fill=c)
+                ), fill=lighten_color(c, 0.7-m))
+            ch = stats['chars'][j]
+            # 方块内填入文字
+            draw.text(
+                (x * cell_size + int(0.15*cell_size) + margin, y * cell_size - int(0.05*cell_size) + margin),
+                ch,
+                font=zh_font,
+                fill=lighten_color(c, 0.5-m))
             i += 1
         level += 1
     
     # 在图片左下角写入模型名称
     draw.text(
-        (margin + 10, image_height - margin - 60),
+        (margin + int(margin/4), image_height - margin - int(4.5*margin)),
         "[ {} ]".format(model_name),
         fill="#000000",
         align="right",
-        font=get_english_font(30))
+        font=get_english_font(int(margin*0.75)))
     # 在模型名称下方写入字表大小
     draw.text(
-        (margin + 40, image_height - margin - 20),
-        "vocab size: {:,} ".format(vocab_size),
+        (margin + int(0.3*margin), image_height - margin - int(3*margin)),
+        "[ vocab size: {:,} ]".format(vocab_size),
         fill="#000000",
         align="right",
-        font=get_english_font(20))
+        font=get_english_font(int(margin/2)))
 
     # 在图片右下角写入字表统计信息
-    zh_font = get_chinese_font(25)
+    zh_font = get_chinese_font(int(margin*0.5))
+
+    # 画字符集图例方块
+    box_width = int(margin / 2)
+    box_start_x = image_width - margin - int(15.5*margin)
+    box_start_y = image_height - margin - int(3.9*margin)
+    box_margin = int(0.2*box_width)
+    for i, color in enumerate(palette):
+        x = box_start_x
+        y = box_start_y + i * (box_width + box_margin)
+        draw.rectangle((x, y, x+box_width, y+box_width), fill=color)
+    # 画字符集名称
     stats_name = ""
     for name in charset_stats.keys():
         stats_name += "{}:\n".format(name)
     draw.text(
-        (image_width - margin - 700, image_height - margin - 180),
+        (image_width - margin - int(15*margin), image_height - margin - int(4*margin)),
         stats_name,
         fill="#000000",
         align="left",
         font=zh_font)
-    
+    # 画字符集统计信息
     stats_value = ""
     for s in charset_stats.values():
         stats_value += "{:4} / {:4}  ({:.2%})\n".format(s['known'], s['total'], float(s['known'])/s['total'])
     draw.text(
-        (image_width - margin - 270, image_height - margin - 180),
+        (image_width - margin - 6*margin, image_height - margin - int(4*margin)),
         stats_value,
         fill="#000000",
         align="right",
         font=zh_font)
 
-    # 保存图像
-    image.save(filename)
+    return image
 
 
 from vocab_coverage.charsets import CharsetClassifier

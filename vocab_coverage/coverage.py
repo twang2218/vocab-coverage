@@ -8,37 +8,11 @@ import sys
 from transformers import AutoTokenizer
 
 from vocab_coverage.draw import draw_vocab_graph
+from vocab_coverage.loader import load_tokenizer
 
 def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False):
     print("检查模型 {} 的字表".format(model_name))
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    except Exception as e:
-        if "LLaMATokenizer" in e.args[0]:
-            from transformers import LlamaTokenizer
-            tokenizer = LlamaTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        elif "aquila" in e.args[0]:
-            from flagai.data.tokenizer import Tokenizer
-            name = 'aquila-7b'
-            cache_dir = os.path.join('./model', name)
-            tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
-            tokenizer.cls_token_id = tokenizer.token_start_id
-            tokenizer.sep_token_id = tokenizer.token_end_id
-            tokenizer.unk_token_id = tokenizer.token_unk_id if hasattr(tokenizer, 'token_unk_id') else None
-            tokenizer.pad_token_id = tokenizer.token_pad_id if hasattr(tokenizer, 'token_pad_id') else None
-            tokenizer.mask_token_id = tokenizer.token_mask_id if hasattr(tokenizer, 'token_mask_id') else None
-            tokenizer.vocab_size = tokenizer.num_tokens
-        elif "OpenAI" in e.args[0]:
-            import tiktoken
-            name = model_name.split("/")[-1]
-            tokenizer = tiktoken.encoding_for_model(name)
-            tokenizer.vocab_size = tokenizer.n_vocab
-            tokenizer.cls_token_id = tokenizer.encode_single_token('<|endoftext|>')
-            if debug:
-                print(tokenizer._special_tokens)
-        else:
-            print("加载模型 {} 失败：{}".format(model_name, e))
-            return
+    tokenizer = load_tokenizer(model_name, debug=debug)
 
     charset_stats = {
         name: {
@@ -109,13 +83,17 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
     for name, stats in charset_stats.items():
         print("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
 
+    # 生成字表图
+    image = draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, width=150)
+
     # 生成文件名
-    filename = model_name.replace('/', '_') + '.coverage.png'
+    filename = model_name.replace('/', '_') + '.coverage.jpg'
     if output_dir is None:
         output_dir = os.getcwd()
     output_dir = os.path.join(output_dir, 'coverage')
     os.makedirs(output_dir, exist_ok=True)
     filename = os.path.join(output_dir, filename)
 
-    # 生成字表图
-    draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, filename, width=150)
+    # 保存图像
+    image.save(filename, quality=80, optimize=True)
+
