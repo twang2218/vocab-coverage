@@ -1,0 +1,69 @@
+---
+bert-base-cased:
+  models:
+    - bert-base-cased
+
+roberta-large:
+  models:
+    - roberta-large
+
+bert-base-multilingual-cased:
+  models:
+    - bert-base-multilingual-cased
+
+t5:
+  models:
+    - google/flan-t5-base
+    - shibing624/prompt-t5-base-chinese
+    - shibing624/mengzi-t5-base-chinese-correction
+
+bert-zh:
+  models:
+    - bert-base-chinese
+    - hfl/chinese-macbert-base
+    - shibing624/text2vec-base-chinese
+    - moka-ai/m3e-base
+    - junnyu/wobert_chinese_plus_base
+
+ernie:
+  models:
+    - nghuyong/ernie-3.0-base-zh
+    - shibing624/text2vec-base-chinese-sentence
+    - shibing624/text2vec-base-chinese-paraphrase
+
+sbert:
+  models:
+    - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+    - shibing624/text2vec-base-multilingual
+
+xlm-roberta-base:
+  models:
+    - xlm-roberta-base
+    - sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+
+llama:
+  models:
+    - decapoda-research/llama-7b-hf
+    - lmsys/vicuna-7b-delta-v1.1
+    - togethercomputer/RedPajama-INCITE-7B-Chat
+    - openlm-research/open_llama_7b
+    - shibing624/chinese-alpaca-plus-7b-hf
+
+llm:
+  models:
+    - decapoda-research/llama-7b-hf
+    - mosaicml/mpt-7b-instruct
+    - tiiuae/falcon-7b-instruct
+    - nomic-ai/gpt4all-j
+    - OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
+
+llm-zh:
+  models:
+    - THUDM/chatglm-6b
+    - THUDM/chatglm2-6b
+    - fnlp/moss-moon-003-sft
+    - baichuan-inc/baichuan-7B
+
+openai:
+  models:
+    - OpenAI/text-embedding-ada-002
