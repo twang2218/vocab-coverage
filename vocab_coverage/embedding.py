@@ -339,7 +339,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
             print(f"Skip {model_name}, only 'text-embedding-ada-002' is supported...")
             return
 
-    workdir = os.path.join(output_dir, 'embeddings')
+    workdir = os.path.join(output_dir, 'assets', 'embeddings')
 
     tokenizer = load_tokenizer(model_name, debug=debug)
     model = load_model(model_name, debug=debug)
