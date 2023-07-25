@@ -43,7 +43,7 @@ def get_english_font(size=14):
     ]
     return get_available_font_from_list(font_paths, size=size)
 
-def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=100, height=100, cell_size=50, margin=200, palette=default_palette):
+def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=100, height=100, cell_size=60, margin=300, palette=default_palette):
     total_chars = sum([s['total'] for s in charset_stats.values()])
 
     # 定义图像大小

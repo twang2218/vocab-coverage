@@ -92,7 +92,7 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
     filename = model_name.replace('/', '_') + '.coverage.jpg'
     if output_dir is None:
         output_dir = os.getcwd()
-    output_dir = os.path.join(output_dir, 'coverage')
+    output_dir = os.path.join(output_dir, 'assets', 'coverage')
     os.makedirs(output_dir, exist_ok=True)
     filename = os.path.join(output_dir, filename)
 
