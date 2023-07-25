@@ -76,11 +76,6 @@
   models:
   - meta-llama/Llama-2-7b-hf
   - meta-llama/Llama-2-7b-chat-hf
-  - TheBloke/koala-7B-HF
-  - TheBloke/wizardLM-7B-HF
-  - lmsys/vicuna-7b-delta-v1.1
-  - togethercomputer/RedPajama-INCITE-7B-Chat
-  - openlm-research/open_llama_7b
 - group: llama2-zh
   name: LLAMA 2 中文衍生模型
   models:
