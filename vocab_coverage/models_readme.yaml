@@ -11,11 +11,6 @@ bert-base-multilingual-cased:
   models:
     - bert-base-multilingual-cased
 
-t5:
-  models:
-    - google/flan-t5-base
-    - shibing624/prompt-t5-base-chinese
-    - shibing624/mengzi-t5-base-chinese-correction
 
 bert-zh:
   models:
