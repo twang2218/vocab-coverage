@@ -15,7 +15,6 @@
       - [bert-base-cased](#bert-base-cased)
       - [roberta-large](#roberta-large)
       - [bert-base-multilingual-cased](#bert-base-multilingual-cased)
-    - [T5 模型及其衍生的模型对比](#t5-模型及其衍生的模型对比)
     - [bert-base-chinese 模型及其衍生的模型对比](#bert-base-chinese-模型及其衍生的模型对比)
     - [ERNIE 模型及其衍生的模型对比](#ernie-模型及其衍生的模型对比)
     - [paraphrase-multilingual-MiniLM-L12-v2 模型及其衍生的模型对比](#paraphrase-multilingual-minilm-l12-v2-模型及其衍生的模型对比)
@@ -179,25 +178,6 @@
 此外，输入端词向量分布图中，中文的「**后缀子词**」呈现出随机分布的形态，团成一团，并且互相之间几乎等距，不像汉字「**普通词**」那样，有明显的三五个词连成一线的简单结构。这说明**中文的后缀子词在输入端没有训练出语义**。而如果对比英文后缀子词，则会发现他们有3-5个词的小幅聚集情况，这说明英文的后缀子词在输入端训练出了一定的语义。因此，可能如之前所说的一样，**后缀子词的用法可能并不适合中文**。
 
 观察输出端词向量分布图，会发现，中文后缀子词，开始具有简单的小堆聚集连结的倾向，说明经过了完整的网络后，后缀子词的语义确实有被学习到。但是，这个结构的复杂和清晰程度，远远不如英文后缀子词，观察浅绿色的那部分，可以看到英文中更清晰的聚集结构。这些都有可能说明，**子词（subword）的用法，更适合英文，而不一定适合中文。**
-
-### T5 模型及其衍生的模型对比
-
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>google</p><p>/</p><p>flan-t5-base</p></b> | [![Vocab Coverage for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.coverage.thumbnail.jpg)](images/assets/coverage/google_flan-t5-base.coverage.jpg) | [![input embedding image for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/google_flan-t5-base.embeddings.input.jpg) | [![output embedding image for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/google_flan-t5-base.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b> |   | [![input embedding image for <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b>](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.input.jpg)](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b>](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.output.jpg)](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_mengzi-t5-base-chinese-correction.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_mengzi-t5-base-chinese-correction.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_mengzi-t5-base-chinese-correction.embeddings.output.jpg) |
-
-
-`google/flan-t5-base` 是原始的 **Flan-T5** 模型，从图中可以很清晰的得知，这个模型**完全不支持中文**，是一个纯英文模型，并且是基于**字符级别**而不是拆分成字节的 Tokenizer。
-
-后两个模型虽然都是中文的 T5 模型，但并非自 `google/flan-t5-base` 训练而来，是来自两个不同机构用不同的语料从头训练出的 T5 中文模型。
-
-可以通过分布看出，虽然 `shibing624/prompt-t5-base-chinese` 的**词表略大**，但是 `shibing624/mengzi-t5-base-chinese-correction` 则可以认识**更多的中文汉字**。如果放大词向量分布图，则可以看出，`shibing624/prompt-t5-base-chinese` 的词表中拥有更多的**中文多字词**。
-
-此外，如果观察输出端词向量分布图，会发现 `shibing624/mengzi-t5-base-chinese-correction` 的输出词向量分布图，可以明显的**分出两堆**，而 `shibing624/prompt-t5-base-chinese` 就没有明显的这类分布特征。进一步观察两个模型，会发现在微调的过程中，`shibing624/mengzi-t5-base-chinese-correction` 只使用了 [SIGHAN+Wang271K中文纠错数据集](https://github.com/shibing624/pycorrector#Dataset) 进行训练，而 `shibing624/prompt-t5-base-chinese` 则在 SIGHAN+Wang271K中文纠错数据集 的基础上，还使用了 [pCLUE中文prompt数据集](https://github.com/CLUEbenchmark/pCLUE)。
-
-前者语料类别比较单一，后者则包括了更多样的语料。那么这种分团的现象，会不会是因为语料多样性不够，而有部分字词并没有在微调训练中被触及到，从而导致了分布出现了明显差异？
 
 ### bert-base-chinese 模型及其衍生的模型对比
 
