@@ -143,10 +143,7 @@
 
 #### bert-base-cased
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b>bert-base-cased</b> | [![Vocab Coverage for <b>bert-base-cased</b>](images/thumbnails/bert-base-cased.coverage.thumbnail.jpg)](images/assets/coverage/bert-base-cased.coverage.jpg) | [![input embedding image for <b>bert-base-cased</b>](images/thumbnails/bert-base-cased.embeddings.input.thumbnail.jpg)](images/assets/embeddings/bert-base-cased.embeddings.input.jpg) | [![output embedding image for <b>bert-base-cased</b>](images/thumbnails/bert-base-cased.embeddings.output.thumbnail.jpg)](images/assets/embeddings/bert-base-cased.embeddings.output.jpg) |
-
+{bert-base-cased}
 
 `bert-base-cased` 是原始的**英文** BERT 模型，使用的是 **WordPiece** Tokenizer，只使用英文语料训练，因此词表中基本都是英文，只有少数汉字的「漏网之鱼」。这个模型基本**不认识汉字**，绝大多数汉字在输入模型时，会被替换为 `[UNK]`，这样的模型，就算经过微调，也不会对中文有什么认知。
 
@@ -158,19 +155,13 @@
 
 #### roberta-large
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b>roberta-large</b> | [![Vocab Coverage for <b>roberta-large</b>](images/thumbnails/roberta-large.coverage.thumbnail.jpg)](images/assets/coverage/roberta-large.coverage.jpg) | [![input embedding image for <b>roberta-large</b>](images/thumbnails/roberta-large.embeddings.input.thumbnail.jpg)](images/assets/embeddings/roberta-large.embeddings.input.jpg) | [![output embedding image for <b>roberta-large</b>](images/thumbnails/roberta-large.embeddings.output.thumbnail.jpg)](images/assets/embeddings/roberta-large.embeddings.output.jpg) |
-
+{roberta-large}
 
 此处的 `roberta-large` 就是典型的使用 **BBPE Tokenizer** 的**英文**模型，其词表中**几乎没有汉字**，但由于字节拆分的特征，不管是否对理解力有损伤，**理论上**它是可以接受所有字符的。在它的中文覆盖率的图上，可以看出，基本所有汉字都被拆分为多个 token，甚至绝大多数都被拆分为了 3 个 token。这样的模型，对于中文的认知有限，不仅仅是因为它没有使用中文语料训练，就算使用中文语料训练，如果不扩增词表，可能也会伤害其性能。此外，这个模型的输入端词向量分布图和输出端词向量分布度，也呈现了由简单连结关系，向复杂连结关系发展的变化。
 
 #### bert-base-multilingual-cased
   
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b>bert-base-multilingual-cased</b> | [![Vocab Coverage for <b>bert-base-multilingual-cased</b>](images/thumbnails/bert-base-multilingual-cased.coverage.thumbnail.jpg)](images/assets/coverage/bert-base-multilingual-cased.coverage.jpg) | [![input embedding image for <b>bert-base-multilingual-cased</b>](images/thumbnails/bert-base-multilingual-cased.embeddings.input.thumbnail.jpg)](images/assets/embeddings/bert-base-multilingual-cased.embeddings.input.jpg) | [![output embedding image for <b>bert-base-multilingual-cased</b>](images/thumbnails/bert-base-multilingual-cased.embeddings.output.thumbnail.jpg)](images/assets/embeddings/bert-base-multilingual-cased.embeddings.output.jpg) |
-
+{bert-base-multilingual-cased}
 
 `bert-base-multilingual-cased` 则是一个典型的使用了 **WordPiece** 的**多语言模型**，为了支持多国语言，它将词表扩充到了**12万**，并且使用了多国语言的语料进行训练。因此它支持**汉字的常用字，包括简繁体**，但是稍微不常用一些的字，它认知的就非常少了。
 
@@ -182,12 +173,7 @@
 
 ### T5 模型及其衍生的模型对比
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>google</p><p>/</p><p>flan-t5-base</p></b> | [![Vocab Coverage for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.coverage.thumbnail.jpg)](images/assets/coverage/google_flan-t5-base.coverage.jpg) | [![input embedding image for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/google_flan-t5-base.embeddings.input.jpg) | [![output embedding image for <b><p>google</p><p>/</p><p>flan-t5-base</p></b>](images/thumbnails/google_flan-t5-base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/google_flan-t5-base.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b> |   | [![input embedding image for <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b>](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.input.jpg)](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>prompt-t5-base-chinese</p></b>](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.output.jpg)](images/assets/embeddings/shibing624_prompt-t5-base-chinese.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_mengzi-t5-base-chinese-correction.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_mengzi-t5-base-chinese-correction.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>mengzi-t5-base-chinese-correction</p></b>](images/thumbnails/shibing624_mengzi-t5-base-chinese-correction.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_mengzi-t5-base-chinese-correction.embeddings.output.jpg) |
-
+{t5}
 
 `google/flan-t5-base` 是原始的 **Flan-T5** 模型，从图中可以很清晰的得知，这个模型**完全不支持中文**，是一个纯英文模型，并且是基于**字符级别**而不是拆分成字节的 Tokenizer。
 
@@ -201,14 +187,7 @@
 
 ### bert-base-chinese 模型及其衍生的模型对比
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b>bert-base-chinese</b> | [![Vocab Coverage for <b>bert-base-chinese</b>](images/thumbnails/bert-base-chinese.coverage.thumbnail.jpg)](images/assets/coverage/bert-base-chinese.coverage.jpg) | [![input embedding image for <b>bert-base-chinese</b>](images/thumbnails/bert-base-chinese.embeddings.input.thumbnail.jpg)](images/assets/embeddings/bert-base-chinese.embeddings.input.jpg) | [![output embedding image for <b>bert-base-chinese</b>](images/thumbnails/bert-base-chinese.embeddings.output.thumbnail.jpg)](images/assets/embeddings/bert-base-chinese.embeddings.output.jpg) |
-| <b><p>hfl</p><p>/</p><p>chinese-macbert-base</p></b> | [![Vocab Coverage for <b><p>hfl</p><p>/</p><p>chinese-macbert-base</p></b>](images/thumbnails/hfl_chinese-macbert-base.coverage.thumbnail.jpg)](images/assets/coverage/hfl_chinese-macbert-base.coverage.jpg) | [![input embedding image for <b><p>hfl</p><p>/</p><p>chinese-macbert-base</p></b>](images/thumbnails/hfl_chinese-macbert-base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/hfl_chinese-macbert-base.embeddings.input.jpg) | [![output embedding image for <b><p>hfl</p><p>/</p><p>chinese-macbert-base</p></b>](images/thumbnails/hfl_chinese-macbert-base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/hfl_chinese-macbert-base.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese</p></b>](images/thumbnails/shibing624_text2vec-base-chinese.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_text2vec-base-chinese.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese</p></b>](images/thumbnails/shibing624_text2vec-base-chinese.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese</p></b>](images/thumbnails/shibing624_text2vec-base-chinese.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese.embeddings.output.jpg) |
-| <b><p>moka-ai</p><p>/</p><p>m3e-base</p></b> | [![Vocab Coverage for <b><p>moka-ai</p><p>/</p><p>m3e-base</p></b>](images/thumbnails/moka-ai_m3e-base.coverage.thumbnail.jpg)](images/assets/coverage/moka-ai_m3e-base.coverage.jpg) | [![input embedding image for <b><p>moka-ai</p><p>/</p><p>m3e-base</p></b>](images/thumbnails/moka-ai_m3e-base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/moka-ai_m3e-base.embeddings.input.jpg) | [![output embedding image for <b><p>moka-ai</p><p>/</p><p>m3e-base</p></b>](images/thumbnails/moka-ai_m3e-base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/moka-ai_m3e-base.embeddings.output.jpg) |
-| <b><p>junnyu</p><p>/</p><p>wobert_chinese_plus_base</p></b> | [![Vocab Coverage for <b><p>junnyu</p><p>/</p><p>wobert_chinese_plus_base</p></b>](images/thumbnails/junnyu_wobert_chinese_plus_base.coverage.thumbnail.jpg)](images/assets/coverage/junnyu_wobert_chinese_plus_base.coverage.jpg) | [![input embedding image for <b><p>junnyu</p><p>/</p><p>wobert_chinese_plus_base</p></b>](images/thumbnails/junnyu_wobert_chinese_plus_base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/junnyu_wobert_chinese_plus_base.embeddings.input.jpg) | [![output embedding image for <b><p>junnyu</p><p>/</p><p>wobert_chinese_plus_base</p></b>](images/thumbnails/junnyu_wobert_chinese_plus_base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/junnyu_wobert_chinese_plus_base.embeddings.output.jpg) |
-
+{bert-zh}
 
 这几个模型都是具有继承关系的，均是在前一个模型的基础上，调整了训练方法，用了更多的语料进行了训练，其继承关系如下：
 
@@ -225,12 +204,7 @@
 由此可见，**微调对于输出端词向量的影响，远大于对输入端词向量的影响**。那么或许可以通过观察输出端的词向量分布变化，来观察不同的训练语料对于模型的影响。
 ### ERNIE 模型及其衍生的模型对比
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>nghuyong</p><p>/</p><p>ernie-3.0-base-zh</p></b> | [![Vocab Coverage for <b><p>nghuyong</p><p>/</p><p>ernie-3.0-base-zh</p></b>](images/thumbnails/nghuyong_ernie-3.0-base-zh.coverage.thumbnail.jpg)](images/assets/coverage/nghuyong_ernie-3.0-base-zh.coverage.jpg) | [![input embedding image for <b><p>nghuyong</p><p>/</p><p>ernie-3.0-base-zh</p></b>](images/thumbnails/nghuyong_ernie-3.0-base-zh.embeddings.input.thumbnail.jpg)](images/assets/embeddings/nghuyong_ernie-3.0-base-zh.embeddings.input.jpg) | [![output embedding image for <b><p>nghuyong</p><p>/</p><p>ernie-3.0-base-zh</p></b>](images/thumbnails/nghuyong_ernie-3.0-base-zh.embeddings.output.thumbnail.jpg)](images/assets/embeddings/nghuyong_ernie-3.0-base-zh.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_text2vec-base-chinese-sentence.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-paraphrase.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_text2vec-base-chinese-paraphrase.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-paraphrase.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese-paraphrase.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-paraphrase</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-paraphrase.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-chinese-paraphrase.embeddings.output.jpg) |
-
+{ernie}
 
 
 这一组基座模型和微调模型的对比很有意思，后一组两个模型都是基于 **nghuyong/ernie-3.0-base-zh** 模型微调而来，但是输出端的词向量分布却有很大的差异。而且这两个模型之间的微调其实非常接近。paraphrase 模型用来训练的语料库其实是在 sentence 模型的语料库基础上增加了 6051 个句子段落对，这部分里有4k左右的长文本。目前不太清楚是否是因为 **这 4k 的长文本**，导致了输出端词向量分布的巨大差异。
@@ -239,59 +213,28 @@
 
 ### paraphrase-multilingual-MiniLM-L12-v2 模型及其衍生的模型对比
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-MiniLM-L12-v2</p></b> | [![Vocab Coverage for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-MiniLM-L12-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.coverage.thumbnail.jpg)](images/assets/coverage/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.coverage.jpg) | [![input embedding image for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-MiniLM-L12-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.embeddings.input.thumbnail.jpg)](images/assets/embeddings/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.embeddings.input.jpg) | [![output embedding image for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-MiniLM-L12-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.embeddings.output.thumbnail.jpg)](images/assets/embeddings/sentence-transformers_paraphrase-multilingual-MiniLM-L12-v2.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>text2vec-base-multilingual</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>text2vec-base-multilingual</p></b>](images/thumbnails/shibing624_text2vec-base-multilingual.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_text2vec-base-multilingual.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-multilingual</p></b>](images/thumbnails/shibing624_text2vec-base-multilingual.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-multilingual.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-multilingual</p></b>](images/thumbnails/shibing624_text2vec-base-multilingual.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_text2vec-base-multilingual.embeddings.output.jpg) |
-
+{sbert}
 
 ### xlm-roberta-base 模型及其微调后的模型对比
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b>xlm-roberta-base</b> | [![Vocab Coverage for <b>xlm-roberta-base</b>](images/thumbnails/xlm-roberta-base.coverage.thumbnail.jpg)](images/assets/coverage/xlm-roberta-base.coverage.jpg) | [![input embedding image for <b>xlm-roberta-base</b>](images/thumbnails/xlm-roberta-base.embeddings.input.thumbnail.jpg)](images/assets/embeddings/xlm-roberta-base.embeddings.input.jpg) | [![output embedding image for <b>xlm-roberta-base</b>](images/thumbnails/xlm-roberta-base.embeddings.output.thumbnail.jpg)](images/assets/embeddings/xlm-roberta-base.embeddings.output.jpg) |
-| <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-mpnet-base-v2</p></b> | [![Vocab Coverage for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-mpnet-base-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.coverage.thumbnail.jpg)](images/assets/coverage/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.coverage.jpg) | [![input embedding image for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-mpnet-base-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.embeddings.input.thumbnail.jpg)](images/assets/embeddings/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.embeddings.input.jpg) | [![output embedding image for <b><p>sentence-transformers</p><p>/</p><p>paraphrase-multilingual-mpnet-base-v2</p></b>](images/thumbnails/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.embeddings.output.thumbnail.jpg)](images/assets/embeddings/sentence-transformers_paraphrase-multilingual-mpnet-base-v2.embeddings.output.jpg) |
-
+{xlm-roberta-base}
 
 ### LLaMA 及衍生模型
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b> | [![Vocab Coverage for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.coverage.thumbnail.jpg)](images/assets/coverage/decapoda-research_llama-7b-hf.coverage.jpg) | [![input embedding image for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.embeddings.input.thumbnail.jpg)](images/assets/embeddings/decapoda-research_llama-7b-hf.embeddings.input.jpg) | [![output embedding image for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.embeddings.output.thumbnail.jpg)](images/assets/embeddings/decapoda-research_llama-7b-hf.embeddings.output.jpg) |
-| <b><p>lmsys</p><p>/</p><p>vicuna-7b-delta-v1.1</p></b> | [![Vocab Coverage for <b><p>lmsys</p><p>/</p><p>vicuna-7b-delta-v1.1</p></b>](images/thumbnails/lmsys_vicuna-7b-delta-v1.1.coverage.thumbnail.jpg)](images/assets/coverage/lmsys_vicuna-7b-delta-v1.1.coverage.jpg) | [![input embedding image for <b><p>lmsys</p><p>/</p><p>vicuna-7b-delta-v1.1</p></b>](images/thumbnails/lmsys_vicuna-7b-delta-v1.1.embeddings.input.thumbnail.jpg)](images/assets/embeddings/lmsys_vicuna-7b-delta-v1.1.embeddings.input.jpg) | [![output embedding image for <b><p>lmsys</p><p>/</p><p>vicuna-7b-delta-v1.1</p></b>](images/thumbnails/lmsys_vicuna-7b-delta-v1.1.embeddings.output.thumbnail.jpg)](images/assets/embeddings/lmsys_vicuna-7b-delta-v1.1.embeddings.output.jpg) |
-| <b><p>togethercomputer</p><p>/</p><p>RedPajama-INCITE-7B-Chat</p></b> | [![Vocab Coverage for <b><p>togethercomputer</p><p>/</p><p>RedPajama-INCITE-7B-Chat</p></b>](images/thumbnails/togethercomputer_RedPajama-INCITE-7B-Chat.coverage.thumbnail.jpg)](images/assets/coverage/togethercomputer_RedPajama-INCITE-7B-Chat.coverage.jpg) | [![input embedding image for <b><p>togethercomputer</p><p>/</p><p>RedPajama-INCITE-7B-Chat</p></b>](images/thumbnails/togethercomputer_RedPajama-INCITE-7B-Chat.embeddings.input.thumbnail.jpg)](images/assets/embeddings/togethercomputer_RedPajama-INCITE-7B-Chat.embeddings.input.jpg) | [![output embedding image for <b><p>togethercomputer</p><p>/</p><p>RedPajama-INCITE-7B-Chat</p></b>](images/thumbnails/togethercomputer_RedPajama-INCITE-7B-Chat.embeddings.output.thumbnail.jpg)](images/assets/embeddings/togethercomputer_RedPajama-INCITE-7B-Chat.embeddings.output.jpg) |
-| <b><p>openlm-research</p><p>/</p><p>open_llama_7b</p></b> | [![Vocab Coverage for <b><p>openlm-research</p><p>/</p><p>open_llama_7b</p></b>](images/thumbnails/openlm-research_open_llama_7b.coverage.thumbnail.jpg)](images/assets/coverage/openlm-research_open_llama_7b.coverage.jpg) | [![input embedding image for <b><p>openlm-research</p><p>/</p><p>open_llama_7b</p></b>](images/thumbnails/openlm-research_open_llama_7b.embeddings.input.thumbnail.jpg)](images/assets/embeddings/openlm-research_open_llama_7b.embeddings.input.jpg) | [![output embedding image for <b><p>openlm-research</p><p>/</p><p>open_llama_7b</p></b>](images/thumbnails/openlm-research_open_llama_7b.embeddings.output.thumbnail.jpg)](images/assets/embeddings/openlm-research_open_llama_7b.embeddings.output.jpg) |
-| <b><p>shibing624</p><p>/</p><p>chinese-alpaca-plus-7b-hf</p></b> | [![Vocab Coverage for <b><p>shibing624</p><p>/</p><p>chinese-alpaca-plus-7b-hf</p></b>](images/thumbnails/shibing624_chinese-alpaca-plus-7b-hf.coverage.thumbnail.jpg)](images/assets/coverage/shibing624_chinese-alpaca-plus-7b-hf.coverage.jpg) | [![input embedding image for <b><p>shibing624</p><p>/</p><p>chinese-alpaca-plus-7b-hf</p></b>](images/thumbnails/shibing624_chinese-alpaca-plus-7b-hf.embeddings.input.thumbnail.jpg)](images/assets/embeddings/shibing624_chinese-alpaca-plus-7b-hf.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>chinese-alpaca-plus-7b-hf</p></b>](images/thumbnails/shibing624_chinese-alpaca-plus-7b-hf.embeddings.output.thumbnail.jpg)](images/assets/embeddings/shibing624_chinese-alpaca-plus-7b-hf.embeddings.output.jpg) |
-
+{llama}
 
 ### 英文大语言模型
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b> | [![Vocab Coverage for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.coverage.thumbnail.jpg)](images/assets/coverage/decapoda-research_llama-7b-hf.coverage.jpg) | [![input embedding image for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.embeddings.input.thumbnail.jpg)](images/assets/embeddings/decapoda-research_llama-7b-hf.embeddings.input.jpg) | [![output embedding image for <b><p>decapoda-research</p><p>/</p><p>llama-7b-hf</p></b>](images/thumbnails/decapoda-research_llama-7b-hf.embeddings.output.thumbnail.jpg)](images/assets/embeddings/decapoda-research_llama-7b-hf.embeddings.output.jpg) |
-| <b><p>mosaicml</p><p>/</p><p>mpt-7b-instruct</p></b> | [![Vocab Coverage for <b><p>mosaicml</p><p>/</p><p>mpt-7b-instruct</p></b>](images/thumbnails/mosaicml_mpt-7b-instruct.coverage.thumbnail.jpg)](images/assets/coverage/mosaicml_mpt-7b-instruct.coverage.jpg) | [![input embedding image for <b><p>mosaicml</p><p>/</p><p>mpt-7b-instruct</p></b>](images/thumbnails/mosaicml_mpt-7b-instruct.embeddings.input.thumbnail.jpg)](images/assets/embeddings/mosaicml_mpt-7b-instruct.embeddings.input.jpg) | [![output embedding image for <b><p>mosaicml</p><p>/</p><p>mpt-7b-instruct</p></b>](images/thumbnails/mosaicml_mpt-7b-instruct.embeddings.output.thumbnail.jpg)](images/assets/embeddings/mosaicml_mpt-7b-instruct.embeddings.output.jpg) |
-| <b><p>tiiuae</p><p>/</p><p>falcon-7b-instruct</p></b> | [![Vocab Coverage for <b><p>tiiuae</p><p>/</p><p>falcon-7b-instruct</p></b>](images/thumbnails/tiiuae_falcon-7b-instruct.coverage.thumbnail.jpg)](images/assets/coverage/tiiuae_falcon-7b-instruct.coverage.jpg) | [![input embedding image for <b><p>tiiuae</p><p>/</p><p>falcon-7b-instruct</p></b>](images/thumbnails/tiiuae_falcon-7b-instruct.embeddings.input.thumbnail.jpg)](images/assets/embeddings/tiiuae_falcon-7b-instruct.embeddings.input.jpg) | [![output embedding image for <b><p>tiiuae</p><p>/</p><p>falcon-7b-instruct</p></b>](images/thumbnails/tiiuae_falcon-7b-instruct.embeddings.output.thumbnail.jpg)](images/assets/embeddings/tiiuae_falcon-7b-instruct.embeddings.output.jpg) |
-| <b><p>nomic-ai</p><p>/</p><p>gpt4all-j</p></b> | [![Vocab Coverage for <b><p>nomic-ai</p><p>/</p><p>gpt4all-j</p></b>](images/thumbnails/nomic-ai_gpt4all-j.coverage.thumbnail.jpg)](images/assets/coverage/nomic-ai_gpt4all-j.coverage.jpg) | [![input embedding image for <b><p>nomic-ai</p><p>/</p><p>gpt4all-j</p></b>](images/thumbnails/nomic-ai_gpt4all-j.embeddings.input.thumbnail.jpg)](images/assets/embeddings/nomic-ai_gpt4all-j.embeddings.input.jpg) | [![output embedding image for <b><p>nomic-ai</p><p>/</p><p>gpt4all-j</p></b>](images/thumbnails/nomic-ai_gpt4all-j.embeddings.output.thumbnail.jpg)](images/assets/embeddings/nomic-ai_gpt4all-j.embeddings.output.jpg) |
-| <b><p>OpenAssistant</p><p>/</p><p>oasst-sft-4-pythia-12b-epoch-3.5</p></b> | [![Vocab Coverage for <b><p>OpenAssistant</p><p>/</p><p>oasst-sft-4-pythia-12b-epoch-3.5</p></b>](images/thumbnails/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.coverage.thumbnail.jpg)](images/assets/coverage/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.coverage.jpg) | [![input embedding image for <b><p>OpenAssistant</p><p>/</p><p>oasst-sft-4-pythia-12b-epoch-3.5</p></b>](images/thumbnails/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.embeddings.input.thumbnail.jpg)](images/assets/embeddings/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.embeddings.input.jpg) | [![output embedding image for <b><p>OpenAssistant</p><p>/</p><p>oasst-sft-4-pythia-12b-epoch-3.5</p></b>](images/thumbnails/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.embeddings.output.thumbnail.jpg)](images/assets/embeddings/OpenAssistant_oasst-sft-4-pythia-12b-epoch-3.5.embeddings.output.jpg) |
-
+{llm}
 
 
 ### 中文大语言模型
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>THUDM</p><p>/</p><p>chatglm-6b</p></b> | [![Vocab Coverage for <b><p>THUDM</p><p>/</p><p>chatglm-6b</p></b>](images/thumbnails/THUDM_chatglm-6b.coverage.thumbnail.jpg)](images/assets/coverage/THUDM_chatglm-6b.coverage.jpg) | [![input embedding image for <b><p>THUDM</p><p>/</p><p>chatglm-6b</p></b>](images/thumbnails/THUDM_chatglm-6b.embeddings.input.thumbnail.jpg)](images/assets/embeddings/THUDM_chatglm-6b.embeddings.input.jpg) | [![output embedding image for <b><p>THUDM</p><p>/</p><p>chatglm-6b</p></b>](images/thumbnails/THUDM_chatglm-6b.embeddings.output.thumbnail.jpg)](images/assets/embeddings/THUDM_chatglm-6b.embeddings.output.jpg) |
-| <b><p>THUDM</p><p>/</p><p>chatglm2-6b</p></b> | [![Vocab Coverage for <b><p>THUDM</p><p>/</p><p>chatglm2-6b</p></b>](images/thumbnails/THUDM_chatglm2-6b.coverage.thumbnail.jpg)](images/assets/coverage/THUDM_chatglm2-6b.coverage.jpg) | [![input embedding image for <b><p>THUDM</p><p>/</p><p>chatglm2-6b</p></b>](images/thumbnails/THUDM_chatglm2-6b.embeddings.input.thumbnail.jpg)](images/assets/embeddings/THUDM_chatglm2-6b.embeddings.input.jpg) | [![output embedding image for <b><p>THUDM</p><p>/</p><p>chatglm2-6b</p></b>](images/thumbnails/THUDM_chatglm2-6b.embeddings.output.thumbnail.jpg)](images/assets/embeddings/THUDM_chatglm2-6b.embeddings.output.jpg) |
-| <b><p>fnlp</p><p>/</p><p>moss-moon-003-sft</p></b> | [![Vocab Coverage for <b><p>fnlp</p><p>/</p><p>moss-moon-003-sft</p></b>](images/thumbnails/fnlp_moss-moon-003-sft.coverage.thumbnail.jpg)](images/assets/coverage/fnlp_moss-moon-003-sft.coverage.jpg) | [![input embedding image for <b><p>fnlp</p><p>/</p><p>moss-moon-003-sft</p></b>](images/thumbnails/fnlp_moss-moon-003-sft.embeddings.input.thumbnail.jpg)](images/assets/embeddings/fnlp_moss-moon-003-sft.embeddings.input.jpg) | [![output embedding image for <b><p>fnlp</p><p>/</p><p>moss-moon-003-sft</p></b>](images/thumbnails/fnlp_moss-moon-003-sft.embeddings.output.thumbnail.jpg)](images/assets/embeddings/fnlp_moss-moon-003-sft.embeddings.output.jpg) |
-| <b><p>baichuan-inc</p><p>/</p><p>baichuan-7B</p></b> | [![Vocab Coverage for <b><p>baichuan-inc</p><p>/</p><p>baichuan-7B</p></b>](images/thumbnails/baichuan-inc_baichuan-7B.coverage.thumbnail.jpg)](images/assets/coverage/baichuan-inc_baichuan-7B.coverage.jpg) | [![input embedding image for <b><p>baichuan-inc</p><p>/</p><p>baichuan-7B</p></b>](images/thumbnails/baichuan-inc_baichuan-7B.embeddings.input.thumbnail.jpg)](images/assets/embeddings/baichuan-inc_baichuan-7B.embeddings.input.jpg) | [![output embedding image for <b><p>baichuan-inc</p><p>/</p><p>baichuan-7B</p></b>](images/thumbnails/baichuan-inc_baichuan-7B.embeddings.output.thumbnail.jpg)](images/assets/embeddings/baichuan-inc_baichuan-7B.embeddings.output.jpg) |
-
+{llm-zh}
 
 ### OpenAI 提供的模型
 
-| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |
-| :---: | :---: | :---: | :---: |
-| <b><p>OpenAI</p><p>/</p><p>text-embedding-ada-002</p></b> | [![Vocab Coverage for <b><p>OpenAI</p><p>/</p><p>text-embedding-ada-002</p></b>](images/thumbnails/OpenAI_text-embedding-ada-002.coverage.thumbnail.jpg)](images/assets/coverage/OpenAI_text-embedding-ada-002.coverage.jpg) |   | [![output embedding image for <b><p>OpenAI</p><p>/</p><p>text-embedding-ada-002</p></b>](images/thumbnails/OpenAI_text-embedding-ada-002.embeddings.output.thumbnail.jpg)](images/assets/embeddings/OpenAI_text-embedding-ada-002.embeddings.output.jpg) |
-
+{openai}
 
 ### 其他模型
 

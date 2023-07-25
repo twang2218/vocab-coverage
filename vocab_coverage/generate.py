@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import io
 import json
 import os
 import sys
 import traceback
 from typing import List
+import yaml
 
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,18 +15,6 @@ if __name__ == "__main__":
 from vocab_coverage import coverage_analysis, embedding_analysis
 
 DEFAULT_IMAGE_FOLDER = "images"
-
-def load_model_list(filename:str="models.json") -> List[dict]:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(base_dir, filename)
-    try:
-        with open(filename, "r") as f:
-            models = json.load(f)
-        return models
-    except Exception as e:
-        print(f"Cannot load model list from {filename}")
-        traceback.print_exc()
-        exit(1)
 
 def get_model_basename(model_name:str):
     basename = model_name.replace("/", "_")
@@ -86,69 +76,6 @@ def find_thumbnail_file(filename:str):
     if os.path.exists(thumbnail):
         return thumbnail
     return None
-
-def generate_markdown(models:List[dict], output:str="graphs.md", section_level:int=2):
-    with open(output, "w") as f:
-        section_mark = "#" * section_level
-        for section in models:
-            f.write(f"{section_mark} {section['name']}\n\n")
-            # Table header
-            f.write("| 名称| ![](images/empty.png) 汉字覆盖率分析 | ![](images/empty.png) 输入词向量分布 | ![](images/empty.png) 输出词向量分布 |\n")
-            f.write("| :---: | :---: | :---: | :---: |\n")
-            # Table body
-            for model_name in section["models"]:
-                basename = get_model_basename(model_name)
-                coverage = find_coverage_file(model_name)
-                if coverage is None:
-                    print(f"Cannot find coverage file for {model_name}")
-                input_embedding = find_embedding_file(model_name, "input")
-                if input_embedding is None and not 'openai' in model_name.lower():
-                    print(f"Cannot find input embedding file for {model_name}")
-                output_embedding = find_embedding_file(model_name, "output")
-                if output_embedding is None and not 'openai' in model_name.lower():
-                    print(f"Cannot find output embedding file for {model_name}")
-                if coverage is None and input_embedding is None and output_embedding is None:
-                    print(f"Cannot find any file for {model_name}")
-                    continue
-                else:
-                    # Name
-                    # model_name = f'<b style="display: inline-block; transform: rotate(-90deg);">{model_name}</b>'
-                    if "/" in model_name:
-                        org, name = model_name.split("/")
-                        model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
-                    model_name = f'<b>{model_name}</b>'
-                    # Coverage
-                    if coverage is None or len(coverage) == 0:
-                        coverage = " "
-                    else:
-                        coverage_thumbnail = find_thumbnail_file(coverage)
-                        if coverage_thumbnail is None:
-                            print(f"Cannot find thumbnail file for {coverage}, use the full image instead.")
-                            coverage_thumbnail = coverage
-                        coverage = f"[![Vocab Coverage for {model_name}]({coverage_thumbnail})]({coverage})"
-                    # Input Embedding
-                    if input_embedding is None or len(input_embedding) == 0:
-                        input_embedding = " "
-                    else:
-                        input_embedding_thumbnail = find_thumbnail_file(input_embedding)
-                        if input_embedding_thumbnail is None:
-                            print(f"Cannot find thumbnail file for {input_embedding}, use the full image instead.")
-                            input_embedding_thumbnail = input_embedding
-                        input_embedding = f"[![input embedding image for {model_name}]({input_embedding_thumbnail})]({input_embedding})"
-                    # Output Embedding
-                    if output_embedding is None or len(output_embedding) == 0:
-                        output_embedding = " "
-                    else:
-                        output_embedding_thumbnail = find_thumbnail_file(output_embedding)
-                        if output_embedding_thumbnail is None:
-                            print(f"Cannot find thumbnail file for {output_embedding}, use the full image instead.")
-                            output_embedding_thumbnail = output_embedding
-                        output_embedding = f"[![output embedding image for {model_name}]({output_embedding_thumbnail})]({output_embedding})"
-                    f.write(f"| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n")
-                # print(f"* {model_name}")
-                # print("\n")
-            f.write("\n\n")
-
 
 def generate_coverage(models:List[dict], charsets:dict, group:str='', folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:
@@ -269,9 +196,87 @@ def generate_coverage_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER,
                 print(f"Error in {model_name}")
                 traceback.print_exc()
 
-def main():
-    models = load_model_list()
+def generate_markdown_for_model(model_name:str) -> str:
+    coverage = find_coverage_file(model_name)
+    if coverage is None:
+        print(f"Cannot find coverage file for {model_name}")
+    input_embedding = find_embedding_file(model_name, "input")
+    if input_embedding is None and not 'openai' in model_name.lower():
+        print(f"Cannot find input embedding file for {model_name}")
+    output_embedding = find_embedding_file(model_name, "output")
+    if output_embedding is None and not 'openai' in model_name.lower():
+        print(f"Cannot find output embedding file for {model_name}")
+    if coverage is None and input_embedding is None and output_embedding is None:
+        print(f"Cannot find any file for {model_name}")
+        return ""
+    else:
+        # Name
+        # model_name = f'<b style="display: inline-block; transform: rotate(-90deg);">{model_name}</b>'
+        if "/" in model_name:
+            org, name = model_name.split("/")
+            model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
+        model_name = f'<b>{model_name}</b>'
+        # Coverage
+        if coverage is None or len(coverage) == 0:
+            coverage = " "
+        else:
+            coverage_thumbnail = find_thumbnail_file(coverage)
+            if coverage_thumbnail is None:
+                print(f"Cannot find thumbnail file for {coverage}, use the full image instead.")
+                coverage_thumbnail = coverage
+            coverage = f"[![Vocab Coverage for {model_name}]({coverage_thumbnail})]({coverage})"
+        # Input Embedding
+        if input_embedding is None or len(input_embedding) == 0:
+            input_embedding = " "
+        else:
+            input_embedding_thumbnail = find_thumbnail_file(input_embedding)
+            if input_embedding_thumbnail is None:
+                print(f"Cannot find thumbnail file for {input_embedding}, use the full image instead.")
+                input_embedding_thumbnail = input_embedding
+            input_embedding = f"[![input embedding image for {model_name}]({input_embedding_thumbnail})]({input_embedding})"
+        # Output Embedding
+        if output_embedding is None or len(output_embedding) == 0:
+            output_embedding = " "
+        else:
+            output_embedding_thumbnail = find_thumbnail_file(output_embedding)
+            if output_embedding_thumbnail is None:
+                print(f"Cannot find thumbnail file for {output_embedding}, use the full image instead.")
+                output_embedding_thumbnail = output_embedding
+            output_embedding = f"[![output embedding image for {model_name}]({output_embedding_thumbnail})]({output_embedding})"
+        return f"| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n"
 
+def generate_markdown_for_models(models:List[str]) -> str:
+    content = ""
+    with io.StringIO() as f:
+        f.write("| 名称| 汉字覆盖率分析 | 输入词向量分布 | 输出词向量分布 |\n")
+        f.write("| :---: | :---: | :---: | :---: |\n")
+        # Table body
+        for model_name in models:
+            f.write(generate_markdown_for_model(model_name))
+        content = f.getvalue()
+    return content
+
+def generate_markdown_for_all(models:List[dict], output:str="graphs.md", section_level:int=2):
+    with open(output, "w") as f:
+        section_mark = "#" * section_level
+        for section in models:
+            f.write(f"{section_mark} {section['name']}\n\n")
+            f.write(generate_markdown_for_models(section["models"]))
+            f.write("\n\n")
+
+def generate_markdown_from_template(template_file:str, model_list_file:str, output:str="README.md"):
+    with open(template_file, "r") as f:
+        template = f.read()
+    with open(model_list_file, "r") as f:
+        models = yaml.load(f, Loader=yaml.FullLoader)
+    for tag, section in models.items():
+        content = generate_markdown_for_models(section["models"])
+        if len(content) > 0:
+            template = template.replace(f"{{{tag}}}", content)
+    with open(output, "w") as f:
+        f.write(template)
+
+def main():
     parser = argparse.ArgumentParser()
     subcommands = parser.add_subparsers(dest='command')
 
@@ -301,6 +306,10 @@ def main():
         # 使用内置字符集文件
         args.charset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'charsets.json')
 
+    models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models.yaml')
+    with open(models_file, "r") as f:
+        models = yaml.load(f, Loader=yaml.FullLoader)
+
     if args.command == "coverage":
         charsets = json.load(open(args.charset_file, 'r'))
         generate_coverage(models, charsets, group=args.group, folder=args.folder, debug=args.debug)
@@ -311,18 +320,14 @@ def main():
         generate_coverage_thumbnails(models, folder=args.folder, debug=args.debug)
         generate_embedding_thumbnails(models, folder=args.folder, debug=args.debug)
     elif args.command == "markdown":
-        generate_markdown(models, output=args.markdown)
-        # for models in readme
-        models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_readme.json')
-        models = load_model_list(models_file)
-        generate_markdown(models, output='README.models.md', section_level=3)
-        if os.path.exists('README.md.template'):
-            print("Generating README.md")
-            content = open('README.md.template', 'r').read()
-            models_content = open('README.models.md', 'r').read()
-            content = content.replace('{MODEL_LIST}', models_content)
-            open('README.md', 'w').write(content)
-            print("生成后，请在 VSCode 中打开保存一下 `README.md` 文件，触发目录的更新。")
+        # markdown for all models
+        print(f"Generating markdown for all models to {args.markdown}")
+        generate_markdown_for_all(models, output=args.markdown)
+        # markdown for readme
+        template_file = os.path.join('docs', 'README.template.md')
+        models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_readme.yaml')
+        print(f"Generating markdown for readme by {template_file} and {models_file}")
+        generate_markdown_from_template(template_file=template_file, model_list_file=models_file, output='README.md')
     else:
         parser.print_help()
 

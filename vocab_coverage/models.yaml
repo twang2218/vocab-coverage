@@ -1,0 +1,117 @@
+---
+- group: bert
+  name: 原生的BERT类的模型
+  models:
+  - bert-base-cased
+  - bert-base-multilingual-cased
+  - roberta-large
+  - xlnet-base-cased
+  - albert-base-v2
+  - xlm-roberta-base
+  - google/electra-base-discriminator
+- group: t5
+  name: Google T5 系列模型 (Encoder-Decoder)
+  models:
+  - google/flan-t5-base
+- group: sbert
+  name: Sentence Transformers 提供的模型
+  models:
+  - sentence-transformers/all-MiniLM-L6-v2
+  - sentence-transformers/all-mpnet-base-v2
+  - sentence-transformers/all-roberta-large-v1
+  - sentence-transformers/multi-qa-mpnet-base-dot-v1
+  - sentence-transformers/paraphrase-MiniLM-L6-v2
+  - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  - sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+  - sentence-transformers/distiluse-base-multilingual-cased-v2
+- group: ernie
+  name: 百度 ERNIE 系列模型
+  models:
+  - nghuyong/ernie-1.0-base-zh
+  - nghuyong/ernie-3.0-nano-zh
+  - nghuyong/ernie-3.0-base-zh
+  - nghuyong/ernie-3.0-xbase-zh
+  - nghuyong/ernie-health-zh
+  - nghuyong/ernie-gram-zh
+- group: bert-zh
+  name: BERT 中文模型
+  models:
+  - bert-base-chinese
+  - moka-ai/m3e-base
+  - junnyu/wobert_chinese_plus_base
+- group: hfl
+  name: 哈工大 HFL 提供的模型
+  models:
+  - hfl/chinese-bert-wwm-ext
+  - hfl/chinese-macbert-base
+  - hfl/chinese-legal-electra-base-generator
+- group: hfl-llama
+  name: 哈工大 HFL 提供的 LLaMA 类的中文模型
+  models:
+  - minlik/chinese-llama-7b-merged
+  - minlik/chinese-llama-plus-7b-merged
+  - minlik/chinese-alpaca-7b-merged
+  - minlik/chinese-alpaca-plus-7b-merged
+- group: shibing624
+  name: 徐明提供的模型
+  models:
+  - shibing624/text2vec-base-chinese
+  - shibing624/text2vec-base-chinese-sentence
+  - shibing624/text2vec-base-chinese-paraphrase
+  - shibing624/text2vec-base-multilingual
+  - shibing624/mengzi-t5-base-chinese-correction
+  - shibing624/chinese-alpaca-plus-7b-hf
+- group: llama
+  name: LLAMA 及衍生模型
+  models:
+  - decapoda-research/llama-7b-hf
+  - TheBloke/guanaco-7B-HF
+  - TheBloke/koala-7B-HF
+  - TheBloke/wizardLM-7B-HF
+  - lmsys/vicuna-7b-v1.3
+  - togethercomputer/RedPajama-INCITE-7B-Chat
+  - openlm-research/open_llama_7b
+- group: llama2
+  name: LLAMA 2 及衍生模型
+  models:
+  - meta-llama/Llama-2-7b-hf
+  - meta-llama/Llama-2-7b-chat-hf
+  - TheBloke/koala-7B-HF
+  - TheBloke/wizardLM-7B-HF
+  - lmsys/vicuna-7b-delta-v1.1
+  - togethercomputer/RedPajama-INCITE-7B-Chat
+  - openlm-research/open_llama_7b
+- group: llama2-zh
+  name: LLAMA 2 中文衍生模型
+  models:
+  - FlagAlpha/Llama2-Chinese-7b-Chat
+  - RicardoLee/Llama2-chat-Chinese-50W
+  - RicardoLee/Llama2-base-7B-Chinese-50W-pre_release
+  - RicardoLee/Llama2-base-7B-Chinese-50W-Full2LoRA
+  - wenge-research/yayi-7b-llama2
+  - LinkSoul/Chinese-Llama-2-7b
+- group: llm-zh
+  name: 中文大语言模型
+  models:
+  - THUDM/chatglm-6b
+  - THUDM/chatglm2-6b
+  - fnlp/moss-moon-003-sft-int4
+  - fnlp/moss-moon-003-sft
+  - baichuan-inc/baichuan-7B
+- group: llm
+  name: 其他大语言模型
+  models:
+  - bigscience/bloom-7b1
+  - mosaicml/mpt-7b-instruct
+  - tiiuae/falcon-7b-instruct
+  - nomic-ai/gpt4all-j
+  - OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
+- group: openai
+  name: OpenAI 提供的模型
+  models:
+  - OpenAI/gpt-4
+  - OpenAI/gpt-3.5-turbo
+  - OpenAI/text-embedding-ada-002
+  - OpenAI/text-davinci-003
+  - OpenAI/gpt2
+  - OpenAI/text-ada-001
