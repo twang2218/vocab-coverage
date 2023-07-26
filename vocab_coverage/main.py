@@ -28,7 +28,7 @@ def main():
     cmdEmbedding.add_argument("--debug", action='store_true', help="是否打印调试信息（默认为 False）")
     cmdEmbedding.add_argument("--skip_input_embeddings", action='store_true', help="不计算输入层的词向量")
     cmdEmbedding.add_argument("--output_embeddings", action='store_true', help="计算输出层的词向量")
-
+    cmdEmbedding.add_argument("--reducer_type", type=str, default="tsne", help="降维算法（默认为 tsne），可选值为 tsne, umap, tsne_cuml")
     cmdCharset = subcommands.add_parser('charset', help='生成用以统计识字率的字表文件')
     cmdCharset.add_argument("--charset_file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
 
@@ -62,6 +62,7 @@ def main():
             output_dir=args.output_dir,
             embedding_type=etypes,
             is_detailed=args.is_detailed,
+            reducer_type=args.reducer_type,
             debug=args.debug)
     else:
         parser.print_help()
