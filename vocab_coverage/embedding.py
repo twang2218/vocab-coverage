@@ -15,6 +15,7 @@ from transformers import AutoTokenizer, AutoModel
 from vocab_coverage.draw import draw_vocab_embeddings
 from vocab_coverage.loader import load_model, load_tokenizer
 from vocab_coverage.utils import show_gpu_usage, release_resource
+from vocab_coverage.reducer import reduce_to_2d_tsne, reduce_to_2d_tsne_cuml, reduce_to_2d_umap
 
 EMBEDDING_TYPE_INPUT = 'input'
 EMBEDDING_TYPE_OUTPUT = 'output'
@@ -257,54 +258,15 @@ def get_embeddings(model_name:str, model, tokenizer, vocab, embedding_type=EMBED
         print(f"[{model_name}]: unknown embedding_type: {embedding_type}")
         return None
 
-def reduce_to_2d_tsne(embeddings, debug=False):
-    from sklearn.manifold import TSNE
-    tsne_model = TSNE(n_components=2,
-        # early_exaggeration=12,
-        learning_rate='auto',
-        metric='cosine',
-        init='pca',
-        verbose=2 if debug else 0,
-        n_iter=1000,
-        random_state=42,
-        method='barnes_hut',
-        n_jobs=-1)
-    embeddings_2d = tsne_model.fit_transform(embeddings)
-    return embeddings_2d
-
-def reduce_to_2d_tsne_cuml(embeddings, debug=False):
-    from cuml.manifold import TSNE
-    tsne_model = TSNE(n_components=2,
-        # early_exaggeration=12,
-        learning_rate_method='adaptive',
-        metric='cosine',
-        # init='pca',?
-        verbose=debug,
-        n_iter=1000,
-        random_state=42,
-        method='barnes_hut')
-    embeddings_2d = tsne_model.fit_transform(embeddings)
-    return embeddings_2d
-
-def reduce_to_2d_umap(embeddings, debug=False):
-    import warnings
-    warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
-    import umap
-
-    umap_model = umap.UMAP(n_components=2,
-        n_neighbors=40,
-        min_dist=7,
-        spread=7,
-        verbose=debug,
-        random_state=42,
-        metric='cosine')
-    embeddings_2d = umap_model.fit_transform(embeddings)
-    return embeddings_2d
-
-def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_detailed=False, folder=None, embedding_type=EMBEDDING_TYPE_INPUT, debug=False):
+def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_detailed=False, folder=None, embedding_type=EMBEDDING_TYPE_INPUT, reducer_type='tsne', debug=False):
     if debug:
-        print(f"[{model_name}]: reducing the dimension of '{embedding_type}_embeddings' {embeddings.shape} to 2D...")
-    embeddings_2d = reduce_to_2d_tsne(embeddings, debug=debug)
+        print(f"[{model_name}]: reducing the dimension of '{embedding_type}_embeddings' {embeddings.shape} to 2D by {reducer_type}...")
+    if reducer_type == 'tsne':
+        embeddings_2d = reduce_to_2d_tsne(embeddings, debug=debug)
+    elif reducer_type == 'tsne_cuml':
+        embeddings_2d = reduce_to_2d_tsne_cuml(embeddings, debug=debug)
+    elif reducer_type == 'umap':
+        embeddings_2d = reduce_to_2d_umap(embeddings, debug=debug)
     if debug:
         print(f"[{model_name}]: draw {embedding_type}_embeddings {embeddings_2d.shape}...")
     image = draw_vocab_embeddings(
@@ -330,7 +292,7 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
     image.save(filename, quality=80, optimize=True)
 
 
-def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False, clear_cache=False):
+def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False, reducer_type='tsne', clear_cache=False):
     print("对模型 {} 的 embedding 进行可视化...".format(model_name))
 
     if '/' in model_name:
@@ -373,6 +335,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
                 is_detailed=is_detailed,
                 folder=workdir,
                 embedding_type=etype,
+                reducer_type=reducer_type,
                 debug=debug)
 
     # clean up
