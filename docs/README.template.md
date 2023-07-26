@@ -49,7 +49,7 @@
 
 |   识字率分析图  |  颜色对应关系 |
 |:----------------:|:----------------|
-|[![](images/thumbnails/OpenAI_text-embedding-ada-002.coverage.thumbnail.jpg)](images/coverage/OpenAI_text-embedding-ada-002.coverage.jpg) | ![](images/assets/empty.1000.png) ![#B04759](https://placehold.co/15x15/B04759/B04759.png)  深红色：《通用规范汉字表》一级汉字<br>![#E76161](https://placehold.co/15x15/E76161/E76161.png)  红　色：《通用规范汉字表》二级汉字<br>![#F99B7D](https://placehold.co/15x15/F99B7D/F99B7D.png)  橘黄色：《通用规范汉字表》三级汉字<br>![#146C94](https://placehold.co/15x15/146C94/146C94.png)  深蓝色：《常用國字標準字體表》甲表汉字<br>![#19A7CE](https://placehold.co/15x15/19A7CE/19A7CE.png)  浅蓝色：《常用國字標準字體表》乙表汉字<br>![#E893CF](https://placehold.co/15x15/E893CF/E893CF.png)  粉　色：《Unicode中日韩统一表意文字》区段汉字|
+|[![](http://syd.lab99.org/vocab-coverage/thumbnails/OpenAI_text-embedding-ada-002.coverage.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/coverage/OpenAI_text-embedding-ada-002.coverage.jpg) | ![](images/assets/empty.1000.png) ![#B04759](https://placehold.co/15x15/B04759/B04759.png)  深红色：《通用规范汉字表》一级汉字<br>![#E76161](https://placehold.co/15x15/E76161/E76161.png)  红　色：《通用规范汉字表》二级汉字<br>![#F99B7D](https://placehold.co/15x15/F99B7D/F99B7D.png)  橘黄色：《通用规范汉字表》三级汉字<br>![#146C94](https://placehold.co/15x15/146C94/146C94.png)  深蓝色：《常用國字標準字體表》甲表汉字<br>![#19A7CE](https://placehold.co/15x15/19A7CE/19A7CE.png)  浅蓝色：《常用國字標準字體表》乙表汉字<br>![#E893CF](https://placehold.co/15x15/E893CF/E893CF.png)  粉　色：《Unicode中日韩统一表意文字》区段汉字|
 
 
 
@@ -97,7 +97,7 @@
 
 | 词向量分布图 | 颜色对应关系 |
 | ------------ | ------------ |
-| [![](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | ![](images/assets/empty.1000.png)![#D50000](https://placehold.co/15x15/D50000/D50000.png)  汉字（常用字）<br>![#7B1FA2](https://placehold.co/15x15/7B1FA2/7B1FA2.png)  汉字（生僻字）<br>![#827717](https://placehold.co/15x15/827717/827717.png)  日文<br>![#FFA000](https://placehold.co/15x15/FFA000/FFA000.png)  韩文<br>![#2E7D32](https://placehold.co/15x15/2E7D32/2E7D32.png)  英文<br>![#01579B](https://placehold.co/15x15/01579B/01579B.png)  数字<br>![#212121](https://placehold.co/15x15/212121/212121.png)  其他<br> |
+| [![](http://syd.lab99.org/vocab-coverage/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | ![](images/assets/empty.1000.png)![#D50000](https://placehold.co/15x15/D50000/D50000.png)  汉字（常用字）<br>![#7B1FA2](https://placehold.co/15x15/7B1FA2/7B1FA2.png)  汉字（生僻字）<br>![#827717](https://placehold.co/15x15/827717/827717.png)  日文<br>![#FFA000](https://placehold.co/15x15/FFA000/FFA000.png)  韩文<br>![#2E7D32](https://placehold.co/15x15/2E7D32/2E7D32.png)  英文<br>![#01579B](https://placehold.co/15x15/01579B/01579B.png)  数字<br>![#212121](https://placehold.co/15x15/212121/212121.png)  其他<br> |
 
 ##### 后缀子词
 
@@ -113,7 +113,7 @@
 
 | 英文的「普通词」和「后缀词」 | 中文的「普通词」和「后缀词」 |
 | ------------ | ------------ |
-| [![input embedding image for <b>bert-base-cased</b>](images/thumbnails/bert-base-cased.embeddings.input.thumbnail.jpg)](images/embeddings/bert-base-cased.embeddings.input.jpg) | [![input embedding image for <b>bert-base-chinese</b>](images/thumbnails/bert-base-chinese.embeddings.input.thumbnail.jpg)](images/embeddings/bert-base-chinese.embeddings.input.jpg) |
+| [![](http://syd.lab99.org/vocab-coverage/thumbnails/bert-base-cased.embeddings.input.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/embeddings/bert-base-cased.embeddings.input.jpg) | [![](http://syd.lab99.org/vocab-coverage/thumbnails/bert-base-chinese.embeddings.input.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/embeddings/bert-base-chinese.embeddings.input.jpg) |
 
 #### 输入端词向量、输出端词向量
 
@@ -121,7 +121,7 @@
 
 | 输入端词向量分布图 | 输出端词向量分布图 |
 | ------------ | ------------ |
-| [![input embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | [![output embedding image for <b><p>shibing624</p><p>/</p><p>text2vec-base-chinese-sentence</p></b>](images/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.output.thumbnail.jpg)](images/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.output.jpg) |
+| [![](http://syd.lab99.org/vocab-coverage/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.input.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.input.jpg) | [![](http://syd.lab99.org/vocab-coverage/thumbnails/shibing624_text2vec-base-chinese-sentence.embeddings.output.thumbnail.jpg)](http://syd.lab99.org/vocab-coverage/embeddings/shibing624_text2vec-base-chinese-sentence.embeddings.output.jpg) |
 
 
 前者为词或token进入模型时，经过 embedding 层所得到的最初语义表达；而后者，则是经过模型多层计算之后，最终理解的语义表达。

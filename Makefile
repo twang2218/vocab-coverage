@@ -63,6 +63,14 @@ sync-to-oss:
 		--jobs=10 \
 		images/assets oss://lab99-syd-pub/vocab-coverage/
 
+sync-to-oss-thumbnails:
+	aliyun oss cp \
+		--region=ap-southeast-2 \
+		--recursive \
+		--include='*.jpg' \
+		--jobs=10 \
+		images/thumbnails oss://lab99-syd-pub/vocab-coverage/thumbnails/
+
 sync-from-oss:
 	aliyun oss cp \
 		--region=ap-southeast-2 \
