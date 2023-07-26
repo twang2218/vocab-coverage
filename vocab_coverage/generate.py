@@ -198,10 +198,28 @@ def generate_coverage_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER,
 
 def get_oss_url(image) -> str:
     # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
-    base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
+    # base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
+    base_url = "http://syd.lab99.org/vocab-coverage/"
     if image.startswith("images/assets/"):
         image = image.replace("images/assets/", "")
+    elif image.startswith("images/"):
+        image = image.replace("images/", "")
     return base_url + image
+
+def generate_markdown_for_model_graph(image_file) -> str:
+    content = " "
+    if image_file is None or len(image_file) == 0:
+        content = " "
+    else:
+        thumbnail_file = find_thumbnail_file(image_file)
+        if thumbnail_file is None:
+            print(f"Cannot find thumbnail file for {image_file}, use the full size instead.")
+            thumbnail_file = image_file
+        # use OSS for image
+        image_file = get_oss_url(image_file)
+        thumbnail_file = get_oss_url(thumbnail_file)
+        content = f"[![]({thumbnail_file})]({image_file})"
+    return content
 
 def generate_markdown_for_model(model_name:str) -> str:
     coverage = find_coverage_file(model_name)
@@ -223,33 +241,9 @@ def generate_markdown_for_model(model_name:str) -> str:
             org, name = model_name.split("/")
             model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
         model_name = f'<b>{model_name}</b>'
-        # Coverage
-        if coverage is None or len(coverage) == 0:
-            coverage = " "
-        else:
-            coverage_thumbnail = find_thumbnail_file(coverage)
-            if coverage_thumbnail is None:
-                print(f"Cannot find thumbnail file for {coverage}, use the full image instead.")
-                coverage_thumbnail = coverage
-            coverage = f"[![Vocab Coverage for {model_name}]({coverage_thumbnail})]({get_oss_url(coverage)})"
-        # Input Embedding
-        if input_embedding is None or len(input_embedding) == 0:
-            input_embedding = " "
-        else:
-            input_embedding_thumbnail = find_thumbnail_file(input_embedding)
-            if input_embedding_thumbnail is None:
-                print(f"Cannot find thumbnail file for {input_embedding}, use the full image instead.")
-                input_embedding_thumbnail = input_embedding
-            input_embedding = f"[![input embedding image for {model_name}]({input_embedding_thumbnail})]({get_oss_url(input_embedding)})"
-        # Output Embedding
-        if output_embedding is None or len(output_embedding) == 0:
-            output_embedding = " "
-        else:
-            output_embedding_thumbnail = find_thumbnail_file(output_embedding)
-            if output_embedding_thumbnail is None:
-                print(f"Cannot find thumbnail file for {output_embedding}, use the full image instead.")
-                output_embedding_thumbnail = output_embedding
-            output_embedding = f"[![output embedding image for {model_name}]({output_embedding_thumbnail})]({get_oss_url(output_embedding)})"
+        coverage = generate_markdown_for_model_graph(coverage)
+        input_embedding = generate_markdown_for_model_graph(input_embedding)
+        output_embedding = generate_markdown_for_model_graph(output_embedding)
         return f"| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n"
 
 def generate_markdown_for_models(models:List[str]) -> str:
