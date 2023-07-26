@@ -97,7 +97,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=
         font=get_english_font(int(margin*0.75)))
     # 在模型名称下方写入字表大小
     draw.text(
-        (margin + int(0.3*margin), image_height - margin - int(3*margin)),
+        (margin + int(0.3*margin), image_height - margin - int(3.5*margin)),
         "[ vocab size: {:,} ]".format(vocab_size),
         fill="#000000",
         align="right",
@@ -107,9 +107,10 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=
     zh_font = get_chinese_font(int(margin*0.5))
 
     # 画字符集图例方块
+    legend_y = image_height - margin - int(3.5*margin)
     box_width = int(margin / 2)
     box_start_x = image_width - margin - int(15.5*margin)
-    box_start_y = image_height - margin - int(3.9*margin)
+    box_start_y = legend_y + int(0.1*margin)
     box_margin = int(0.2*box_width)
     for i, color in enumerate(palette):
         x = box_start_x
@@ -120,7 +121,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=
     for name in charset_stats.keys():
         stats_name += "{}:\n".format(name)
     draw.text(
-        (image_width - margin - int(15*margin), image_height - margin - int(4*margin)),
+        (image_width - margin - int(15*margin), legend_y),
         stats_name,
         fill="#000000",
         align="left",
@@ -130,7 +131,7 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=
     for s in charset_stats.values():
         stats_value += "{:4} / {:4}  ({:.2%})\n".format(s['known'], s['total'], float(s['known'])/s['total'])
     draw.text(
-        (image_width - margin - 6*margin, image_height - margin - int(4*margin)),
+        (image_width - margin - 6*margin, legend_y),
         stats_value,
         fill="#000000",
         align="right",
