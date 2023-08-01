@@ -15,7 +15,7 @@ from transformers import AutoTokenizer, AutoModel
 from vocab_coverage.draw import draw_vocab_embeddings
 from vocab_coverage.loader import load_model, load_tokenizer
 from vocab_coverage.utils import show_gpu_usage, release_resource, logger
-from vocab_coverage.reducer import reduce_to_2d_tsne, reduce_to_2d_tsne_cuml, reduce_to_2d_umap
+from vocab_coverage.reducer import reduce_to_2d
 
 EMBEDDING_TYPE_INPUT = 'input'
 EMBEDDING_TYPE_OUTPUT = 'output'
@@ -258,15 +258,10 @@ def get_embeddings(model_name:str, model, tokenizer, vocab, embedding_type=EMBED
         logger.error(f"[{model_name}]: unknown embedding_type: {embedding_type}")
         return None
 
-def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_detailed=False, folder=None, embedding_type=EMBEDDING_TYPE_INPUT, reducer_type='tsne', debug=False):
+def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_detailed=False, folder=None, embedding_type=EMBEDDING_TYPE_INPUT, reducer_method='tsne', debug=False):
     if debug:
-        print(f"[{model_name}]: reducing the dimension of '{embedding_type}_embeddings' {embeddings.shape} to 2D by {reducer_type}...")
-    if reducer_type == 'tsne':
-        embeddings_2d = reduce_to_2d_tsne(embeddings, debug=debug)
-    elif reducer_type == 'tsne_cuml':
-        embeddings_2d = reduce_to_2d_tsne_cuml(embeddings, debug=debug)
-    elif reducer_type == 'umap':
-        embeddings_2d = reduce_to_2d_umap(embeddings, debug=debug)
+        logger.debug(f"[{model_name}]: reducing the dimension of '{embedding_type}_embeddings' {embeddings.shape} to 2D by {reducer_method}...")
+    embeddings_2d = reduce_to_2d(embeddings, method=reducer_method, debug=debug)
     if debug:
         logger.debug(f"[{model_name}]: draw {embedding_type}_embeddings {embeddings_2d.shape}...")
     image = draw_vocab_embeddings(
@@ -280,20 +275,10 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
         is_detailed=is_detailed,
         debug=debug)
 
-    # 生成文件名
-    filename = model_name.replace('/', '_') + f'.embeddings.{embedding_type}.jpg'
-    if folder is not None and len(folder) > 0:
-        os.makedirs(folder, exist_ok=True)
-        filename = os.path.join(folder, filename)
+    return image
 
-    # save to file
-    if debug:
-        print(f"[{model_name}]: save {embedding_type}_embeddings to {filename}...")
-    image.save(filename, quality=80, optimize=True)
-
-
-def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False, reducer_type='tsne', clear_cache=False):
-    print("对模型 {} 的 embedding 进行可视化...".format(model_name))
+def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_type=[EMBEDDING_TYPE_INPUT], is_detailed=False, debug=False, reducer_method='tsne', clear_cache=False, postfix:str = None, flat:bool=False, override:bool=False):
+    logger.info("对模型 {} 的 embedding 进行可视化...".format(model_name))
 
     if '/' in model_name:
         org, name = model_name.split('/')
@@ -301,7 +286,6 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
             logger.warning(f"Skip {model_name}, only 'text-embedding-ada-002' is supported...")
             return
 
-    workdir = os.path.join(output_dir, 'assets', 'embeddings')
 
     tokenizer = load_tokenizer(model_name, debug=debug)
     model = load_model(model_name, debug=debug)
@@ -315,6 +299,26 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
             vocab = vocab[:model_vocab_size]
 
     for etype in embedding_type:
+        # 生成文件名
+        if output_dir is None:
+            output_dir = 'images'
+        if flat:
+            workdir = output_dir
+        else:
+            workdir = os.path.join(output_dir, 'assets', 'embeddings')
+        os.makedirs(workdir, exist_ok=True)
+        if postfix is not None and len(postfix) > 0:
+            postfix_text = f".{postfix}"
+        else:
+            postfix_text = ''
+        output_file = model_name.replace('/', '_') + f'.embeddings.{etype}{postfix_text}.jpg'
+        output_file = os.path.join(workdir, output_file)
+        ## 跳过已存在的文件
+        if not override and os.path.exists(output_file):
+            logger.warning(f"[{model_name}]: {output_file} exists, skip...")
+            continue
+
+        # 获取词向量
         embeddings = get_embeddings(model_name, model, tokenizer, vocab, embedding_type=etype, debug=debug)
         not_non_embeddings = []
         not_non_vocab = []
@@ -327,16 +331,23 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
         embeddings = np.array(not_non_embeddings)
         vocab = not_non_vocab
         if embeddings is not None and len(embeddings) > 0:
-            do_embedding_analysis(
+            # 生成图像
+            image = do_embedding_analysis(
                 model_name=model_name,
                 embeddings=embeddings,
                 vocab=vocab,
                 charsets=charsets,
                 is_detailed=is_detailed,
-                folder=workdir,
                 embedding_type=etype,
-                reducer_type=reducer_type,
+                reducer_method=reducer_method,
                 debug=debug)
+            # 保存图像到文件
+            if image is not None:
+                if debug:
+                    logger.debug(f"[{model_name}]: save {etype}_embeddings to {output_file}...")
+                image.save(output_file, quality=80, optimize=True)
+            else:
+                logger.warning(f"[{model_name}]: image is None, skip save to {output_file}...")
 
     # clean up
     del tokenizer
