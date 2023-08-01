@@ -4,7 +4,7 @@ import random
 from typing import List
 from PIL import Image, ImageDraw, ImageColor, ImageFont
 from sklearn.preprocessing import MinMaxScaler
-from vocab_coverage.utils import lighten_color
+from vocab_coverage.utils import lighten_color, logger
 
 default_palette = [
     '#B04759', '#E76161','#F99B7D',
@@ -169,8 +169,8 @@ def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab
     palette = classifier.get_palette(with_prefix_palette=True)
 
     if debug:
-        # print(f"palette: {palette}")
-        print(f"[{model_name}]: draw embedding point: {vocab_size}")
+        # logger.debug(f"palette: {palette}")
+        logger.debug(f"[{model_name}]: draw embedding point: {vocab_size}")
 
     # draw embedding point
     # clip font size to [12, margin]
@@ -178,7 +178,7 @@ def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab
     font_size = int(min(max(font_size, 12), margin))
     zh_font = get_chinese_font(font_size)
     if debug:
-        print(f"font size: {font_size}, font: {zh_font.getname()}")
+        logger.debug(f"font size: {font_size}, font: {zh_font.getname()}")
     for i, (x, y) in enumerate(embeddings_2d_norm):
         word = vocab[i]
         word_type = classifier.get_word_type(word)
@@ -195,10 +195,10 @@ def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab
         try:
             draw.text((x, y), word, fill=c, stroke_width=1, stroke_fill='#F0F0F0', font=zh_font)
         except Exception as e:
-            print(f"[{model_name}]: warning: draw text error: {e}")
+            logger.error(f"[{model_name}]: warning: draw text error: {e}")
 
     if debug:
-        print(f"[{model_name}]: token type counts: {word_type_count}")
+        logger.debug(f"[{model_name}]: token type counts: {word_type_count}")
     # draw model name
     font_size = int(margin / 2)
     draw.text((margin, image_height - (3*margin)),
@@ -232,11 +232,11 @@ def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab
         x = image_width - ((column)*column_width) + (col * column_width)
         y = image_height - ((column_size-row)*(box_width*1.4)) - (margin)
         color = palette[word_type]
-        # print(i, row, col, x, y, word_type, color)
+        # logger.debug(i, row, col, x, y, word_type, color)
 
         # draw box
         draw.rectangle((x, y, x+box_width, y+box_width), fill=color)
-        # print(word_type, color)
+        # logger.debug(word_type, color)
 
         # draw label
         draw.text((x+box_width*1.5, int(y - font_size*0.3)),

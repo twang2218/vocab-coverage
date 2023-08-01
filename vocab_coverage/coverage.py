@@ -10,10 +10,10 @@ import torch
 
 from vocab_coverage.draw import draw_vocab_graph
 from vocab_coverage.loader import load_tokenizer
-from vocab_coverage.utils import release_resource
+from vocab_coverage.utils import release_resource, logger
 
 def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False):
-    print("检查模型 {} 的字表".format(model_name))
+    logger.info("检查模型 {} 的字表".format(model_name))
     tokenizer = load_tokenizer(model_name, debug=debug)
 
     charset_stats = {
@@ -26,10 +26,10 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
     }
 
     if debug:
-        print(tokenizer)
-        print('vocab size:', tokenizer.vocab_size)
+        logger.debug(tokenizer)
+        logger.debug('vocab size:', tokenizer.vocab_size)
         if hasattr(tokenizer, 'cls_token_id'):
-            print('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
+            logger.debug('[Special Token ID] => cls: {}, sep: {}, pad: {}, unk: {}, mask: {}'.format(
                 tokenizer.cls_token_id if hasattr(tokenizer, 'cls_token_id') else None,
                 tokenizer.sep_token_id if hasattr(tokenizer, 'sep_token_id') else None,
                 tokenizer.pad_token_id if hasattr(tokenizer, 'pad_token_id') else None,
@@ -52,7 +52,7 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
                 if "add_special_tokens" in e.args[0]:
                     tokens_ids = tokenizer.encode(c)
                 else:
-                    print("编码字 {} 失败：{}".format(c, e))
+                    logger.error("编码字 {} 失败：{}".format(c, e))
                     continue
 
             # 编码预处理
@@ -65,7 +65,7 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
             if len(tokens_ids) > 1:
                 c2 = tokenizer.decode(tokens_ids)
                 if c != c2:
-                    print("[{}] 编码字 {}({}) 失败：{} != {}".format(tn, c, tokens_ids, c, c2))
+                    logger.warning("[{}] 编码字 {}({}) 失败：{} != {}".format(tn, c, tokens_ids, c, c2))
                     
             # 识字程度判断
             if len(tokens_ids) < 1 or (len(tokens_ids) == 1 and hasattr(tokenizer, 'unk_token_id') and tokens_ids[0] == tokenizer.unk_token_id):
@@ -79,11 +79,11 @@ def coverage_analysis(model_name:str, charsets, output_dir:str=None, debug=False
                 # 一定程度上识别的字，并不计数，只计算识别程度
                 charset_stats[name]['map'][i] = 1.0/len(tokens_ids) # 识别程度
                 if debug:
-                    print("[{}] 汉字({})被拆分了，编码为{}".format(tn, c, tokens_ids))
+                    logger.debug("[{}] 汉字({})被拆分了，编码为{}".format(tn, c, tokens_ids))
 
     # 统计显示
     for name, stats in charset_stats.items():
-        print("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
+        logger.info("字表{}：{}/{} ({:.2%})".format(name, stats['known'], stats['total'], float(stats['known'])/stats['total']))
 
     # 生成字表图
     image = draw_vocab_graph(model_name, charset_stats, tokenizer.vocab_size, width=150)

@@ -3,6 +3,7 @@
 import argparse
 import io
 import json
+import logging
 import os
 import sys
 import traceback
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from vocab_coverage import coverage_analysis, embedding_analysis
+from vocab_coverage.utils import logger
 
 DEFAULT_IMAGE_FOLDER = "images"
 
@@ -43,7 +45,7 @@ def find_coverage_file(model_name:str, folder:str=DEFAULT_IMAGE_FOLDER):
         f"{folder}/{basename}.coverage.png",
     ]
     for filename in candidates:
-        # print(filename)
+        # logger.debug(filename)
         if os.path.exists(filename):
             return filename
     return None
@@ -60,7 +62,7 @@ def find_embedding_file(model_name:str, embedding_type:str, folder:str=DEFAULT_I
         candidates.append(f"{folder}/embeddings_{basename}.jpg")
         candidates.append(f"{folder}/embeddings.{basename}.jpg")
     for filename in candidates:
-        # print(filename)
+        # logger.debug(filename)
         if os.path.exists(filename):
             return filename
     return None
@@ -81,7 +83,7 @@ def generate_coverage(models:List[dict], charsets:dict, group:str='', folder=DEF
     for section in models:
         if group != '' and section['group'] != group:
             if debug:
-                print(f"Skip group {section['group']}")
+                logger.debug(f"Skip group {section['group']}")
             continue
         for model_name in section["models"]:
             try:
@@ -90,24 +92,24 @@ def generate_coverage(models:List[dict], charsets:dict, group:str='', folder=DEF
                     # fix coverage filename
                     standard_coverage = get_standard_coverage_filename(model_name)
                     if standard_coverage != coverage:
-                        print(f"Renaming {coverage} => {standard_coverage}")
+                        logger.info(f"Renaming {coverage} => {standard_coverage}")
                         os.rename(coverage, standard_coverage)
                         coverage = standard_coverage
                     if debug:
-                        print(f"Nothing to generate for {model_name} coverage. ({coverage}).")
+                        logger.debug(f"Nothing to generate for {model_name} coverage. ({coverage}).")
                     continue
                 # generate coverage
                 coverage_analysis(model_name, charsets, folder, debug)
-                print(f"Generated coverage for {model_name}")
+                logger.info(f"Generated coverage for {model_name}")
             except Exception as e:
-                print(f"Error in {model_name}")
+                logger.error(f"Error in {model_name}")
                 traceback.print_exc()
 
 def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     for section in models:
         if group != '' and section['group'] != group:
             if debug:
-                print(f"Skip group {section['group']}")
+                logger.debug(f"Skip group {section['group']}")
             continue
         for model_name in section["models"]:
             try:
@@ -119,7 +121,7 @@ def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DE
                 # fix the embedding filename
                 standard_input_embedding = get_standard_embedding_filename(model_name, "input")
                 if input_embedding is not None and input_embedding != standard_input_embedding:
-                    print(f"Renaming {input_embedding} => {standard_input_embedding}")
+                    logger.info(f"Renaming {input_embedding} => {standard_input_embedding}")
                     os.rename(input_embedding, standard_input_embedding)
                     input_embedding = standard_input_embedding
                 # Output Embedding
@@ -129,21 +131,21 @@ def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DE
                 # fix the embedding filename
                 standard_output_embedding = get_standard_embedding_filename(model_name, "output")
                 if output_embedding is not None and output_embedding != standard_output_embedding:
-                    print(f"Renaming {output_embedding} => {standard_output_embedding}")
+                    logger.info(f"Renaming {output_embedding} => {standard_output_embedding}")
                     os.rename(output_embedding, standard_output_embedding)
                     output_embedding = standard_output_embedding
                 # check if we need to generate embedding
                 if len(embedding_types) == 0:
                     if debug:
-                        print(f"Nothing to generate for {model_name} embedding. ({input_embedding}, {output_embedding}))")
+                        logger.debug(f"Nothing to generate for {model_name} embedding. ({input_embedding}, {output_embedding}))")
                     continue
                 # check special case for OpenAI
                 if "openai" in model_name.lower() and "text-embedding-ada-002" not in model_name.lower():
                     if debug:
-                        print(f"Do not support embedding analysis for {model_name}")
+                        logger.debug(f"Do not support embedding analysis for {model_name}")
                     continue
                 if 'openai' in model_name.lower():
-                    print(f'embedding_types: {embedding_types}')
+                    logger.info(f'embedding_types: {embedding_types}')
                 # generate embedding
                 embedding_analysis(model_name=model_name,
                                 charsets=charsets,
@@ -151,24 +153,24 @@ def generate_embedding(models:List[dict], charsets:dict, group:str='', folder=DE
                                 embedding_type=embedding_types,
                                 clear_cache=True,
                                 debug=debug)
-                print(f"Generated embedding for {model_name}")
+                logger.info(f"Generated embedding for {model_name}")
             except Exception as e:
-                print(f"Error in {model_name}")
+                logger.error(f"Error in {model_name}")
                 traceback.print_exc()
 
 def generate_thumbnail(filename:str, folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
     if filename is None or len(filename) == 0 or not os.path.exists(filename):
-        print(f"Cannot find file {filename}")
+        logger.error(f"Cannot find file {filename}")
         return
     thumbnail_filename = get_thumbnail_filename(filename, folder=folder)
     if not os.path.exists(thumbnail_filename):
         basedir = os.path.dirname(thumbnail_filename)
         if not os.path.exists(basedir):
             os.makedirs(basedir, exist_ok=True)
-        print(f"Creating thumbnail for {filename}")
+        logger.info(f"Creating thumbnail for {filename}")
         ret = os.system(f"convert {filename} -quality 50 -resize 20% {thumbnail_filename}")
         if ret != 0:
-            print(f"Failed to create thumbnail for {filename}")
+            logger.error(f"Failed to create thumbnail for {filename}")
             raise Exception(f"Failed to create thumbnail for {filename}")
 
 def generate_embedding_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
@@ -182,7 +184,7 @@ def generate_embedding_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER
                 if output_embedding is not None:
                     generate_thumbnail(output_embedding, folder=folder, debug=debug)
             except Exception as e:
-                print(f"Error in {model_name}")
+                logger.error(f"Error in {model_name}")
                 traceback.print_exc()
 
 def generate_coverage_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER, debug:bool=False):
@@ -193,13 +195,13 @@ def generate_coverage_thumbnails(models:List[dict], folder=DEFAULT_IMAGE_FOLDER,
                 if coverage is not None:
                     generate_thumbnail(coverage, folder=folder, debug=debug)
             except Exception as e:
-                print(f"Error in {model_name}")
+                logger.error(f"Error in {model_name}")
                 traceback.print_exc()
 
 def get_oss_url(image) -> str:
     # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
     # base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
-    base_url = "http://syd.lab99.org/vocab-coverage/"
+    base_url = "http://syd.jiefu.org/vocab-coverage/"
     if image.startswith("images/assets/"):
         image = image.replace("images/assets/", "")
     elif image.startswith("images/"):
@@ -213,7 +215,7 @@ def generate_markdown_for_model_graph(image_file) -> str:
     else:
         thumbnail_file = find_thumbnail_file(image_file)
         if thumbnail_file is None:
-            print(f"Cannot find thumbnail file for {image_file}, use the full size instead.")
+            logger.warning(f"Cannot find thumbnail file for {image_file}, use the full size instead.")
             thumbnail_file = image_file
         # use OSS for image
         image_file = get_oss_url(image_file)
@@ -224,15 +226,15 @@ def generate_markdown_for_model_graph(image_file) -> str:
 def generate_markdown_for_model(model_name:str) -> str:
     coverage = find_coverage_file(model_name)
     if coverage is None:
-        print(f"Cannot find coverage file for {model_name}")
+        logger.warning(f"Cannot find coverage file for {model_name}")
     input_embedding = find_embedding_file(model_name, "input")
     if input_embedding is None and not 'openai' in model_name.lower():
-        print(f"Cannot find input embedding file for {model_name}")
+        logger.warning(f"Cannot find input embedding file for {model_name}")
     output_embedding = find_embedding_file(model_name, "output")
     if output_embedding is None and not 'openai' in model_name.lower():
-        print(f"Cannot find output embedding file for {model_name}")
+        logger.warning(f"Cannot find output embedding file for {model_name}")
     if coverage is None and input_embedding is None and output_embedding is None:
-        print(f"Cannot find any file for {model_name}")
+        logger.error(f"Cannot find any file for {model_name}")
         return ""
     else:
         # Name
@@ -303,6 +305,9 @@ def main():
 
     args = parser.parse_args()
 
+    if hasattr(args, "debug") and args.debug:
+        logger.setLevel(logging.DEBUG)
+
     if hasattr(args, "charset_file") and len(args.charset_file) == 0:
         # 使用内置字符集文件
         args.charset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'charsets.json')
@@ -322,12 +327,12 @@ def main():
         generate_embedding_thumbnails(models, folder=args.folder, debug=args.debug)
     elif args.command == "markdown":
         # markdown for all models
-        print(f"Generating markdown for all models to {args.markdown}")
+        logger.info(f"Generating markdown for all models to {args.markdown}")
         generate_markdown_for_all(models, output=args.markdown)
         # markdown for readme
         template_file = os.path.join('docs', 'README.template.md')
         models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_readme.yaml')
-        print(f"Generating markdown for readme by {template_file} and {models_file}")
+        logger.info(f"Generating markdown for readme by {template_file} and {models_file}")
         generate_markdown_from_template(template_file=template_file, model_list_file=models_file, output='README.md')
     else:
         parser.print_help()

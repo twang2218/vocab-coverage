@@ -14,7 +14,7 @@ import shutil
 from transformers import AutoTokenizer, AutoModel
 from vocab_coverage.draw import draw_vocab_embeddings
 from vocab_coverage.loader import load_model, load_tokenizer
-from vocab_coverage.utils import show_gpu_usage, release_resource
+from vocab_coverage.utils import show_gpu_usage, release_resource, logger
 from vocab_coverage.reducer import reduce_to_2d_tsne, reduce_to_2d_tsne_cuml, reduce_to_2d_umap
 
 EMBEDDING_TYPE_INPUT = 'input'
@@ -27,13 +27,13 @@ def get_vocab(model_name:str, tokenizer, debug=False):
 
     vocab_size = max([id for id in tokenizer.get_vocab().values()]) + 1
     if debug:
-        print(f"[{model_name}]: vocab_size: {vocab_size}")
+        logger.debug(f"[{model_name}]: vocab_size: {vocab_size}")
 
     # get vocab
     vocab = [''] * (vocab_size)
     for k, v in tokenizer.get_vocab().items():
         if v >= vocab_size:
-            print(f"[{model_name}] out of range: {k}, {v}")
+            logger.warning(f"[{model_name}] out of range: {k}, {v}")
             continue
         try:
             if hasattr(tokenizer, 'convert_tokens_to_string'):
@@ -44,7 +44,7 @@ def get_vocab(model_name:str, tokenizer, debug=False):
             else:
                 vocab[v] = k
         except Exception as e:
-            print(f"[{model_name}]: convert_tokens_to_string({k}) failed: {e}")
+            logger.error(f"[{model_name}]: convert_tokens_to_string({k}) failed: {e}")
             vocab[v] = k
     return vocab
 
@@ -57,19 +57,19 @@ def get_vocab_openai(model_name:str, debug=False):
         try:
             vocab.append(str(k, encoding='utf-8'))
         except:
-            # print(str(k))
+            # logger.debug(str(k))
             count_except += 1
             vocab.append(str(k))
     if debug:
-        print(f"[{model_name}]: vocab: {len(vocab)}")
-        print(f"[{model_name}]: count_except: {count_except}")
+        logger.debug(f"[{model_name}]: vocab: {len(vocab)}")
+        logger.debug(f"[{model_name}]: count_except: {count_except}")
     return vocab
 
 def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
     input_embeddings = []
     try:
         if "OpenAI" in model_name:
-            print(f"[{model_name}]: Cannot retrieve input embeddings from OpenAI models.")
+            logger.error(f"[{model_name}]: Cannot retrieve input embeddings from OpenAI models.")
             return None
 
         if hasattr(model, 'transformer') and hasattr(model.transformer, 'embedding') and hasattr(model.transformer.embedding, 'word_embeddings'):
@@ -85,12 +85,12 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
             # most Transformers
             input_embedding_func = model.get_input_embeddings()
         else:
-            print(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
-            print(model)
+            logger.error(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
+            logger.debug(model)
             raise Exception(f"[{model_name}]: cannot find 'model.get_input_embeddings()'")
 
         if debug:
-            print(f"[{model_name}]: get_input_embeddings(): {input_embedding_func}")
+            logger.debug(f"[{model_name}]: get_input_embeddings(): {input_embedding_func}")
 
         vocab_size = len(vocab)
         if hasattr(input_embedding_func, 'weight'):
@@ -103,11 +103,11 @@ def get_input_embeddings(model_name, model, tokenizer, vocab, debug=False):
         input_embeddings = input_embeddings.detach().numpy()
 
         if debug:
-            print(f"[{model_name}]: input_embeddings: {input_embeddings.shape}")
+            logger.debug(f"[{model_name}]: input_embeddings: {input_embeddings.shape}")
     except Exception as e:
-        print(f"[{model_name}]: get_input_embeddings failed: {e}")
+        logger.error(f"[{model_name}]: get_input_embeddings failed: {e}")
         traceback.print_exc()
-        print(model)
+        logger.debug(model)
         raise e
     return input_embeddings
 
@@ -145,13 +145,13 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
         if hasattr(model, 'get_encoder'):
             outputs = model.get_encoder()(**inputs, output_hidden_states=True)
         else:
-            print(f"[{model_name}]: get_sentences_embeddings() failed: {e}")
+            logger.error(f"[{model_name}]: get_sentences_embeddings() failed: {e}")
             traceback.print_exc()
-            print(model)
+            logger.debug(model)
             raise e
 
     # get attention_mask and token_embeddings
-    # print(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
+    # logger.debug(f"[{model_name}]: input_ids: {inputs['input_ids'].shape}, attention_mask: {inputs['attention_mask'].shape}")
     attention_mask = inputs['attention_mask']
     del inputs
     all_hidden_states = []
@@ -165,18 +165,18 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
         #   attention_mask.shape: [50, 1, 4, 4] => [50, 4]
         old_shape = attention_mask.shape
         attention_mask = torch.where(attention_mask[:, 0, -1], torch.tensor(0), torch.tensor(1))
-        print(f"[{model_name}]: fix attention_mask: {old_shape} => {attention_mask.shape}")
+        logger.debug(f"[{model_name}]: fix attention_mask: {old_shape} => {attention_mask.shape}")
         #   token_embeddings.shape: [4, 50, 4096] => [50, 4, 4096]
         old_shape = token_embeddings.shape
         token_embeddings = token_embeddings.permute(1, 0, 2)
-        print(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
+        logger.debug(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
     elif 'chatglm2-6b' in model_name:
         # THUDM/chatglm2-6b
         #   attention_mask.shape: [50, 7]
         #   token_embeddings.shape: [7, 50, 4096] => [50, 7, 4096]
         old_shape = token_embeddings.shape
         token_embeddings = token_embeddings.permute(1, 0, 2)
-        print(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
+        logger.debug(f"[{model_name}]: fix token_embeddings: {old_shape} => {token_embeddings.shape}")
 
     # Calculate of Sentences Embedding by the averaging the all token vectors
     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -189,14 +189,14 @@ def get_sentences_embeddings(model_name, model, tokenizer, sentences:List[str], 
 
     for i, e in enumerate(embeddings):
         if np.isnan(e).any():
-            print(f"[{model_name}]: embeddings for {i}:'{sentences[i]}' contains NaN")
-            # print(f"[{model_name}]: > attention_mask({attention_mask[i].shape}):  {attention_mask[i]}")
-            # print(f"[{model_name}]: > token_embeddings({token_embeddings[i].shape}): {token_embeddings[i]}")
-            print(f"[{model_name}]: > all_hidden_states: {len(all_hidden_states)}")
+            logger.warning(f"[{model_name}]: embeddings for {i}:'{sentences[i]}' contains NaN")
+            # logger.debug(f"[{model_name}]: > attention_mask({attention_mask[i].shape}):  {attention_mask[i]}")
+            # logger.debug(f"[{model_name}]: > token_embeddings({token_embeddings[i].shape}): {token_embeddings[i]}")
+            logger.debug(f"[{model_name}]: > all_hidden_states: {len(all_hidden_states)}")
             for j, hs in enumerate(all_hidden_states):
                 if np.isnan(hs[i]).any():
-                    print(f"[{model_name}]: > all_hidden_states[{j}]({hs[i].shape}): {hs[i]}")
-            # print(f"[{model_name}]: > input_mask_expanded({input_mask_expanded[i].shape}): {input_mask_expanded[i]}")
+                    logger.debug(f"[{model_name}]: > all_hidden_states[{j}]({hs[i].shape}): {hs[i]}")
+            # logger.debug(f"[{model_name}]: > input_mask_expanded({input_mask_expanded[i].shape}): {input_mask_expanded[i]}")
     return embeddings
 
 def get_sentences_embedding_in_batch(model_name, model, tokenizer, sentences:List[str], batch_size=32, use_token_id=False, max_length=256):
@@ -207,7 +207,7 @@ def get_sentences_embedding_in_batch(model_name, model, tokenizer, sentences:Lis
             embeddings = batch_embeddings
         else:
             embeddings = np.concatenate((embeddings, batch_embeddings))
-        print(f"[{model_name}]: batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
+        logger.info(f"[{model_name}]: batch_embeddings: {batch_embeddings.shape}, embeddings: {embeddings.shape}")
     return embeddings
 
 def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
@@ -222,14 +222,14 @@ def get_output_embeddings(model_name, model, tokenizer, vocab, debug=False):
             batch_size = round((memory['free']//12)/200) * 200
         else:
             batch_size = 100
-        print(f"[{model_name}]: batch_size: {batch_size}")
+        logger.info(f"[{model_name}]: batch_size: {batch_size}")
 
         output_embeddings = get_sentences_embedding_in_batch(model_name, model, tokenizer, vocab, batch_size=batch_size, use_token_id=True, max_length=5)
 
     except Exception as e:
-        print(f"[{model_name}]: get_output_embedding failed: {e}")
+        logger.error(f"[{model_name}]: get_output_embedding failed: {e}")
         traceback.print_exc()
-        print(model)
+        logger.debug(model)
         raise e
     return output_embeddings
 
@@ -238,15 +238,15 @@ def get_output_embeddings_openai(model_name:str, vocab:List[str], batch=10, debu
     embeds = []
     for i in range(0, len(vocab), batch):
         if debug:
-            print(f"[{model_name}]: get_output_embeddings_openai(): {i}")
+            logger.debug(f"[{model_name}]: get_output_embeddings_openai(): {i}")
         ee = openai.Embedding.create(input = vocab[i:i+batch], model=model_name)['data']
         ee = [e['embedding'] for e in ee]
         if debug:
-            print(f"[{model_name}]: Retrieved {len(ee)} embeddings for {vocab[i:i+batch]}")
+            logger.debug(f"[{model_name}]: Retrieved {len(ee)} embeddings for {vocab[i:i+batch]}")
         embeds.extend(ee)
 
     if debug:
-        print(f"embeds: {len(embeds)}")
+        logger.debug(f"embeds: {len(embeds)}")
     return np.array(embeds)
 
 def get_embeddings(model_name:str, model, tokenizer, vocab, embedding_type=EMBEDDING_TYPE_INPUT, debug=False):
@@ -255,7 +255,7 @@ def get_embeddings(model_name:str, model, tokenizer, vocab, embedding_type=EMBED
     elif embedding_type == EMBEDDING_TYPE_OUTPUT:
         return get_output_embeddings(model_name, model, tokenizer, vocab, debug=debug)
     else:
-        print(f"[{model_name}]: unknown embedding_type: {embedding_type}")
+        logger.error(f"[{model_name}]: unknown embedding_type: {embedding_type}")
         return None
 
 def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_detailed=False, folder=None, embedding_type=EMBEDDING_TYPE_INPUT, reducer_type='tsne', debug=False):
@@ -268,7 +268,7 @@ def do_embedding_analysis(model_name:str, embeddings, vocab, charsets:dict, is_d
     elif reducer_type == 'umap':
         embeddings_2d = reduce_to_2d_umap(embeddings, debug=debug)
     if debug:
-        print(f"[{model_name}]: draw {embedding_type}_embeddings {embeddings_2d.shape}...")
+        logger.debug(f"[{model_name}]: draw {embedding_type}_embeddings {embeddings_2d.shape}...")
     image = draw_vocab_embeddings(
         model_name=model_name,
         embeddings_2d=embeddings_2d,
@@ -298,7 +298,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
     if '/' in model_name:
         org, name = model_name.split('/')
         if org.lower() == 'openai' and name != 'text-embedding-ada-002':
-            print(f"Skip {model_name}, only 'text-embedding-ada-002' is supported...")
+            logger.warning(f"Skip {model_name}, only 'text-embedding-ada-002' is supported...")
             return
 
     workdir = os.path.join(output_dir, 'assets', 'embeddings')
@@ -311,7 +311,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
         tokenizer_vocab_size = len(vocab)
         model_vocab_size = model.get_input_embeddings().weight.shape[0]
         if tokenizer_vocab_size > model_vocab_size:
-            print(f"[{model_name}]: tokenizer_vocab_size({tokenizer_vocab_size}) > model_vocab_size({model_vocab_size}), will truncate the model vocab_size...")
+            logger.warning(f"[{model_name}]: tokenizer_vocab_size({tokenizer_vocab_size}) > model_vocab_size({model_vocab_size}), will truncate the model vocab_size...")
             vocab = vocab[:model_vocab_size]
 
     for etype in embedding_type:
@@ -320,7 +320,7 @@ def embedding_analysis(model_name:str, charsets:dict, output_dir:str, embedding_
         not_non_vocab = []
         for i, e in enumerate(embeddings):
             if np.isnan(e).any():
-                print(f"[{model_name}]: [{i}]: '{vocab[i]}' embeddings: ({np.shape(e)}): {e}")
+                logger.warning(f"[{model_name}]: [{i}]: '{vocab[i]}' embeddings: ({np.shape(e)}): {e}")
             else:
                 not_non_embeddings.append(e)
                 not_non_vocab.append(vocab[i])
