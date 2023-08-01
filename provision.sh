@@ -41,6 +41,11 @@ install_conda() {
     ln -s $CONDA_PREFIX/lib/python3.10/site-packages/nvidia/cusparse/lib/libcusparse.so.11 $CONDA_PREFIX/lib/libcusparse.so.11
 }
 
+install_cuml() {
+    pip install umap-learn
+    pip install cudf-cu12 cuml-cu12 --extra-index-url=https://pypi.nvidia.com
+}
+
 install_tools() {
     # Install system tools
     GOTOP=https://github.com/xxxserxxx/gotop/releases/download/v4.2.0/gotop_v4.2.0_linux_amd64.deb
@@ -121,6 +126,9 @@ main() {
             install_tools
             install_conda
             ;;
+        install-cuml)
+            install_cuml
+            ;;
         make)
             run_make "$@"
             ;;
@@ -128,7 +136,7 @@ main() {
             setup_tmux
             ;;
         *)
-            echo "Usage: $0 {install|make|tmux}"
+            echo "Usage: $0 {install|install-cuml|make|tmux}"
             exit 1
     esac
 }
