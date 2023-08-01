@@ -4,7 +4,7 @@ import argparse
 import json
 from bs4 import BeautifulSoup
 import requests
-from vocab_coverage.utils import lighten_color
+from vocab_coverage.utils import lighten_color, logger
 
 def get_chinese_chars():
     urls = [
@@ -62,12 +62,12 @@ def generate_charsets(filename:str):
     charset['《通用规范汉字表》二级汉字'] = s1[1]
     charset['《通用规范汉字表》三级汉字'] = s1[2]
     for k, v in charset.items():
-        print(f"{k}共有{len(v)}个汉字")
+        logger.info(f"{k}共有{len(v)}个汉字")
 
     base_chars = set()
     for cc in charset.values():
         base_chars.update(cc)
-    print(f"《通用规范汉字表》共有{len(base_chars)}个汉字")
+    logger.info(f"《通用规范汉字表》共有{len(base_chars)}个汉字")
     s2 = generate_cnc_chars()
 
     extra_chars = []
@@ -75,7 +75,7 @@ def generate_charsets(filename:str):
         if c not in base_chars:
             extra_chars.append(c)
     charset['《常用國字標準字體表》甲表(增)'] = extra_chars
-    print(f"《常用國字標準字體表》甲表共有{len(s2[0])}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》中")
+    logger.info(f"《常用國字標準字體表》甲表共有{len(s2[0])}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》中")
     for c in extra_chars:
         base_chars.update(c)
 
@@ -84,7 +84,7 @@ def generate_charsets(filename:str):
         if c not in base_chars:
             extra_chars.append(c)
     charset['《常用國字標準字體表》乙表(增)'] = extra_chars
-    print(f"《常用國字標準字體表》乙表共有{len(s2[1])}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》中")
+    logger.info(f"《常用國字標準字體表》乙表共有{len(s2[1])}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》中")
     for c in extra_chars:
         base_chars.update(c)
 
@@ -93,10 +93,10 @@ def generate_charsets(filename:str):
     for c in chars:
         if c not in base_chars:
             extra_chars.append(c)
-    print(f"《Unicode中日韩统一表意文字》共有{len(chars)}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》和《常用國字標準字體表》中")
+    logger.info(f"《Unicode中日韩统一表意文字》共有{len(chars)}个汉字，其中{len(extra_chars)}个汉字不在《通用规范汉字表》和《常用國字標準字體表》中")
     charset['《Unicode中日韩统一表意文字》(增)'] = extra_chars
 
-    print(f"共有{sum([len(c) for c in charset.values()])}个汉字")
+    logger.info(f"共有{sum([len(c) for c in charset.values()])}个汉字")
 
     # 保存到JSON文件
     with open(filename, 'w') as f:

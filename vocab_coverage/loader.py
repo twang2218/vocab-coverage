@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import os
 from transformers import AutoTokenizer, AutoModel
 import torch
-import os
-from vocab_coverage.utils import show_gpu_usage
+from vocab_coverage.utils import show_gpu_usage, logger
 
 def load_tokenizer(model_name:str, debug:bool=False):
     try:
@@ -36,9 +36,9 @@ def load_tokenizer(model_name:str, debug:bool=False):
             tokenizer.vocab_size = tokenizer.n_vocab
             tokenizer.cls_token_id = tokenizer.encode_single_token('<|endoftext|>')
             if debug:
-                print(tokenizer._special_tokens)
+                logger.debug(tokenizer._special_tokens)
         else:
-            print("加载模型 {} 失败：{}".format(model_name, e))
+            logger.error("加载模型 {} 失败：{}".format(model_name, e))
             raise e
 
     # https://github.com/huggingface/transformers/issues/24514
@@ -49,23 +49,23 @@ def load_tokenizer(model_name:str, debug:bool=False):
     # https://github.com/huggingface/transformers/issues/22312
     if (not hasattr(tokenizer, 'pad_token')) or (tokenizer.pad_token is None) or (len(tokenizer.pad_token) == 0):
         if hasattr(tokenizer, 'eos_token') and tokenizer.eos_token is not None and len(tokenizer.eos_token) > 0:
-            print(f"[{model_name}]: 'tokenizer.pad_token' is None, set tokenizer.pad_token = tokenizer.eos_token ({tokenizer.eos_token}))")
+            logger.warning(f"[{model_name}]: 'tokenizer.pad_token' is None, set tokenizer.pad_token = tokenizer.eos_token ({tokenizer.eos_token}))")
             tokenizer.pad_token = tokenizer.eos_token
         else:
-            print(f"[{model_name}]: 'tokenizer.pad_token' and 'tokenizer.eos_token' are None, set tokenizer.pad_token = '</s>'")
+            logger.warning(f"[{model_name}]: 'tokenizer.pad_token' and 'tokenizer.eos_token' are None, set tokenizer.pad_token = '</s>'")
             tokenizer.bos_token = '<s>'
             tokenizer.eos_token = '</s>'
             tokenizer.unk_token = '<unk>'
             tokenizer.pad_token = tokenizer.eos_token
 
     if debug:
-        print(tokenizer)
+        logger.debug(tokenizer)
 
     return tokenizer
 
 def load_model(model_name:str, debug:bool=False):
     if "OpenAI" in model_name:
-        print(f"[{model_name}]: OpenAI don't support model loading.")
+        logger.error(f"[{model_name}]: OpenAI don't support model loading.")
         return None
 
     # 加载预训练模型
@@ -73,7 +73,7 @@ def load_model(model_name:str, debug:bool=False):
     # 判断是否是大模型
     is_large_model = False
     for large_model in ['6b', '7b', '12b', '13b', 'llama', 'gpt', 'aquila', 'moss']:
-        # print(f"[{model_name}]: large_model: {large_model} in {model_name.lower()}? {large_model in model_name.lower()}")
+        # logger.debug(f"[{model_name}]: large_model: {large_model} in {model_name.lower()}? {large_model in model_name.lower()}")
         if large_model in model_name.lower():
             is_large_model = True
             break
@@ -113,27 +113,26 @@ def load_model(model_name:str, debug:bool=False):
             kwargs['device_map'] = "auto"
 
         if debug:
-            print(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs})")
+            logger.debug(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs})")
 
         model = AutoModel.from_pretrained(model_name, trust_remote_code=True, **kwargs)
 
     except Exception as e:
-        if debug:
-            print(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs}) failed: {e}, args: {e.args}")
+        logger.warning(f"[{model_name}]: AutoModel.from_pretrained(model_name={model_name}, kwargs={kwargs}) failed: {e}, args: {e.args}")
         if isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "AutoModel" in e.args[0]:
             from transformers import AutoModelForCausalLM
             model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
         elif isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "aquila" in e.args[0]:
             from flagai.model.aquila_model import AQUILAModel
             # cache_dir = os.path.join('./model', 'aquila-7b')
-            # print(f"cache_dir: {os.path.abspath(cache_dir)}")
+            # logger.debug(f"cache_dir: {os.path.abspath(cache_dir)}")
             model = AQUILAModel.from_pretrain(model_name='aquila-7b', download_path='./model')
         else:
-            print("加载 AutoModel 模型 {} 失败：{}".format(model_name, e))
+            logger.error("加载 AutoModel 模型 {} 失败：{}".format(model_name, e))
             raise e
 
     if debug:
-        print(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
+        logger.debug(f"[{model_name}]: num_parameters: {model.num_parameters():,}")
 
     # ValueError: `.to` is not supported for `4-bit` or `8-bit` models. Please use the model as it is, since the model has already been set to the correct devices and casted to the correct `dtype`.
     #   fnlp/moss-moon-003-sft-int4
@@ -143,7 +142,7 @@ def load_model(model_name:str, debug:bool=False):
         model.to(device)
     model.eval()
 
-    print(f"[{model_name}]: {model.__class__.__name__} model loaded on device: {model.device}")
+    logger.info(f"[{model_name}]: {model.__class__.__name__} model loaded on device: {model.device}")
 
     if debug:
         show_gpu_usage(model_name)
