@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vocab-coverage',
-    version='0.6',
+    version='0.7',
     packages=find_packages(),
     install_requires=[
         'Pillow',
@@ -19,7 +19,11 @@ setup(
         'accelerate',
         'openai',
         'python-dotenv',
+        'umap-learn',
     ],
+    extras_require={
+        'cuml': ['cudf-cu12', 'cuml-cu12'],
+    },
     description='语言模型中文识字率分析\nA Python package designed to perform coverage analysis on Chinese vocabulary for language models.',
     long_description_content_type="text/markdown",
     long_description=open('README.md').read(),

@@ -1,5 +1,5 @@
 
-
+SHELL := /bin/bash
 REMOTE_HOST = vast
 
 create-env:
