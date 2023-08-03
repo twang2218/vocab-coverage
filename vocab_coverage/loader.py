@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig
 import torch
 from vocab_coverage.utils import show_gpu_usage, logger
 
@@ -104,6 +104,11 @@ def load_model(model_name:str, debug:bool=False):
                 # mosaicml/mpt-7b-instruct
                 kwargs['torch_dtype'] = torch.bfloat16
                 kwargs['device_map'] = "auto"
+            elif "qwen" in model_name.lower():
+                quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+                kwargs['quantization_config'] = quantization_config
+                kwargs['device_map'] = "auto"
+                kwargs['torch_dtype'] = torch.bfloat16
             else:
                 kwargs['torch_dtype'] = torch.float16
                 kwargs['device_map'] = "auto"

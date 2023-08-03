@@ -20,6 +20,7 @@ setup(
         'openai',
         'python-dotenv',
         'umap-learn',
+        'einops',
     ],
     extras_require={
         'cuml': ['cudf-cu12', 'cuml-cu12'],

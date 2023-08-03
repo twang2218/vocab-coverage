@@ -143,10 +143,13 @@ def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=
 from vocab_coverage.charsets import CharsetClassifier
 import math
 
-# model: {model_name, model, tokenizer, vocab, embeddings, embeddings_2d}
-# def draw_vocab_embeddings(model, charsets, width=8000, height=8000, is_detail=False, debug=False):
-def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab:List[str], charsets:List[str],
-                        embedding_type:str, width=8000, height=8000, is_detailed=False, debug=False):
+def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]],
+                          vocab:List[str],
+                          charsets:List[str],
+                          position:str,
+                          width=8000, height=8000,
+                          is_detailed=False,
+                          debug=False):
     vocab_size = len(vocab)
 
     # calculate image size, margin, etc.
@@ -208,7 +211,7 @@ def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]], vocab
 
     # draw embedding type
     draw.text((margin, image_height - int(2.3*margin)),
-        f"[ {embedding_type} embeddings ]",
+        f"[ {position} embeddings ]",
         fill='#000000',
         font=get_english_font(int(font_size/1.5)))
 
