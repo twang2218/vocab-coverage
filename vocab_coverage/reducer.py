@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
 
+import importlib
 import multiprocessing
+import warnings
+from sklearn.preprocessing import MinMaxScaler
 
 from vocab_coverage.utils import logger
+from vocab_coverage import constants
 
 def reduce_to_2d_tsne(embeddings, debug=False):
-    from sklearn.manifold import TSNE
+    TSNE = importlib.import_module('sklearn.manifold').TSNE
     tsne_model = TSNE(n_components=2,
-        # early_exaggeration=12,
+        early_exaggeration=12,
         learning_rate='auto',
         metric='cosine',
         init='pca',
         verbose=2 if debug else 0,
-        n_iter=1000,
-        random_state=42,
+        n_iter=1500, # 碰到过 1000 次迭代还没收敛的情况
+        random_state=2218,
         method='barnes_hut',
         n_jobs=-1)
     embeddings_2d = tsne_model.fit_transform(embeddings)
     return embeddings_2d
 
 def reduce_to_2d_tsne_cuml(embeddings, debug=False):
-    from cuml.manifold import TSNE
+    TSNE = importlib.import_module('cuml.manifold').TSNE
     tsne_model = TSNE(n_components=2,
         # early_exaggeration=12,
         learning_rate_method='adaptive',
@@ -34,10 +38,9 @@ def reduce_to_2d_tsne_cuml(embeddings, debug=False):
     return embeddings_2d
 
 def reduce_to_2d_umap(embeddings, debug=False):
-    import warnings
     warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
-    import umap
-    umap_model = umap.UMAP(n_components=2,
+    UMAP = importlib.import_module('umap').UMAP
+    umap_model = UMAP(n_components=2,
         n_neighbors=30,
         min_dist=0.6,
         spread=1,
@@ -48,8 +51,8 @@ def reduce_to_2d_umap(embeddings, debug=False):
     return embeddings_2d
 
 def reduce_to_2d_umap_cuml(embeddings, debug=False):
-    import cuml
-    umap_model = cuml.UMAP(n_components=2,
+    UMAP = importlib.import_module('cuml.manifold').UMAP
+    umap_model = UMAP(n_components=2,
         n_neighbors=30,
         min_dist=1,
         spread=1,
@@ -61,10 +64,9 @@ def reduce_to_2d_umap_cuml(embeddings, debug=False):
 
 def reduce_to_2d_umap_tsne(embeddings, debug=False):
     # Use UMAP reduce to 30 dimensions, then TSNE to 2
-    import warnings
     warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
-    import umap
-    umap_model = umap.UMAP(n_components=30,
+    UMAP = importlib.import_module('umap').UMAP
+    umap_model = UMAP(n_components=30,
         n_neighbors=30,
         min_dist=0.6,
         spread=1,
@@ -79,10 +81,9 @@ def reduce_to_2d_umap_tsne(embeddings, debug=False):
 
 def reduce_to_2d_umap_tsne_cuml(embeddings, debug=False):
     # Use UMAP reduce to 30 dimensions, then TSNE to 2
-    import warnings
     warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
-    import umap
-    umap_model = umap.UMAP(n_components=30,
+    UMAP = importlib.import_module('umap').UMAP
+    umap_model = UMAP(n_components=30,
         n_neighbors=30,
         min_dist=0.6,
         spread=1,
@@ -96,10 +97,9 @@ def reduce_to_2d_umap_tsne_cuml(embeddings, debug=False):
 
 def reduce_to_2d_umap_tsne_cuml_both(embeddings, debug=False):
     # Use UMAP reduce to 30 dimensions, then TSNE to 2
-    import warnings
     warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
-    import cuml
-    umap_model = cuml.UMAP(n_components=30,
+    UMAP = importlib.import_module('cuml.manifold').UMAP
+    umap_model = UMAP(n_components=30,
         n_neighbors=30,
         min_dist=0.6,
         spread=1,
@@ -112,8 +112,8 @@ def reduce_to_2d_umap_tsne_cuml_both(embeddings, debug=False):
     return embeddings_2d
 
 def with_timeout(func, timeout, *args, **kwargs):
-    logger.debug(f"> call {func} with timeout: {timeout}s")
-    
+    logger.debug("> call %s with timeout: %ss", func, timeout)
+
     current_process = multiprocessing.current_process()
     timeout_event = multiprocessing.Event()
 
@@ -121,12 +121,12 @@ def with_timeout(func, timeout, *args, **kwargs):
         if not timeout_event.wait(timeout):
             logger.debug("with_timeout():monitor(): timeout")
             if current_process.is_alive():
-                logger.error(f"> {func} timeout: {timeout}s")
+                logger.error("> %s timeout: %ss", func, timeout)
                 current_process.terminate()
                 current_process.join()
         else:
             logger.debug("with_timeout():monitor(): timeout_event.set()")
-    
+
     monitor_process = multiprocessing.Process(target=monitor, args=(timeout,))
     result = func(*args, **kwargs)
     timeout_event.set()
@@ -139,38 +139,31 @@ def with_timeout(func, timeout, *args, **kwargs):
 
 def reduce_to_2d(embeddings, method='tsne', debug=False):
     if debug:
-        logger.debug(f"> reducing the dimension of {embeddings.shape} to 2D by {method}...")
+        logger.debug("> reducing the dimension of %s to 2D by [%s]...", embeddings.shape, method)
     reducer = None
     set_timeout = False
-    if method == 'tsne':
-        reducer = reduce_to_2d_tsne
-        set_timeout = False
-    elif method == 'tsne_cuml':
-        reducer = reduce_to_2d_tsne_cuml
-        set_timeout = True
-    elif method == 'umap':
-        reducer = reduce_to_2d_umap
-        set_timeout = False
-    elif method == 'umap_cuml':
-        reducer = reduce_to_2d_umap_cuml
-        set_timeout = True
-    elif method == 'umap_tsne':
-        reducer = reduce_to_2d_umap_tsne
-        set_timeout = False
-    elif method == 'umap_tsne_cuml':
-        reducer = reduce_to_2d_umap_tsne_cuml
-        set_timeout = True
-    elif method == 'umap_tsne_cuml_both':
-        reducer = reduce_to_2d_umap_tsne_cuml_both
-        set_timeout = True
-    else:
-        raise ValueError(f'Unknown reduce_to_2d() method: {method}')
-    
+    reducers = {
+        constants.REDUCER_TSNE: { 'reducer': reduce_to_2d_tsne, 'set_timeout': False },
+        constants.REDUCER_TSNE_CUML: { 'reducer': reduce_to_2d_tsne_cuml, 'set_timeout': True },
+        constants.REDUCER_UMAP: { 'reducer': reduce_to_2d_umap, 'set_timeout': False },
+        constants.REDUCER_UMAP_CUML: { 'reducer': reduce_to_2d_umap_cuml, 'set_timeout': True },
+        constants.REDUCER_UMAP_TSNE: { 'reducer': reduce_to_2d_umap_tsne, 'set_timeout': False },
+        constants.REDUCER_UMAP_TSNE_CUML: { 'reducer': reduce_to_2d_umap_tsne_cuml, 'set_timeout': True },
+        constants.REDUCER_UMAP_TSNE_CUML_BOTH: { 'reducer': reduce_to_2d_umap_tsne_cuml_both, 'set_timeout': True }
+    }
+    reducer = reducers[method]['reducer']
+    set_timeout = reducers[method]['set_timeout']
+    # reduce
     if reducer is not None:
+        if debug:
+            logger.debug("> call reducer: %s, set_timeout: %s", reducer, set_timeout)
         if set_timeout:
             embeddings_2d = with_timeout(reducer, timeout=600, embeddings=embeddings, debug=debug)
         else:
             embeddings_2d = reducer(embeddings, debug)
     else:
         embeddings_2d = None
+    # normalize
+    if embeddings_2d is not None:
+        embeddings_2d = MinMaxScaler().fit_transform(embeddings_2d)
     return embeddings_2d

@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import random
-from typing import List
-from PIL import Image, ImageDraw, ImageColor, ImageFont
-from sklearn.preprocessing import MinMaxScaler
+import math
+from typing import List, Dict, Tuple
+from PIL import Image, ImageDraw, ImageFont
+from vocab_coverage.lexicon import Lexicon
 from vocab_coverage.utils import lighten_color, logger
-
-default_palette = [
-    '#B04759', '#E76161','#F99B7D',
-    '#146C94', '#19A7CE', '#E893CF',
-]
+from vocab_coverage import constants
 
 # apt install fonts-noto-cjk fonts-anonymous-pro fonts-noto-color-emoji
 def get_available_font_from_list(fonts: List[str], size=14):
@@ -43,213 +39,333 @@ def get_english_font(size=14):
     ]
     return get_available_font_from_list(font_paths, size=size)
 
-def draw_vocab_graph(model_name: str, charset_stats:dict, vocab_size:int, width=100, height=100, cell_size=60, margin=300, palette=default_palette):
-    total_chars = sum([s['total'] for s in charset_stats.values()])
-
-    # 定义图像大小
-    image_width = width * cell_size + 1 + margin * 2
-    height = total_chars // width + 1
-    image_height = height * cell_size + 1 + margin * 8
+def draw_coverage_graph(model_name:str, lexicon:Lexicon, vocab_size:int, width:int=8500, height:int=10000):
+    # 计算各部分图像尺寸大小
+    image_width = width
+    image_height = height
+    margin = image_width // 30
 
     # 创建新的空白图像
-    image = Image.new("RGB", (image_width, image_height), "#FFFFFF")
-
-    # 获取图像的像素访问对象
-    pixels = image.load()
-
-    grid_color = (255,255,255, 40)
-
-    # 根据map绘制栅格
+    image = Image.new("RGB", (image_width, image_height), constants.PALETTE_BACKGROUND)
     draw = ImageDraw.Draw(image)
-    # 画上底图
-    draw.rectangle((margin, margin, width * cell_size + margin, height * cell_size + margin), fill='#EEEEEE')
-    # 画每一个方块
+
+    # 绘制栅格区域
+    draw_coverage_region(draw,
+                         region=(margin, margin, image_width - margin, image_width - margin),
+                         lexicon=lexicon)
+
+    # 绘制文字区域
+    ## 标题
+    title = f"[ {model_name} ]"
+    ## 副标题
+    if lexicon.classifier.granularity == constants.GRANULARITY_TOKEN:
+        subtitle = "〔 词表 token 完整性覆盖图 〕"
+    elif lexicon.classifier.granularity == constants.GRANULARITY_CHARACTER:
+        subtitle = "〔 汉字完整性覆盖图 〕"
+    else:
+        raise ValueError(f"Unknown granularity: {lexicon.classifier.granularity}")
+    ## 辅助信息
+    total_items = lexicon.get_item_count()
+    granularity = lexicon.classifier.granularity
+    intact = 0
+    for _, value in lexicon:
+        intact += value['stats']['intact']
+    completeness = float(intact / total_items if total_items > 0 else 0)
+    auxiliary = [
+        f"[ vocab size: {vocab_size:,} ]",          # 字表大小
+        f"[ granularity: {granularity} ]",          # 颗粒度
+        f"[ completeness: {completeness:.2%} ]"     # 完整覆盖率
+    ]
+    ## 图例
+    legends = []
+    for category, value in lexicon:
+        intact = value['stats']['intact']
+        total = value['stats']['total']
+        completeness = f"({float(intact/total if total > 0 else 0):6.2%})"
+        legend = {
+            'color': value['color'],
+            'label': f'{category}：',
+            'value': f"{intact:6} / {total:6}  {completeness:>9}"
+        }
+        legends.append(legend)
+    draw_text_region(draw,
+                     (margin, image_width, image_width - margin, image_height - margin),
+                     title, subtitle, auxiliary, legends)
+    return image
+
+def draw_coverage_region(draw:ImageDraw, region:Tuple[int, int, int, int], lexicon:Lexicon):
+    ## 计算尺寸位置数值
+    x, y, x2, y2 = region
+    ### 计算最大正方形
+    max_width = x2 - x
+    max_height = y2 - y
+    max_size = min(max_width, max_height)
+    # region_height = y2 - y
+    ### 计算行、列数
+    total_items = lexicon.get_item_count()
+    num_of_cell_per_row = math.ceil(math.sqrt(total_items))
+    num_of_rows = math.ceil(total_items / num_of_cell_per_row)
+    ### 计算每个方块的尺寸
+    cell_size = (max_size) // num_of_cell_per_row
+    ### 计算方块区域的尺寸
+    region_width = cell_size * num_of_cell_per_row
+    region_height = cell_size * num_of_rows
+    ### 计算方块区域的位置
+    region_x = x + (max_size - region_width) // 2
+    region_y = y + (max_size - region_height) // 2
+    region_x2 = region_x + region_width
+    region_y2 = region_y + region_height
+
+    ## 画上底图
+    color_cell_region_background = constants.PALETTE_REGION_BACKGROUND
+    draw.rectangle((region_x, region_y, region_x2, region_y2),
+                    fill=color_cell_region_background)
+    ## 画每一个方块
     i = 0
-    level = 0
-    zh_font = get_chinese_font(int(cell_size*0.7))
-    for name, stats in charset_stats.items():
-        for j, m in enumerate(stats['map']):
-            x = i % width
-            y = i // width
-            c = ImageColor.getrgb(palette[level])
+    font = get_chinese_font(int(cell_size*0.7))
+    for category, value in lexicon:
+        for item in value['items']:
             # 画方块
-            draw.rectangle((x * cell_size + 1 + margin,
-                y * cell_size + 1 + margin,
-                x * cell_size + (cell_size-1) + margin,
-                y * cell_size + (cell_size-1) + margin
-                ), fill=lighten_color(c, 0.7-m))
-            ch = stats['chars'][j]
-            # 方块内填入文字
-            draw.text(
-                (x * cell_size + int(0.15*cell_size) + margin, y * cell_size - int(0.05*cell_size) + margin),
-                ch,
-                font=zh_font,
-                fill=lighten_color(c, 0.5-m))
+            if category in constants.CHARSET_CJK_SETS:
+                ## CJK字符宽，因此只显示一个字符
+                text = item['text'][0]
+            else:
+                text = item['text'][:2]
+            cell_x = region_x + (i % num_of_cell_per_row) * cell_size
+            cell_y = region_y + (i // num_of_cell_per_row) * cell_size
+            draw_coverage_cell(draw, (cell_x, cell_y),
+                               cell_size=cell_size,
+                               completeness=item['completeness'],
+                               color=value['color'],
+                               text=text,
+                               font=font)
             i += 1
-        level += 1
-    
-    # 在图片左下角写入模型名称
-    draw.text(
-        (margin + int(margin/4), image_height - margin - int(4.5*margin)),
-        "[ {} ]".format(model_name),
-        fill="#000000",
-        align="right",
-        font=get_english_font(int(margin*0.75)))
-    # 在模型名称下方写入字表大小
-    draw.text(
-        (margin + int(0.3*margin), image_height - margin - int(3.5*margin)),
-        "[ vocab size: {:,} ]".format(vocab_size),
-        fill="#000000",
-        align="right",
-        font=get_english_font(int(margin/2)))
 
-    # 在图片右下角写入字表统计信息
-    zh_font = get_chinese_font(int(margin*0.5))
+def draw_text_region(draw:ImageDraw, region:Tuple[int, int, int, int], title:str, subtitle:str, auxiliary:List[str], legends:List[Dict[str, str]]):
+    ## 计算文字区域相关数据
+    x, y, x2, y2 = region
+    width = x2 - x
+    ## 计算文字尺寸
+    margin = width // (30-2) # 给定的region去除了两侧margin
+    text_size_large = int(0.75 * margin)
+    text_size_small = int(0.5 * margin)
+    text_size_xsmall = int(0.4 * margin)
+    text_gap = int(0.1 * margin)
 
-    # 画字符集图例方块
-    legend_y = image_height - margin - int(3.5*margin)
-    box_width = int(margin / 2)
-    box_start_x = image_width - margin - int(15.5*margin)
-    box_start_y = legend_y + int(0.1*margin)
-    box_margin = int(0.2*box_width)
-    for i, color in enumerate(palette):
-        x = box_start_x
-        y = box_start_y + i * (box_width + box_margin)
-        draw.rectangle((x, y, x+box_width, y+box_width), fill=color)
-    # 画字符集名称
-    stats_name = ""
-    for name in charset_stats.keys():
-        stats_name += "{}:\n".format(name)
+    ### 左上角写入模型名称
+    draw_title(draw, (x, y), title, text_size_large)
+
+    ### 在模型名称下方写入辅助信息（字表大小、颗粒度、完整覆盖率）
+    auxiliary_x = x + text_gap
+    auxiliary_y = y + text_size_large + text_gap + text_size_small + text_gap
+    draw_auxiliary(draw, (auxiliary_x, auxiliary_y), auxiliary, text_size_small)
+
+    ### 右上角写入副标题
+    draw_subtitle(draw, (x2, y), subtitle, text_size_small)
+
+    ## 在图片右下角画类别图例
+    draw_legend(draw, (x2, y2), legends, text_size_xsmall)
+
+def draw_coverage_cell(draw:ImageDraw, xy:Tuple[int, int], cell_size:int, completeness:float, color:str, text:str=None, font=None):
+    x, y = xy
+    draw.rectangle((x + 1, y + 1, x + (cell_size-1), y + (cell_size-1)),
+        fill=lighten_color(color, 0.7-completeness))
+    # 画方块内文字
+    if cell_size > 40 and text is not None:
+        # 如果方块尺寸太小，则不显示文字了
+        # 方块内填入文字
+        draw.text((x + int(0.15*cell_size), y - int(0.05*cell_size)),
+            text,
+            font=font,
+            fill=lighten_color(color, 0.5-completeness))
+
+def draw_title(draw:ImageDraw, xy:Tuple[int, int], title:str, text_size:int):
+    if len(title) == 0:
+        return
+    x, y = xy
+    font = get_english_font(text_size)
     draw.text(
-        (image_width - margin - int(15*margin), legend_y),
-        stats_name,
-        fill="#000000",
+        (x, y),
+        title,
+        fill=constants.PALETTE_TEXT,
         align="left",
-        font=zh_font)
-    # 画字符集统计信息
-    stats_value = ""
-    for s in charset_stats.values():
-        stats_value += "{:4} / {:4}  ({:.2%})\n".format(s['known'], s['total'], float(s['known'])/s['total'])
+        font=font)
+
+def draw_subtitle(draw:ImageDraw, xy2:Tuple[int, int], subtitle:str, text_size:int):
+    if len(subtitle) == 0:
+        return
+    x2, y2 = xy2 # 文本框右上角坐标，但视为右下角，因此副标题将在文本框右上角外部
+    width = int(0.8 * (len(subtitle)+3) * text_size)
+    font = get_chinese_font(text_size)
     draw.text(
-        (image_width - margin - 6*margin, legend_y),
-        stats_value,
-        fill="#000000",
+        (x2 - width, y2 - text_size),
+        subtitle,
+        fill=constants.PALETTE_TEXT,
         align="right",
-        font=zh_font)
+        font=font)
 
-    return image
+def draw_auxiliary(draw:ImageDraw, xy:Tuple[int, int], subtitles:List[str], text_size:int):
+    if len(subtitles) == 0:
+        return
+    x, y = xy
+    text_gap = int(0.1 * text_size)
+    font = get_english_font(text_size)
+    for i, subtitle in enumerate(subtitles):
+        draw.text(
+            (x, y + i * (text_size+text_gap)),
+            subtitle,
+            fill=constants.PALETTE_TEXT,
+            align="left",
+            font=font)
 
+def draw_legend(draw:ImageDraw, xy2:Tuple[int, int], items:List[Dict[str, str]], text_size:int):
+    if len(items) == 0:
+        return
 
-from vocab_coverage.charsets import CharsetClassifier
-import math
+    if 'label' in items[0]:
+        max_label_length = max(len(item['label']) for item in items)
+        max_label_width = int(0.8*(max_label_length + 2) * text_size)
+    else:
+        max_label_width = 0
 
-def draw_vocab_embeddings(model_name:str, embeddings_2d:List[List[float]],
-                          vocab:List[str],
-                          charsets:List[str],
+    if 'value' in items[0]:
+        max_value_length = max(len(item['value']) for item in items)
+        max_value_width = int(0.5*(max_value_length + 2) * text_size)
+    else:
+        max_value_width = 0
+
+    if 'color' in items[0]:
+        box_size = text_size
+    else:
+        box_size = 0
+
+    x2, y2 = xy2 # 右下角坐标
+    text_gap = int(0.2 * text_size)
+    font_zh = get_chinese_font(text_size)
+
+    # 图例框（测试用）
+    # draw.rectangle((x2 - (box_size + text_gap + max_label_width + text_gap + max_value_width),
+    #                 y2 - (len(items) + 1) * (text_size + text_gap),
+    #                 x2,
+    #                 y2),
+    #                 outline="#aaaaaa")
+
+    for i, item in enumerate(items):
+        # 画图例方块
+        if 'color' in item:
+            item_x = x2 - (box_size + text_gap + max_label_width + text_gap + max_value_width)
+            item_y = y2 - (len(items) - i + 1) * (text_size + text_gap)
+            box_x = item_x
+            box_y = item_y + 2*text_gap
+            draw.rectangle((box_x, box_y, box_x+box_size, box_y+box_size),
+                        fill=item['color'])
+        # 画图例文字
+        if 'label' in item:
+            draw.text((item_x + box_size + 2*text_gap, item_y),
+                    item['label'], fill=constants.PALETTE_TEXT, font=font_zh)
+        # 画图例数值
+        if 'value' in item:
+            draw.text((item_x + box_size + text_gap + max_label_width, item_y),
+                      item['value'], fill=constants.PALETTE_TEXT, font=font_zh)
+
+def draw_vocab_embeddings(model_name:str,
+                          lexicon:Lexicon,
                           position:str,
-                          width=8000, height=8000,
-                          is_detailed=False,
+                          width:int=8500,
+                          height:int=10000,
                           debug=False):
-    vocab_size = len(vocab)
+    vocab_size = lexicon.get_item_count()
+    granularity = lexicon.get_granularity()
 
-    # calculate image size, margin, etc.
-    margin = int(width / 20)
-    image_width = width + margin * (2+2) # outer + inner margin
-    image_height = height + margin * (2+2+3) # outer + inner margin + banner
+    # 计算图片尺寸、边距等
+    image_width = width
+    image_height = height
+    margin = image_width // 30
 
-    # normalize embeddings
-    scaler = MinMaxScaler()
-    embeddings_2d_norm = scaler.fit_transform(embeddings_2d)
-
-    # draw embeddings
-    image = Image.new('RGB', (image_width, image_height), (255, 255, 255))
+    # 创建画布
+    image = Image.new('RGB', (image_width, image_height), constants.PALETTE_BACKGROUND)
     draw = ImageDraw.Draw(image)
-    draw.rectangle((margin, margin, width + (3*margin), height + (3*margin)), fill='#F0F0F0')
 
-    # CharsetClassifier
-    classifier = CharsetClassifier(charsets=charsets, is_detailed=is_detailed)
-    word_type_count = {k: 0 for k in classifier.get_types()}
-    palette = classifier.get_palette(with_prefix_palette=True)
+    # 绘制向量分布区域
+    draw_embedding_region(draw,
+                          region=(margin, margin, image_width-margin, image_width-margin),
+                          lexicon=lexicon,
+                          debug=debug)
 
-    if debug:
-        # logger.debug(f"palette: {palette}")
-        logger.debug(f"[{model_name}]: draw embedding point: {vocab_size}")
-
-    # draw embedding point
-    # clip font size to [12, margin]
-    font_size = int(margin * 2000 / vocab_size)
-    font_size = int(min(max(font_size, 12), margin))
-    zh_font = get_chinese_font(font_size)
-    if debug:
-        logger.debug(f"font size: {font_size}, font: {zh_font.getname()}")
-    for i, (x, y) in enumerate(embeddings_2d_norm):
-        word = vocab[i]
-        word_type = classifier.get_word_type(word)
-        word_type_count[word_type] += 1
-
-        if word.startswith('##'):
-            word_type = '##' + word_type
-
-        c = palette[word_type]
-
-        # draw text
-        x = x * width + margin * 2
-        y = y * height + margin * 2
-        try:
-            draw.text((x, y), word, fill=c, stroke_width=1, stroke_fill='#F0F0F0', font=zh_font)
-        except Exception as e:
-            logger.error(f"[{model_name}]: warning: draw text error: {e}")
-
-    if debug:
-        logger.debug(f"[{model_name}]: token type counts: {word_type_count}")
-    # draw model name
-    font_size = int(margin / 2)
-    draw.text((margin, image_height - (3*margin)),
-        f'[ {model_name} ]',
-        fill='#000000',
-        font=get_english_font(font_size))
-
-    # draw embedding type
-    draw.text((margin, image_height - int(2.3*margin)),
-        f"[ {position} embeddings ]",
-        fill='#000000',
-        font=get_english_font(int(font_size/1.5)))
-
-    # draw vocab size
-    draw.text((margin, image_height - int(1.8*margin)),
-        "[ vocab size: {:,} ]".format(vocab_size),
-        fill='#000000',
-        font=get_english_font(int(font_size/1.5)))
-
-    # draw legend
-    font_size = int(margin / 3)
-    box_width = int(margin / 2)
-    column = 4
-    column_width = int(box_width * 6)
-    column_size = math.ceil(len(word_type_count) / column)
-    font_label = get_chinese_font(font_size)
-    font_count = get_chinese_font(int(font_size/1.7))
-    for i, word_type in enumerate(word_type_count.keys()):
-        row = int(i % column_size)
-        col = int(i / column_size)
-        x = image_width - ((column)*column_width) + (col * column_width)
-        y = image_height - ((column_size-row)*(box_width*1.4)) - (margin)
-        color = palette[word_type]
-        # logger.debug(i, row, col, x, y, word_type, color)
-
-        # draw box
-        draw.rectangle((x, y, x+box_width, y+box_width), fill=color)
-        # logger.debug(word_type, color)
-
-        # draw label
-        draw.text((x+box_width*1.5, int(y - font_size*0.3)),
-            f'{word_type}',
-            fill='#000000',
-            font=font_label)
-        # draw count
-        draw.text((x+box_width*1.5, int(y + font_size*1)),
-            f'({word_type_count[word_type]})',
-            fill='#000000',
-            font=font_count)
+    # 绘制文字区域
+    ## 标题
+    title = f'[ {model_name} ]'
+    ## 副标题
+    position_name = {
+        constants.EMBEDDING_POSITION_INPUT: '输入端',
+        constants.EMBEDDING_POSITION_OUTPUT: '输出端',
+    }
+    if granularity == constants.GRANULARITY_TOKEN:
+        subtitle = f"〔 词表向量{position_name[position]}分布图 〕"
+        vocab_name = 'vocab'
+    elif granularity == constants.GRANULARITY_CHARACTER:
+        subtitle = f"〔 汉字向量{position_name[position]}分布图 〕"
+        vocab_name = 'character'
+    else:
+        raise ValueError(f"不支持的颗粒度：{granularity}")
+    ## 辅助信息
+    auxiliary = [
+        f"[ {vocab_name} size: {vocab_size} ]",
+        f"[ granularity: {granularity} ]",
+        f"[ position: {position} ]",
+    ]
+    ## 图例
+    legends = []
+    for category, value in lexicon:
+        legend = {
+            'color': value['color'],
+            'label': f'{category}：',
+            'value': f"{len(value['items']):6}"
+        }
+        legends.append(legend)
+    ## 绘制
+    draw_text_region(draw,
+                     (margin, image_width, image_width - margin, image_height - margin),
+                     title, subtitle, auxiliary, legends)
 
     return image
+
+def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lexicon:Lexicon, debug:bool=False):
+    ## 计算尺寸位置数值
+    x, y, x2, y2 = region
+    width = x2 - x
+    height = y2 - y
+    margin = width // 28
+    # 画底图
+    draw.rectangle((x, y, x2, y2), fill=constants.PALETTE_REGION_BACKGROUND)
+    # 字体
+    font_size = int(margin * 2000 / lexicon.get_item_count())
+    font_size = int(min(max(font_size, 12), margin))
+    font = get_chinese_font(font_size)
+    # 画字
+    if debug:
+        logger.debug("> font size: %d, font: %s", font_size, font.getname())
+    # 倒序类别画字，保证前面的类别不会被后面的类别覆盖
+    for category, value in reversed(list(lexicon)):
+        count = 0
+        for item in value['items']:
+            # 画字
+            if 'embedding' not in item:
+                logger.warning("> item has no embedding: %s", item)
+                continue
+            embedding = item['embedding']
+            padding = margin // 4
+            item_x = (x+padding) + embedding[0] * (width-font_size-padding*2)
+            item_y = (x+padding) + embedding[1] * (height-font_size-padding*2)
+            # if debug:
+            #     logger.debug(">> %s: %s, %s", category, item['text'], embedding)
+            color = value['color']
+            if item['text'].startswith('##'):
+                color = lighten_color(color, 0.4)
+            draw.text((item_x, item_y), item['text'],
+                      fill=color,
+                      stroke_fill=constants.PALETTE_REGION_BACKGROUND, stroke_width=1,
+                      font=font)
+            count += 1
+        if debug:
+            logger.debug("> %s: %d", category, count)
