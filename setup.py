@@ -21,6 +21,7 @@ setup(
         'python-dotenv',
         'umap-learn',
         'einops',
+        'transformers_stream_generator',
     ],
     extras_require={
         'cuml': ['cudf-cu12', 'cuml-cu12'],
