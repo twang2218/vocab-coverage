@@ -44,6 +44,9 @@ generate-coverage:
 generate-embedding:
 	python vocab_coverage/generate.py embedding --debug
 
+generate-embedding-word:
+	python vocab_coverage/generate.py embedding --debug --granularity=word
+
 generate-thumbnails:
 	python vocab_coverage/generate.py thumbnails --debug
 

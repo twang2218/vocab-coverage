@@ -213,3 +213,83 @@ def get_token_charsets(debug:bool=False) -> dict[str, dict]:
     logger.info('总字数：%d', total)
 
     return charsets
+
+def get_thuocl_dicts(debug:bool=False) -> dict[str, dict]:
+    # http://thuocl.thunlp.org/
+    # CSDN博客 时间：2014.07-2016.07 文档数：3785976
+    # 新浪新闻 时间：2008.01-2016.11 文档数：8421097
+    # 搜狗语料 文档数：729008561
+    logger.info('获取清华大学中文词表...')
+
+    corpus = {
+        'CSDN博客': {'name': 'CSDN博客', 'num_of_documents': 3785976},
+        '新浪新闻': {'name': '新浪新闻', 'num_of_documents': 8421097},
+        '搜狗语料': {'name': '搜狗语料', 'num_of_documents': 729008561},
+    }
+
+    dicts = {
+        'IT': {'url': 'http://thuocl.thunlp.org/source/THUOCL_it.txt', 'corpus': corpus['CSDN博客'], 'color': constants.PALETTE_WORD_IT},
+        '财经': {'url': 'http://thuocl.thunlp.org/source/THUOCL_caijing.txt', 'corpus': corpus['新浪新闻'], 'color': constants.PALETTE_WORD_FINANCE},
+        '成语': {'url': 'http://thuocl.thunlp.org/source/THUOCL_chengyu.txt', 'corpus': corpus['新浪新闻'], 'color': constants.PALETTE_WORD_IDIOM},
+        '地名': {'url': 'http://thuocl.thunlp.org/source/THUOCL_diming.txt', 'corpus': corpus['搜狗语料'], 'color': constants.PALETTE_WORD_PLACE},
+        '历史名人': {'url': 'http://thuocl.thunlp.org/source/THUOCL_lishimingren.txt', 'corpus': corpus['新浪新闻'], 'color': constants.PALETTE_WORD_PERSON},
+        '诗词': {'url': 'http://thuocl.thunlp.org/source/THUOCL_poem.txt', 'corpus': corpus['新浪新闻'], 'color': constants.PALETTE_WORD_POEM},
+        '医学': {'url': 'http://thuocl.thunlp.org/source/THUOCL_medical.txt', 'corpus': corpus['新浪新闻'], 'color': constants.PALETTE_WORD_MEDICAL},
+        '饮食': {'url': 'http://thuocl.thunlp.org/source/THUOCL_food.txt', 'corpus': corpus['搜狗语料'], 'color': constants.PALETTE_WORD_FOOD},
+        '法律': {'url': 'http://thuocl.thunlp.org/source/THUOCL_law.txt', 'corpus': corpus['搜狗语料'], 'color': constants.PALETTE_WORD_LAW},
+        '汽车': {'url': 'http://thuocl.thunlp.org/source/THUOCL_car.txt', 'corpus': corpus['搜狗语料'], 'color': constants.PALETTE_WORD_CAR},
+        '动物': {'url': 'http://thuocl.thunlp.org/source/THUOCL_animal.txt', 'corpus': corpus['搜狗语料'], 'color': constants.PALETTE_WORD_ANIMAL},
+    }
+    total = 0
+    for name, value in dicts.items():
+        r = requests.get(value['url'], timeout=30)
+        r.encoding = r.apparent_encoding
+        lines = r.text.split('\n')
+        if len(lines) == 1:
+            lines = r.text.split('\r')
+        print('\n'.join(lines[:3]+['...']))
+        value['items'] = []
+        for l in lines:
+            l = l.strip()
+            if len(l) > 0:
+                if l[0] == '#':
+                    continue
+                w = l.split('\t')
+                if len(w) > 0:
+                    try:
+                        freq = int(w[1])
+                    except ValueError:
+                        freq = 0
+                    except IndexError:
+                        freq = 0
+                        logger.warning("IndexError: %s", l)
+                    value['items'].append({
+                        'text': w[0],
+                        'frequency': freq,
+                    })
+        # 按照词频排序
+        value['items'].sort(key=lambda x: x['frequency'], reverse=True)
+        if debug:
+            logger.debug('%s \t词数：%d', name, len(value['items']))
+        total += len(value['items'])
+    if debug:
+        logger.debug('总词数：%d', total)
+    return dicts
+
+def get_chinese_word_dicts(debug:bool=False) -> dict[str, dict]:
+    thuocl_dicts = get_thuocl_dicts(debug=debug)
+    logger.info('精简词表...')
+    threshold_per_category = 2000
+    dicts = {}
+    for name, value in thuocl_dicts.items():
+        dicts[name] = {
+            # 'items': value['items'][:threshold_per_category],
+            'texts': [item['text'] for item in value['items'][:threshold_per_category]],
+            'color': value['color']
+        }
+        if debug:
+            logger.debug('%s \t词数：%d', name, len(dicts[name]['texts']))
+    total = sum(len(value['texts']) for value in dicts.values())
+    if debug:
+        logger.debug('总词数：%d', total)
+    return dicts

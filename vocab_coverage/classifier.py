@@ -6,9 +6,11 @@ from vocab_coverage import constants
 
 FILE_CHARSET_CHAR = 'charsets_char.json'
 FILE_CHARSET_TOKEN = 'charsets_token.json'
+FILE_DICT_WORD = 'dict_word.json'
 FILE_CHARSET_DICT = {
     constants.GRANULARITY_TOKEN: FILE_CHARSET_TOKEN,
     constants.GRANULARITY_CHARACTER: FILE_CHARSET_CHAR,
+    constants.GRANULARITY_WORD: FILE_DICT_WORD
 }
 
 class Classifier:
