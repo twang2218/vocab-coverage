@@ -107,6 +107,7 @@ def generate_embedding(models:List[dict],
             continue
         for model_name in section["models"]:
             try:
+                # check embedding files
                 position_candidates = []
                 for position in positions:
                     embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder)
@@ -125,6 +126,9 @@ def generate_embedding(models:List[dict],
                     logger.debug("[%s] No [%s] embedding at %s is required to be generated.", model_name, granularity, positions)
                     continue
 
+                # release cache
+                release_resource(model_name, clear_cache=cleanup)
+
                 # generate embedding
                 lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
                 embedding_analysis(model_name,
@@ -135,8 +139,6 @@ def generate_embedding(models:List[dict],
                                    folder=folder,
                                    debug=debug)
                 logger.info("[%s] Generated [%s] embedding at %s", model_name, granularity, position_candidates)
-                # cleanup
-                release_resource(model_name, clear_cache=cleanup)
             except Exception as ex:
                 logger.error("[%s] embedding_analysis() failed. [%s]", model_name, ex)
                 traceback.print_exc()

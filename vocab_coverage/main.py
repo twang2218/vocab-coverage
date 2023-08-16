@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
 # pylint: disable=wrong-import-position
 from vocab_coverage import coverage_analysis, embedding_analysis
-from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets
+from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets, get_chinese_word_dicts
 from vocab_coverage.utils import logger
 from vocab_coverage.classifier import Classifier
 from vocab_coverage.lexicon import load_lexicon
@@ -74,6 +74,8 @@ def main():
             charsets = get_chinese_charsets(debug=True)
         elif args.granularity == constants.GRANULARITY_TOKEN:
             charsets = get_token_charsets(debug=True)
+        elif args.granularity == constants.GRANULARITY_WORD:
+            charsets = get_chinese_word_dicts(debug=True)
         else:
             logger.error('不支持的字表类型：%s', args.granularity)
             sys.exit(1)

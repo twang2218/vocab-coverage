@@ -6,6 +6,7 @@ import os
 import shutil
 import torch
 import inspect
+import gc
 
 def has_parameter(fn, parameter_name:str):
     try:
@@ -52,6 +53,7 @@ def lighten_color(color, amount=0.2):
     return adjusted_color
 
 def release_resource(model_name:str = "", clear_cache=False):
+    gc.collect()
     if len(model_name) > 0:
         label = f"[{model_name}]: "
     if torch.cuda.is_available():
@@ -75,7 +77,7 @@ def get_logger():
     l.addHandler(ch)
     # 创建FileHandler处理器，用于输出到文件
     # 获取当前日期，生成日期字符串，用于日志文件名
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    date_str = datetime.datetime.now().strftime('%Y-%m-%d.%H-%M')
     log_file = f"{__package__}_{date_str}.log"
     file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)

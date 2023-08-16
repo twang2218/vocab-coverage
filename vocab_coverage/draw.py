@@ -62,6 +62,8 @@ def draw_coverage_graph(model_name:str, lexicon:Lexicon, vocab_size:int, width:i
         subtitle = "〔 词表 token 完整性覆盖图 〕"
     elif lexicon.classifier.granularity == constants.GRANULARITY_CHARACTER:
         subtitle = "〔 汉字完整性覆盖图 〕"
+    elif lexicon.classifier.granularity == constants.GRANULARITY_WORD:
+        subtitle = "〔 中文多字词完整性覆盖图 〕"
     else:
         raise ValueError(f"Unknown granularity: {lexicon.classifier.granularity}")
     ## 辅助信息
@@ -242,7 +244,9 @@ def draw_legend(draw:ImageDraw, xy2:Tuple[int, int], items:List[Dict[str, str]],
     x2, y2 = xy2 # 右下角坐标
     text_gap = int(0.2 * text_size)
     font_zh = get_chinese_font(text_size)
-
+    MAX_ROWS_PER_COL = 6
+    cols = math.ceil(len(items) / MAX_ROWS_PER_COL)
+    rows_per_col = math.ceil(len(items) / cols)
     # 图例框（测试用）
     # draw.rectangle((x2 - (box_size + text_gap + max_label_width + text_gap + max_value_width),
     #                 y2 - (len(items) + 1) * (text_size + text_gap),
@@ -251,14 +255,18 @@ def draw_legend(draw:ImageDraw, xy2:Tuple[int, int], items:List[Dict[str, str]],
     #                 outline="#aaaaaa")
 
     for i, item in enumerate(items):
+        current_col = i // rows_per_col
         # 画图例方块
         if 'color' in item:
-            item_x = x2 - (box_size + text_gap + max_label_width + text_gap + max_value_width)
-            item_y = y2 - (len(items) - i + 1) * (text_size + text_gap)
+            item_x = x2 - (box_size + text_gap + max_label_width + text_gap + max_value_width) * (cols - current_col)
+            item_y = y2 - (rows_per_col - (i%rows_per_col) + 1) * (text_size + text_gap)
             box_x = item_x
             box_y = item_y + 2*text_gap
             draw.rectangle((box_x, box_y, box_x+box_size, box_y+box_size),
                         fill=item['color'])
+        else:
+            item_x = x2 - (text_gap + max_label_width + text_gap + max_value_width) * (cols - current_col)
+            item_y = y2 - (rows_per_col - (i%rows_per_col) + 1) * (text_size + text_gap)
         # 画图例文字
         if 'label' in item:
             draw.text((item_x + box_size + 2*text_gap, item_y),
@@ -268,7 +276,7 @@ def draw_legend(draw:ImageDraw, xy2:Tuple[int, int], items:List[Dict[str, str]],
             draw.text((item_x + box_size + text_gap + max_label_width, item_y),
                       item['value'], fill=constants.PALETTE_TEXT, font=font_zh)
 
-def draw_vocab_embeddings(model_name:str,
+def draw_embeddings_graph(model_name:str,
                           lexicon:Lexicon,
                           position:str,
                           width:int=8500,
@@ -292,6 +300,11 @@ def draw_vocab_embeddings(model_name:str,
                           lexicon=lexicon,
                           debug=debug)
 
+    # 绘制向量分布区周边，以覆盖向量分布区超出区域的部分
+    draw.rectangle((image_width-margin, margin, image_width, image_width),
+                     fill=constants.PALETTE_BACKGROUND)
+    draw.rectangle((margin, image_width-margin, image_width, image_width),
+                     fill=constants.PALETTE_BACKGROUND)
     # 绘制文字区域
     ## 标题
     title = f'[ {model_name} ]'
@@ -306,6 +319,9 @@ def draw_vocab_embeddings(model_name:str,
     elif granularity == constants.GRANULARITY_CHARACTER:
         subtitle = f"〔 汉字向量{position_name[position]}分布图 〕"
         vocab_name = 'character'
+    elif granularity == constants.GRANULARITY_WORD:
+        subtitle = f"〔 中文多字词向量{position_name[position]}分布图 〕"
+        vocab_name = 'word'
     else:
         raise ValueError(f"不支持的颗粒度：{granularity}")
     ## 辅助信息
@@ -362,7 +378,11 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
             color = value['color']
             if item['text'].startswith('##'):
                 color = lighten_color(color, 0.4)
-            draw.text((item_x, item_y), item['text'],
+            if 'tokenized_text' in item:
+                text = '/'.join(item['tokenized_text'])
+            else:
+                text = item['text']
+            draw.text((item_x, item_y), text,
                       fill=color,
                       stroke_fill=constants.PALETTE_REGION_BACKGROUND, stroke_width=1,
                       font=font)

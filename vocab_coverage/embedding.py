@@ -6,10 +6,11 @@ from typing import List
 
 import numpy as np
 import torch
+from tqdm import tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizer, BatchEncoding
-from vocab_coverage.draw import draw_vocab_embeddings
+from vocab_coverage.draw import draw_embeddings_graph
 from vocab_coverage.loader import load_model, load_tokenizer
-from vocab_coverage.utils import generate_embedding_filename, logger
+from vocab_coverage.utils import generate_embedding_filename, has_parameter, logger
 from vocab_coverage.reducer import reduce_to_2d
 from vocab_coverage.lexicon import Lexicon
 from vocab_coverage import constants
@@ -31,7 +32,6 @@ def get_token_embeddings(model_name:str, model:PreTrainedModel, debug:bool=False
 
 def get_sentences_embeddings(model_name:str, model:PreTrainedModel, tokenizer:PreTrainedTokenizer,
                            sentences:List[str]|List[int],
-                        #    position:str=constants.EMBEDDING_POSITION_OUTPUT,
                            positions:List[str]=None,
                            max_length:int=256,
                            batch_size:int=32):
@@ -157,9 +157,11 @@ def get_embeddings(model_name:str,
                    tokenizer:PreTrainedTokenizer,
                    lexicon:Lexicon,
                    granularity:str=constants.GRANULARITY_TOKEN,
-                #    position:str=constants.EMBEDDING_POSITION_INPUT,
                    positions:List[str]=None,
                    debug:bool=False):
+    if debug:
+        logger.debug("[%s]: get_embeddings(): granularity: %s, positions: %s",
+                     model_name, granularity, positions)
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     embeddings = {position: [] for position in positions}
@@ -175,9 +177,16 @@ def get_embeddings(model_name:str,
         for _, value in lexicon:
             for item in value['items']:
                 texts.append(item['text'])
+    elif granularity == constants.GRANULARITY_WORD:
+        for _, value in lexicon:
+            for item in value['items']:
+                texts.append(item['text'])
     # batch calculation
     batch_size = 100
-    for i in range(0, len(texts), batch_size):
+    logger.debug("[%s]: get_embeddings(): batch_size: %d", model_name, batch_size)
+    progress = tqdm(range(0, len(texts), batch_size))
+    for i in progress:
+        progress.set_description(f"get_sentences_embeddings({i}/{len(texts)})")
         batch_texts = texts[i:i+batch_size]
         batch_embeddings = get_sentences_embeddings(model_name, model, tokenizer, batch_texts, positions)
         for position in positions:
@@ -185,7 +194,8 @@ def get_embeddings(model_name:str,
                 embeddings[position] = batch_embeddings[position]
             else:
                 embeddings[position] = np.concatenate((embeddings[position], batch_embeddings[position]), axis=0)
-            logger.info("[%s]: batch_embeddings: %s, embeddings: %s", model_name, batch_embeddings[position].shape, embeddings[position].shape)
+            # if debug:
+            #     logger.debug("[%s]: batch_embeddings: %s, embeddings: %s", model_name, batch_embeddings[position].shape, embeddings[position].shape)
         # if debug:
         #     for i, text in enumerate(batch_texts):
         #         logger.debug("[%s]: %s: %s", model_name, text, batch_embeddings[i][:5])
@@ -211,23 +221,35 @@ def embedding_analysis(model_name:str,
             logger.warning("[%s] only 'text-embedding-ada-002' is supported, skip...", model_name)
             return
 
+    # 生成文件名
+    positions_candidates = []
+    filenames = {}
+    for position in positions:
+        filename = generate_embedding_filename(model_name=model_name,
+                                                granularity=granularity,
+                                                position=position,
+                                                postfix=postfix,
+                                                folder=folder)
+        ## 跳过已存在的文件
+        if not override and os.path.exists(filename):
+            logger.warning("[%s]: %s exists, skip...", model_name, filename)
+        else:
+            filenames[position] = filename
+            positions_candidates.append(position)
+    if len(positions_candidates) == 0:
+        logger.warning("[%s]: no positions to process, skip...", model_name)
+        return
+    positions = positions_candidates
+
     tokenizer = load_tokenizer(model_name, debug=debug)
     model = load_model(model_name, debug=debug)
+
 
     # 获取向量
     embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)
     # 处理不同位置的向量
     for position in positions:
         # 生成文件名
-        filename = generate_embedding_filename(model_name=model_name,
-                                               granularity=granularity,
-                                               position=position,
-                                               postfix=postfix,
-                                               folder=folder)
-        ## 跳过已存在的文件
-        if not override and os.path.exists(filename):
-            logger.warning("[%s]: %s exists, skip...", model_name, filename)
-            continue
 
         # Qwen/Qwen-7B-Chat
         ## 其 vocab 中为 bytes，需要转换为方便可视化的 string
@@ -258,20 +280,22 @@ def embedding_analysis(model_name:str,
                         logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
                     i += 1
             # 降维
-            embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, debug=debug)
+            embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
             # 为 lexicon 添加 embedding 信息
             i = 0
             for _, value in lexicon:
                 for item in value['items']:
                     item['embedding'] = embeddings_2d[i]
-                    # if debug:
-                    #     logger.debug("[%s]: '%s': %s => %s", model_name, item['text'], embeddings[i][:5], embeddings_2d[i])
+                    kwargs = {}
+                    if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
+                        kwargs['add_special_tokens'] = False
+                    item['tokenized_text'] = tokenizer.tokenize(item['text'], **kwargs)
                     i += 1
             # 绘制图像
             if debug:
                 logger.debug("[%s]: draw %s_embeddings %s...",
                              model_name, position, embeddings_2d.shape)
-            image = draw_vocab_embeddings(
+            image = draw_embeddings_graph(
                 model_name=model_name,
                 lexicon=lexicon,
                 position=position,
@@ -282,6 +306,12 @@ def embedding_analysis(model_name:str,
                 logger.warning("[%s]: 生成 [%s] %s 向量图像失败...", model_name, granularity, position)
                 continue
             
+            filename = filenames[position]
             logger.info("[%s]: 保存 [%s] %s 向量图像 (%s)...", model_name, granularity, position, filename)
             image.save(filename, quality=80, optimize=True)
+    
+    # 释放资源
+    del model
+    del tokenizer
+
     return

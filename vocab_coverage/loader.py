@@ -254,5 +254,8 @@ def load_wordbook(model_name:str, granularity:str=constants.GRANULARITY_TOKEN, d
     elif granularity == constants.GRANULARITY_CHARACTER:
         # 返回 None，表示将使用 classifier 的内容做语料
         return None
+    elif granularity == constants.GRANULARITY_WORD:
+        # 返回 None，表示将使用 classifier 的内容做语料
+        return None
     else:
         raise ValueError(f"[{model_name}]: unknown granularity: {granularity}")

@@ -85,6 +85,7 @@
   - RicardoLee/Llama2-base-7B-Chinese-50W-Full2LoRA
   - wenge-research/yayi-7b-llama2
   - LinkSoul/Chinese-Llama-2-7b
+  - ziqingyang/chinese-llama-2-7b
 - group: llm-zh
   name: 中文大语言模型
   models:
