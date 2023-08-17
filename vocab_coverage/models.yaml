@@ -2,106 +2,221 @@
 - group: bert
   name: 原生的BERT类的模型
   models:
+  # 2019-06-18
   - bert-base-cased
-  - bert-base-multilingual-cased
-  - roberta-large
+  # 2019-07-16
   - xlnet-base-cased
+  # 2019-11-05
   - albert-base-v2
-  - xlm-roberta-base
+  # 2019-12-19
+  - roberta-large
+  # 2020-03-25
   - google/electra-base-discriminator
-- group: t5
-  name: Google T5 系列模型 (Encoder-Decoder)
-  models:
-  - google/flan-t5-base
+
 - group: sbert
   name: Sentence Transformers 提供的模型
   models:
-  - sentence-transformers/all-MiniLM-L6-v2
-  - sentence-transformers/all-mpnet-base-v2
-  - sentence-transformers/all-roberta-large-v1
-  - sentence-transformers/multi-qa-mpnet-base-dot-v1
+  # 2021-05-20
   - sentence-transformers/paraphrase-MiniLM-L6-v2
-  - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-  - sentence-transformers/paraphrase-multilingual-mpnet-base-v2
-  - sentence-transformers/distiluse-base-multilingual-cased-v2
-- group: ernie
-  name: 百度 ERNIE 系列模型
+  # 2021-08-18
+  - sentence-transformers/all-roberta-large-v1
+  # 2021-08-24
+  - sentence-transformers/multi-qa-mpnet-base-dot-v1
+  # 2021-08-31
+  - sentence-transformers/all-MiniLM-L6-v2
+  # 2021-08-31
+  - sentence-transformers/all-mpnet-base-v2
+
+- group: bert-multilingual
+  name: 多语言 BERT 系列模型
   models:
-  - nghuyong/ernie-1.0-base-zh
-  - nghuyong/ernie-3.0-nano-zh
-  - nghuyong/ernie-3.0-base-zh
-  - nghuyong/ernie-3.0-xbase-zh
-  - nghuyong/ernie-health-zh
-  - nghuyong/ernie-gram-zh
+  # 2019-06-18
+  - bert-base-multilingual-cased
+  # 2021-05-19
+  - sentence-transformers/paraphrase-MiniLM-L12-v2
+  # 2020-06-19
+  - microsoft/Multilingual-MiniLM-L12-H384
+  # 2021-06-02
+  - sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  # 2023-06-22
+  - shibing624/text2vec-base-multilingual
+  # 2019-12-19
+  - xlm-roberta-base
+  # 2021-05-20
+  - sentence-transformers/paraphrase-mpnet-base-v2
+  # 2021-06-02
+  - sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+  # 2019-12-05
+  - distilbert-base-multilingual-cased
+  # 2021-06-23
+  - sentence-transformers/distiluse-base-multilingual-cased-v2
+
 - group: bert-zh
   name: BERT 中文模型
   models:
+  # 2019-06-18
   - bert-base-chinese
-  - moka-ai/m3e-base
-  - junnyu/wobert_chinese_plus_base
-- group: hfl
-  name: 哈工大 HFL 提供的模型
-  models:
+  # 2019-12-19
   - hfl/chinese-bert-wwm-ext
+  # 2020-11-03
   - hfl/chinese-macbert-base
+  # 2020-11-13
   - hfl/chinese-legal-electra-base-generator
-- group: hfl-llama
-  name: 哈工大 HFL 提供的 LLaMA 类的中文模型
-  models:
-  - minlik/chinese-llama-7b-merged
-  - minlik/chinese-llama-plus-7b-merged
-  - minlik/chinese-alpaca-7b-merged
-  - minlik/chinese-alpaca-plus-7b-merged
-- group: shibing624
-  name: 徐明提供的模型
-  models:
+  # 2021-04-18
+  - junnyu/wobert_chinese_plus_base
+  # 2021-05-08
+  - SIKU-BERT/sikubert
+  # 2021-05-08
+  - SIKU-BERT/sikuroberta
+  # 2021-09-10
+  - fnlp/bart-base-chinese
+  # 2021-09-29
+  - Langboat/mengzi-bert-base
+  # 2022-01-23
   - shibing624/text2vec-base-chinese
+  # 2023-06-06
+  - moka-ai/m3e-base
+  # 2023-08-05
+  - BAAI/bge-base-zh
+
+- group: ernie
+  name: 百度 ERNIE 系列模型及其衍生模型
+  models:
+  # 2020-07-17
+  - nghuyong/ernie-1.0-base-zh
+  # 2022-04-04
+  - nghuyong/ernie-gram-zh
+  # 2022-05-31
+  - nghuyong/ernie-health-zh
+  # 2022-08-22
+  - nghuyong/ernie-3.0-nano-zh
+  # 2022-08-22
+  - nghuyong/ernie-3.0-base-zh
+  # 2022-10-22
+  - nghuyong/ernie-3.0-xbase-zh
+  # 2023-06-16
   - shibing624/text2vec-base-chinese-sentence
+  # 2023-06-19
   - shibing624/text2vec-base-chinese-paraphrase
-  - shibing624/text2vec-base-multilingual
+
+- group: t5
+  name: Google T5 系列模型 (Encoder-Decoder)
+  models:
+  # 2021-10-08
+  - Langboat/mengzi-t5-base
+  # 2022-06-17
   - shibing624/mengzi-t5-base-chinese-correction
-  - shibing624/chinese-alpaca-plus-7b-hf
+  # 2022-10-21
+  - google/flan-t5-base
+
 - group: llama
   name: LLAMA 及衍生模型
   models:
+  # 2023-03-05
   - decapoda-research/llama-7b-hf
-  - TheBloke/guanaco-7B-HF
+  # 2023-04-07
   - TheBloke/koala-7B-HF
+  # 2023-04-26
   - TheBloke/wizardLM-7B-HF
-  - lmsys/vicuna-7b-v1.3
+  # 2023-05-05
   - togethercomputer/RedPajama-INCITE-7B-Chat
+  # 2023-05-26
+  - TheBloke/guanaco-7B-HF
+  # 2023-06-06
   - openlm-research/open_llama_7b
+  # 2023-06-18
+  - lmsys/vicuna-7b-v1.3
+
+- group: llama-zh
+  name: LLAMA 中文衍生模型
+  models:
+  # 2023-04-10
+  - minlik/chinese-llama-7b-merged
+  # 2023-04-10
+  - minlik/chinese-alpaca-7b-merged
+  # 2023-04-28
+  - minlik/chinese-llama-plus-7b-merged
+  # 2023-04-28
+  - minlik/chinese-alpaca-plus-7b-merged
+  # 2023-05-01
+  - shibing624/chinese-alpaca-plus-7b-hf
+  # 2023-05-08
+  - IDEA-CCNL/Ziya-LLaMA-7B-Reward
+  # 2023-06-07 update from 2023-05-16
+  - IDEA-CCNL/Ziya-LLaMA-13B-v1.1
+
 - group: llama2
   name: LLAMA 2 及衍生模型
   models:
+  # 2023-07-18
   - meta-llama/Llama-2-7b-hf
+  # 2023-07-18
   - meta-llama/Llama-2-7b-chat-hf
+
 - group: llama2-zh
   name: LLAMA 2 中文衍生模型
   models:
-  - FlagAlpha/Llama2-Chinese-7b-Chat
-  - RicardoLee/Llama2-chat-Chinese-50W
-  - RicardoLee/Llama2-base-7B-Chinese-50W-pre_release
-  - RicardoLee/Llama2-base-7B-Chinese-50W-Full2LoRA
-  - wenge-research/yayi-7b-llama2
+  # 2023-07-21
   - LinkSoul/Chinese-Llama-2-7b
+  # 2023-07-21
+  - RicardoLee/Llama2-chat-Chinese-50W
+  # 2023-07-23
+  - FlagAlpha/Llama2-Chinese-7b-Chat
+  # 2023-07-23
+  - wenge-research/yayi-7b-llama2
+  # 2023-07-25
+  - OpenBuddy/openbuddy-llama2-13b-v8.1-fp16
+  # 2023-07-25
+  - YeungNLP/firefly-llama2-13b
+  # 2023-07-27
   - ziqingyang/chinese-llama-2-7b
+  # 2023-08-10
+  - yentinglin/Taiwan-LLaMa-v1.0
+
+- group: bloom
+  name: Bloom 及衍生模型
+  models:
+  # 2022-05-20
+  - bigscience/bloom-7b1
+  # 2023-06-02
+  - wenge-research/yayi-7b
+  # 2023-07-07
+  - TigerResearch/tigerbot-7b-base
+
 - group: llm-zh
   name: 中文大语言模型
   models:
+  # 2023-03-13
   - THUDM/chatglm-6b
-  - THUDM/chatglm2-6b
-  - fnlp/moss-moon-003-sft-int4
+  # 2023-04-19
   - fnlp/moss-moon-003-sft
+  # 2023-04-22
+  - fnlp/moss-moon-003-sft-int4
+  # 2023-06-15
   - baichuan-inc/baichuan-7B
+  # 2023-06-19
+  - OpenBuddy/openbuddy-falcon-7b-v6-bf16
+  # 2023-06-24
+  - THUDM/chatglm2-6b
+  # 2023-06-26
+  - YeungNLP/firefly-baichuan-7b
+  # 2023-06-28
+  - BAAI/Aquila-7B
+  # 2023-08-03
+  - Qwen/Qwen-7B-Chat
+
 - group: llm
   name: 其他大语言模型
   models:
-  - bigscience/bloom-7b1
-  - mosaicml/mpt-7b-instruct
-  - tiiuae/falcon-7b-instruct
-  - nomic-ai/gpt4all-j
+  # 2023-04-04
   - OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
+  # 2023-04-11
+  - nomic-ai/gpt4all-j
+  # 2023-04-25
+  - tiiuae/falcon-7b-instruct
+  # 2023-06-18
+  - mosaicml/mpt-7b-instruct
+
 - group: openai
   name: OpenAI 提供的模型
   models:
