@@ -38,11 +38,21 @@ test-package:
 charsets:
 	python vocab_coverage/main.py charset --charset_file vocab_coverage/charset.json
 
-generate-coverage:
-	python vocab_coverage/generate.py coverage --debug
+generate-coverage: generate-coverage-char generate-coverage-token
 
-generate-embedding:
-	python vocab_coverage/generate.py embedding --debug
+generate-coverage-char:
+	python vocab_coverage/generate.py coverage --debug --granularity=char
+
+generate-coverage-token:
+	python vocab_coverage/generate.py coverage --debug --granularity=token
+
+generate-embedding: generate-embedding-token generate-embedding-char generate-embedding-word
+
+generate-embedding-token:
+	python vocab_coverage/generate.py embedding --debug --granularity=token
+
+generate-embedding-char:
+	python vocab_coverage/generate.py embedding --debug --granularity=char
 
 generate-embedding-word:
 	python vocab_coverage/generate.py embedding --debug --granularity=word
