@@ -126,8 +126,8 @@ def generate_embedding(models:List[dict],
                     logger.debug("[%s] No [%s] embedding at %s is required to be generated.", model_name, granularity, positions)
                     continue
 
-                # release cache
-                release_resource(model_name, clear_cache=cleanup)
+                # release cache (Only for GPU)
+                release_resource(model_name, clear_cache=False)
 
                 # generate embedding
                 lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
@@ -142,6 +142,10 @@ def generate_embedding(models:List[dict],
             except Exception as ex:
                 logger.error("[%s] embedding_analysis() failed. [%s]", model_name, ex)
                 traceback.print_exc()
+            finally:
+                # release cache (Both for GPU and Storage)
+                release_resource(model_name, clear_cache=cleanup)
+
 
 def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES):
     if not(filename and os.path.exists(filename)):

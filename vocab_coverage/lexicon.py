@@ -114,7 +114,9 @@ class Lexicon:
             text = item['text']
             category = self.classifier.classify(text)
             if category is None:
-                raise ValueError(f'无法判别文本类别："{text}"')
+                # 无需退出，忽略无法判别的文本即可
+                logger.error('无法判别文本类别："%s"', text)
+                continue
             if category not in lexicon:
                 raise ValueError(f'词表中的类别({category})不在分类器中')
             lexicon[category]['items'].append({'id': item['id'], 'text': text})

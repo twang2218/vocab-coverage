@@ -94,8 +94,14 @@ def _get_inputs(model_name:str,
         # tiiuae/falcon-7b-instruct
         # ValueError: Got unexpected arguments: {'token_type_ids': tensor([[0]])}
         del inputs['token_type_ids']
-
+    elif 'bart' in model_name.lower():
+        # fnlp/bart-base-chinese
+        # BartEncoder.forward() got an unexpected keyword argument 'token_type_ids'
+        del inputs['token_type_ids']
     return inputs
+
+cache_model_fix_attention_mask = []
+cache_model_fix_token_embeddings = []
 
 def _prepare_attention_mask(model_name:str, attention_mask):
     model_name = model_name.lower()
@@ -104,8 +110,10 @@ def _prepare_attention_mask(model_name:str, attention_mask):
         #   attention_mask.shape: [50, 1, 4, 4] => [50, 4]
         old_shape = attention_mask.shape
         attention_mask = torch.where(attention_mask[:, 0, -1], torch.tensor(0), torch.tensor(1))
-        logger.debug("[%s]: fix attention_mask: %s => %s",
-                     model_name, old_shape, attention_mask.shape)
+        if model_name not in cache_model_fix_attention_mask:
+            cache_model_fix_attention_mask.append(model_name)
+            logger.debug("[%s]: fix attention_mask: %s => %s",
+                        model_name, old_shape, attention_mask.shape)
     return attention_mask
 
 def _prepare_token_embeddings(model_name:str, token_embeddings):
@@ -115,16 +123,20 @@ def _prepare_token_embeddings(model_name:str, token_embeddings):
         #   token_embeddings.shape: [4, 50, 4096] => [50, 4, 4096]
         old_shape = token_embeddings.shape
         token_embeddings = token_embeddings.permute(1, 0, 2)
-        logger.debug("[%s]: fix token_embeddings: %s => %s",
-                     model_name, old_shape, token_embeddings.shape)
+        if model_name not in cache_model_fix_token_embeddings:
+            cache_model_fix_token_embeddings.append(model_name)
+            logger.debug("[%s]: fix token_embeddings: %s => %s",
+                        model_name, old_shape, token_embeddings.shape)
     elif 'chatglm2-6b' in model_name:
         # THUDM/chatglm2-6b
         #   attention_mask.shape: [50, 7]
         #   token_embeddings.shape: [7, 50, 4096] => [50, 7, 4096]
         old_shape = token_embeddings.shape
         token_embeddings = token_embeddings.permute(1, 0, 2)
-        logger.debug("[%s]: fix token_embeddings: %s => %s",
-                     model_name, old_shape, token_embeddings.shape)
+        if model_name not in cache_model_fix_token_embeddings:
+            cache_model_fix_token_embeddings.append(model_name)
+            logger.debug("[%s]: fix token_embeddings: %s => %s",
+                        model_name, old_shape, token_embeddings.shape)
     return token_embeddings
 
 def _calculate_sentence_embedding_mean_pooling(token_embeddings:torch.Tensor,
@@ -249,22 +261,6 @@ def embedding_analysis(model_name:str,
     embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)
     # 处理不同位置的向量
     for position in positions:
-        # 生成文件名
-
-        # Qwen/Qwen-7B-Chat
-        ## 其 vocab 中为 bytes，需要转换为方便可视化的 string
-        # if 'qwen' in model_name.lower():
-        #     new_vocab = []
-        #     for k in vocab:
-        #         if isinstance(k, bytes):
-        #             try:
-        #                 k = bytearray(k).decode('utf-8')
-        #             except UnicodeDecodeError:
-        #                 # cannot decode in utf-8, so use "b'...'"
-        #                 k = str(bytes(k))
-        #         new_vocab.append(k)
-        #     vocab = new_vocab
-
         if embeddings[position] is not None and len(embeddings[position]) > 0:
             # 检查
             ## 检查长度是否一致
@@ -289,7 +285,8 @@ def embedding_analysis(model_name:str,
                     kwargs = {}
                     if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
                         kwargs['add_special_tokens'] = False
-                    item['tokenized_text'] = tokenizer.tokenize(item['text'], **kwargs)
+                    tokenized_text = tokenizer.tokenize(item['text'], **kwargs)
+                    item['tokenized_text'] = [t for t in tokenized_text if t != constants.TEXT_LEADING_UNDERSCORE]
                     i += 1
             # 绘制图像
             if debug:
