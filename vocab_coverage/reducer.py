@@ -134,18 +134,6 @@ def reduce_to_2d_umap_tsne_cuml_both(embeddings, debug=False):
     embeddings_2d = reduce_to_2d_tsne_cuml(embeddings_30, debug)
     return embeddings_2d
 
-def reduce_to_2d_lda_tsne(embeddings, debug=False):
-    # Use LDA reduce to 30 dimensions, then TSNE to 2
-    LDA = importlib.import_module('sklearn.discriminant_analysis').LinearDiscriminantAnalysis
-    TSNE = importlib.import_module('sklearn.manifold').TSNE
-    if debug:
-        logger.debug("> reduce_to_2d_lda_tsne(%s): %s, %s", embeddings.shape, LDA, TSNE)
-    lda_model = LDA(n_components=30)
-    embeddings_30 = lda_model.fit_transform(embeddings)
-    # TSNE
-    embeddings_2d = reduce_to_2d_tsne(embeddings_30, debug)
-    return embeddings_2d
-
 def with_timeout(func, timeout, *args, **kwargs):
     logger.debug("> call %s with timeout: %ss", func, timeout)
 
@@ -185,7 +173,6 @@ def reduce_to_2d(embeddings, method:str=constants.REDUCER_TSNE, shuffle:bool=Tru
         constants.REDUCER_UMAP_TSNE: { 'reducer': reduce_to_2d_umap_tsne, 'set_timeout': False },
         constants.REDUCER_UMAP_TSNE_CUML: { 'reducer': reduce_to_2d_umap_tsne_cuml, 'set_timeout': True },
         constants.REDUCER_UMAP_TSNE_CUML_BOTH: { 'reducer': reduce_to_2d_umap_tsne_cuml_both, 'set_timeout': True },
-        constants.REDUCER_LDA_TSNE: { 'reducer': reduce_to_2d_lda_tsne, 'set_timeout': False },
     }
     reducer = reducers[method]['reducer']
     set_timeout = reducers[method]['set_timeout']
@@ -196,10 +183,11 @@ def reduce_to_2d(embeddings, method:str=constants.REDUCER_TSNE, shuffle:bool=Tru
         random.shuffle(base_embeddings)
         embeddings = [x[1] for x in base_embeddings]
         embeddings = np.array(embeddings)
-        for i in range(5):
-            for j, em in enumerate(base_embeddings):
-                if em[0] == i:
-                    logger.debug(f"reducer: (shuffle) [{i}->{j}]: original: {original_embeddings[i][:5]}... => {embeddings[j][:5]}...")
+        if debug:
+            for i in range(5):
+                for j, em in enumerate(base_embeddings):
+                    if em[0] == i:
+                        logger.debug("reducer: (shuffle) [%s->%s]: original: %s... => %s...", i, j, original_embeddings[i][:5], embeddings[j][:5])
     # reduce
     if reducer is not None:
         if debug:
@@ -217,8 +205,9 @@ def reduce_to_2d(embeddings, method:str=constants.REDUCER_TSNE, shuffle:bool=Tru
     if shuffle:
         embeddings_2d = [(x[0], embeddings, embeddings_2d[i]) for i, x in enumerate(base_embeddings)]
         embeddings_2d.sort(key=lambda x: x[0])
-        for i in range(5):
-            logger.debug(f"reducer: (2D) [{i}]: original: {original_embeddings[i][:5]}... => {embeddings_2d[i][2]}...")
+        if debug:
+            for i in range(5):
+                logger.debug("reducer: (2D) [%s]: original: %s... => %s", i, original_embeddings[i][:5], embeddings_2d[i][2])
         embeddings_2d = [x[2] for x in embeddings_2d]
         embeddings_2d = np.array(embeddings_2d)
     return embeddings_2d
