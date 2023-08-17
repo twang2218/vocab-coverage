@@ -87,18 +87,22 @@ def generate_coverage(models:List[dict],
                                   folder=folder,
                                   debug=debug)
                 logger.info("[%s] Generated [%s] coverage.", model_name, granularity)
+            # pylint: disable=broad-except
             except Exception as ex:
                 logger.error("[%s] coverage_analysis() failed. [%s]", model_name, ex)
                 traceback.print_exc()
 
 def generate_embedding(models:List[dict],
                        group:str='',
-                       granularity:str=constants.GRANULARITY_TOKEN,
+                       granularities:List[str]=None,
                        positions:List[str]=None,
                        reducer:str=constants.REDUCER_TSNE,
                        folder=constants.FOLDER_IMAGES,
                        cleanup:bool=True,
                        debug:bool=False):
+    if granularities is None:
+        granularities = [constants.GRANULARITY_TOKEN]
+
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
 
@@ -108,37 +112,41 @@ def generate_embedding(models:List[dict],
         for model_name in section["models"]:
             try:
                 # check embedding files
-                position_candidates = []
-                for position in positions:
-                    embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder)
-                    if embedding_file is None:
-                        position_candidates.append(position)
-                    standard_file = generate_embedding_filename(model_name,
-                                                                granularity=granularity,
-                                                                position=position,
-                                                                folder=folder)
-                    if embedding_file and standard_file != embedding_file:
-                        logger.info("Renaming %s => %s", embedding_file, standard_file)
-                        os.rename(embedding_file, standard_file)
-                        embedding_file = standard_file
+                position_candidates = {}
+                for granularity in granularities:
+                    position_candidates[granularity] = []
+                    for position in positions:
+                        embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder)
+                        if embedding_file is None:
+                            position_candidates[granularity].append(position)
+                        standard_file = generate_embedding_filename(model_name,
+                                                                    granularity=granularity,
+                                                                    position=position,
+                                                                    folder=folder)
+                        if embedding_file and standard_file != embedding_file:
+                            logger.info("Renaming %s => %s", embedding_file, standard_file)
+                            os.rename(embedding_file, standard_file)
+                            embedding_file = standard_file
                 
-                if len(position_candidates) == 0:
-                    logger.debug("[%s] No [%s] embedding at %s is required to be generated.", model_name, granularity, positions)
+                if sum(len(position_candidates[granularity]) for granularity in granularities) == 0:
+                    logger.debug("[%s] Skip. Exists all [%s] embedding for [%s]", model_name, positions, granularities)
                     continue
 
-                # release cache (Only for GPU)
-                release_resource(model_name, clear_cache=False)
-
                 # generate embedding
-                lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
-                embedding_analysis(model_name,
-                                   lexicon=lexicon,
-                                   granularity=granularity,
-                                   positions=position_candidates,
-                                   reducer=reducer,
-                                   folder=folder,
-                                   debug=debug)
-                logger.info("[%s] Generated [%s] embedding at %s", model_name, granularity, position_candidates)
+                for granularity in granularities:
+                    # release cache (Only for GPU)
+                    release_resource(model_name, clear_cache=False)
+                    # analysis
+                    lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
+                    embedding_analysis(model_name,
+                                    lexicon=lexicon,
+                                    granularity=granularity,
+                                    positions=position_candidates[granularity],
+                                    reducer=reducer,
+                                    folder=folder,
+                                    debug=debug)
+                    logger.info("[%s] Generated [%s] embedding at %s", model_name, granularity, position_candidates[granularity])
+            # pylint: disable=broad-except
             except Exception as ex:
                 logger.error("[%s] embedding_analysis() failed. [%s]", model_name, ex)
                 traceback.print_exc()
@@ -286,7 +294,7 @@ def main():
 
     cmd_embedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
     cmd_embedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
-    cmd_embedding.add_argument("--granularity", type=str, default="token", help="统计颗粒度，可选值为 token 或 char（默认为 token）")
+    cmd_embedding.add_argument("--granularity", type=str, default="token", help="统计颗粒度，可选值为 (token、char、word）或组合（如：token,char），（默认为 token）")
     cmd_embedding.add_argument("--position", type=str, default="input,output", help="向量位置，可选值为 input, output 或 input,output（默认为 input,output）")
     cmd_embedding.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_ASSETS_EMBEDDING, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_ASSETS_EMBEDDING}）")
     cmd_embedding.add_argument("--debug", action="store_true", help="是否输出调试信息")
@@ -317,7 +325,7 @@ def main():
     elif args.command == "embedding":
         generate_embedding(models,
                            group=args.group,
-                           granularity=args.granularity,
+                           granularities=args.granularity.split(','),
                            positions=args.position.split(','),
                            reducer=args.reducer,
                            folder=args.folder,
