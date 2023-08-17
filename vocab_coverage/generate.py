@@ -19,7 +19,7 @@ from vocab_coverage.lexicon import load_lexicon
 from vocab_coverage.utils import logger, generate_coverage_filename, generate_embedding_filename, generate_thumbnail_filename, generate_model_path, release_resource
 from vocab_coverage import constants
 
-def find_coverage_file(model_name:str, granularity:str, postfix:str='', folder:str=constants.FOLDER_IMAGES):
+def find_coverage_file(model_name:str, granularity:str, postfix:str='', folder:str=constants.FOLDER_IMAGES, debug:bool=False):
     basename = generate_model_path(model_name)
     candidates = [
         generate_coverage_filename(model_name, granularity=granularity, postfix=postfix, folder=folder),
@@ -28,13 +28,15 @@ def find_coverage_file(model_name:str, granularity:str, postfix:str='', folder:s
         f"{folder}/coverage.{basename}.png",
         f"{folder}/{basename}.coverage.png",
     ]
+    # if debug:
+    #     logger.debug('> candidates: %s', candidates)
     for filename in candidates:
         # logger.debug(filename)
         if os.path.exists(filename):
             return filename
     return None
 
-def find_embedding_file(model_name:str, granularity:str, position:str, postfix:str='', folder:str=constants.FOLDER_IMAGES):
+def find_embedding_file(model_name:str, granularity:str, position:str, postfix:str='', folder:str=constants.FOLDER_IMAGES, debug:bool=False):
     basename = generate_model_path(model_name)
     candidates = [
         generate_embedding_filename(model_name,
@@ -46,6 +48,8 @@ def find_embedding_file(model_name:str, granularity:str, position:str, postfix:s
     if position == constants.EMBEDDING_POSITION_INPUT:
         candidates.append(f"{folder}/embeddings_{basename}.jpg")
         candidates.append(f"{folder}/embeddings.{basename}.jpg")
+    # if debug:
+    #     logger.debug('> candidates: %s', candidates)
     for filename in candidates:
         # logger.debug(filename)
         if os.path.exists(filename):
@@ -116,7 +120,7 @@ def generate_embedding(models:List[dict],
                 for granularity in granularities:
                     position_candidates[granularity] = []
                     for position in positions:
-                        embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder)
+                        embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder, debug=debug)
                         if embedding_file is None:
                             position_candidates[granularity].append(position)
                         standard_file = generate_embedding_filename(model_name,
@@ -155,7 +159,7 @@ def generate_embedding(models:List[dict],
                 release_resource(model_name, clear_cache=cleanup)
 
 
-def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES):
+def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES, debug:bool=False):
     if not(filename and os.path.exists(filename)):
         raise ValueError(f"Cannot find file {filename}")
     thumbnail_filename = generate_thumbnail_filename(filename, folder=folder)
@@ -168,48 +172,68 @@ def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES):
         raise ValueError(f"Failed to create thumbnail for {filename}. ({ret})")
 
 def generate_coverage_thumbnails(models:List[dict], 
-                                 granularity:str=constants.GRANULARITY_CHARACTER,
-                                 folder=constants.FOLDER_IMAGES):
+                                 granularities:List[str]=None,
+                                 input:str=constants.FOLDER_IMAGES_FULLSIZE,
+                                 output:str=constants.FOLDER_IMAGES_THUMBNAIL,
+                                 debug:bool=False):
+    if granularities is None:
+        granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER]
     for section in models:
         for model_name in section["models"]:
-            coverage = find_coverage_file(model_name,
-                                          granularity=granularity,
-                                          folder=folder)
-            if coverage is not None:
-                generate_thumbnail(coverage, folder=folder)
+            logger.debug('为模型 [%s] 生成完整覆盖率缩略图...', model_name)
+            for granularity in granularities:
+                coverage = find_coverage_file(model_name,
+                                            granularity=granularity,
+                                            folder=input)
+                if coverage is not None:
+                    generate_thumbnail(coverage, folder=output)
+                else:
+                    if debug:
+                        logger.debug('> 未发现 [%s] 覆盖率图。', granularity)
 
 def generate_embedding_thumbnails(models:List[dict],
-                                  granularity:str=constants.GRANULARITY_TOKEN,
+                                  granularities:List[str]=None,
                                   positions:List[str]=None,
-                                  folder=constants.FOLDER_IMAGES):
+                                  input:str=constants.FOLDER_IMAGES_FULLSIZE,
+                                  output:str=constants.FOLDER_IMAGES_THUMBNAIL,
+                                  debug:bool=False):
+    if granularities is None:
+        granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER, constants.GRANULARITY_WORD]
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     for section in models:
         for model_name in section["models"]:
-            for position in positions:
-                embedding = find_embedding_file(model_name,
-                                                granularity=granularity,
-                                                position=position,
-                                                folder=folder)
-                if embedding is not None:
-                    generate_thumbnail(embedding, folder=folder)
+            logger.debug('为模型 [%s] 生成向量分布图缩略图...', model_name)
+            for granularity in granularities:
+                for position in positions:
+                    embedding = find_embedding_file(model_name,
+                                                    granularity=granularity,
+                                                    position=position,
+                                                    folder=input,
+                                                    debug=debug)
+                    if embedding is not None:
+                        generate_thumbnail(embedding, folder=output)
+                    else:
+                        if debug:
+                            logger.debug('> 未发现 [%s] [%s] 向量分布图。', granularity, position)
 
 def get_oss_url(image) -> str:
     # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
     # base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
     base_url = "http://syd.jiefu.org/vocab-coverage/"
+    # base_url = "images/"
     if image.startswith("images/assets/"):
         image = image.replace("images/assets/", "")
     elif image.startswith("images/"):
         image = image.replace("images/", "")
     return base_url + image
 
-def generate_markdown_for_model_graph(image_file) -> str:
+def generate_markdown_for_model_graph(image_file, thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL) -> str:
     content = " "
     if image_file is None or len(image_file) == 0:
         content = " "
     else:
-        thumbnail_file = find_thumbnail_file(image_file)
+        thumbnail_file = find_thumbnail_file(image_file, thumbnail)
         if thumbnail_file is None:
             logger.debug("Cannot find thumbnail file for %s, use the full size instead.", image_file)
             thumbnail_file = image_file
@@ -219,13 +243,16 @@ def generate_markdown_for_model_graph(image_file) -> str:
         content = f"[![]({thumbnail_file})]({image_file})"
     return content
 
-def generate_markdown_for_model(model_name:str, folder:str=constants.FOLDER_IMAGES) -> str:
-    granularities = [constants.GRANULARITY_CHARACTER, constants.GRANULARITY_TOKEN]
-    coverages = {granularity: find_coverage_file(model_name, granularity=granularity, folder=folder) for granularity in granularities}
+def generate_markdown_for_model(model_name:str,
+                                folder:str=constants.FOLDER_IMAGES,
+                                fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
+                                thumbnail:str=constants.FOLDER_THUMBNAIL) -> str:
+    granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER, constants.GRANULARITY_WORD]
+    coverages = {granularity: find_coverage_file(model_name, granularity=granularity, folder=fullsize) for granularity in granularities}
     positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     embeddings = {granularity:
                   {position:
-                    find_embedding_file(model_name, granularity=granularity, position=position, folder=folder)
+                    find_embedding_file(model_name, granularity=granularity, position=position, folder=fullsize)
                     for position in positions}
                     for granularity in granularities}
     if all(coverage is None for coverage in coverages.values()) and all(embedding is None for embedding in embeddings.values()):
@@ -237,46 +264,90 @@ def generate_markdown_for_model(model_name:str, folder:str=constants.FOLDER_IMAG
         org, name = model_name.split("/")
         model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
     model_name = f'<b>{model_name}</b>'
-    token_content = "| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n".format(
-        model_name=model_name,
-        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN]),
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT]),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT])
-    )
-    character_content = "| {model_name} | {coverage} | {input_embedding} | {output_embedding} |\n".format(
-        model_name='', # 同一个模型只显示一次
-        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER]),
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT]),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT])
-    )
-    return token_content + character_content
+    # title = f"| {model_name} | | |\n"
+    # title = f"#### {model_name}\n"
 
-def generate_markdown_for_models(models:List[str]) -> str:
+    # header =  "| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n"
+    # header += "| :---: | :---: | :---: | :---: |\n"
+    # token_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
+    #     granularity='Token',
+    #     coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN], thumbnail=thumbnail),
+    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    # )
+    # character_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
+    #     granularity='汉字',
+    #     coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER], thumbnail=thumbnail),
+    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    # )
+    # word_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
+    #     granularity='汉字词汇',
+    #     coverage='', #generate_markdown_for_model_graph(coverages[constants.GRANULARITY_WORD], thumbnail=thumbnail),
+    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    # )
+    # header = "| Token 完整覆盖率 | Token 输入向量分布 | Token 输出向量分布 | 汉字完整覆盖率 | 汉字输入向量分布 | 汉字输出向量分布 | 词语输入向量分布 | 词语输出向量分布 |\n"
+    # header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+    header = f"| {model_name} "
+    token_content = "| {coverage} | {input_embedding} | {output_embedding} |".format(
+        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN], thumbnail=thumbnail),
+        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    )
+    character_content = " {coverage} | {input_embedding} | {output_embedding} |".format(
+        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER], thumbnail=thumbnail),
+        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    )
+    word_content = " {input_embedding} | {output_embedding} |\n".format(
+        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    )
+
+    return header + token_content + character_content + word_content
+
+def generate_markdown_for_models(models:List[str],
+                                 fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
+                                 thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
+                                 level:int=3) -> str:
     content = ""
     with io.StringIO() as f:
-        f.write("| 名称| 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
-        f.write("| :---: | :---: | :---: | :---: |\n")
+        # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
+        # f.write("| :---: | :---: | :---: | :---: |\n")
+        header = "| 模型名称 | Token 完整性覆盖率 | Token 输入向量分布 | Token 输出向量分布 | 汉字 完整性覆盖率 | 汉字 输入向量分布 | 汉字 输出向量分布 | 词语 输入向量分布 | 词语 输出向量分布 |\n"
+        header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+        f.write(header)
         # Table body
         for model_name in models:
-            f.write(generate_markdown_for_model(model_name))
+            # model_mark = "#" * level
+            # f.write(f"{model_mark} {model_name}\n\n")
+            f.write(generate_markdown_for_model(model_name, fullsize=fullsize, thumbnail=thumbnail))
         content = f.getvalue()
     return content
 
-def generate_markdown_for_all(models:List[dict], output:str="graphs.md", section_level:int=2):
+def generate_markdown_for_all(models:List[dict],
+                              fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
+                              thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
+                              output:str="graphs.md",
+                              section_level:int=2):
     with open(output, "w", encoding='utf-8') as f:
         section_mark = "#" * section_level
         for section in models:
             f.write(f"{section_mark} {section['name']}\n\n")
-            f.write(generate_markdown_for_models(section["models"]))
+            f.write(generate_markdown_for_models(section["models"], fullsize=fullsize, thumbnail=thumbnail, level=section_level+1))
             f.write("\n\n")
 
-def generate_markdown_from_template(template_file:str, model_list_file:str, output:str="README.md"):
+def generate_markdown_from_template(template_file:str, model_list_file:str,
+                                    fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
+                                    thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
+                                    output:str="README.md"):
     with open(template_file, "r", encoding='utf-8') as f:
         template = f.read()
     with open(model_list_file, "r", encoding='utf-8') as f:
         models = yaml.load(f, Loader=yaml.FullLoader)
     for tag, section in models.items():
-        content = generate_markdown_for_models(section["models"])
+        content = generate_markdown_for_models(section["models"], fullsize=fullsize, thumbnail=thumbnail)
         if len(content) > 0:
             template = template.replace(f"{{{tag}}}", content)
     with open(output, "w", encoding='utf-8') as f:
@@ -290,21 +361,25 @@ def main():
     cmd_coverage.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
     cmd_coverage.add_argument("--granularity", type=str, default="char", help="统计颗粒度，可选值为 token 或 char（默认为 char）")
     cmd_coverage.add_argument("--debug", action="store_true", help="是否输出调试信息")
-    cmd_coverage.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_ASSETS_COVERAGE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_ASSETS_COVERAGE}）")
+    cmd_coverage.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
 
     cmd_embedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
     cmd_embedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
     cmd_embedding.add_argument("--granularity", type=str, default="token", help="统计颗粒度，可选值为 (token、char、word）或组合（如：token,char），（默认为 token）")
     cmd_embedding.add_argument("--position", type=str, default="input,output", help="向量位置，可选值为 input, output 或 input,output（默认为 input,output）")
-    cmd_embedding.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_ASSETS_EMBEDDING, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_ASSETS_EMBEDDING}）")
+    cmd_embedding.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
     cmd_embedding.add_argument("--debug", action="store_true", help="是否输出调试信息")
     cmd_embedding.add_argument("--no_cleanup", action="store_true", help="是否保留模型缓存文件")
     cmd_embedding.add_argument("--reducer", type=str, default="tsne", help="降维算法，可选值为 tsne 或 umap（默认为 tsne）")
+
     cmd_thumbnail = subcommands.add_parser('thumbnail', help='Generate thumbnails for embedding graphs')
-    cmd_thumbnail.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_THUMBNAIL, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_THUMBNAIL}）")
+    cmd_thumbnail.add_argument("--input", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输入文件夹，用以查找全尺寸的图片文件，默认为 {constants.FOLDER_IMAGES_FULLSIZE}")
+    cmd_thumbnail.add_argument("--output", type=str, default=constants.FOLDER_IMAGES_THUMBNAIL, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_THUMBNAIL}）")
     cmd_thumbnail.add_argument("--debug", action="store_true", help="是否输出调试信息")
 
     cmd_markdown = subcommands.add_parser('markdown', help='Generate markdown file for graphs')
+    cmd_markdown.add_argument("--fullsize", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"全尺寸图片目录，默认为 {constants.FOLDER_IMAGES_FULLSIZE}")
+    cmd_markdown.add_argument("--thumbnail", type=str, default=constants.FOLDER_IMAGES_THUMBNAIL, help=f"缩略图所在目录，默认为 {constants.FOLDER_IMAGES_THUMBNAIL}")
     cmd_markdown.add_argument("--markdown", type=str, default="graphs.md")
 
     args = parser.parse_args()
@@ -331,18 +406,18 @@ def main():
                            folder=args.folder,
                            cleanup=not args.no_cleanup,
                            debug=args.debug)
-    elif args.command == "thumbnails":
-        generate_coverage_thumbnails(models, folder=args.folder)
-        generate_embedding_thumbnails(models, folder=args.folder)
+    elif args.command == "thumbnail":
+        generate_coverage_thumbnails(models, input=args.input, output=args.output, debug=args.debug)
+        generate_embedding_thumbnails(models, input=args.input, output=args.output, debug=args.debug)
     elif args.command == "markdown":
         # markdown for all models
         logger.info("Generating markdown for all models to %s", args.markdown)
-        generate_markdown_for_all(models, output=args.markdown)
+        generate_markdown_for_all(models, fullsize=args.fullsize, thumbnail=args.thumbnail, output=args.markdown)
         # markdown for readme
         template_file = os.path.join('docs', 'README.template.md')
         models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_readme.yaml')
         logger.info("Generating markdown for readme by %s and %s", template_file, models_file)
-        generate_markdown_from_template(template_file=template_file, model_list_file=models_file, output='README.md')
+        generate_markdown_from_template(template_file=template_file, model_list_file=models_file, fullsize=args.fullsize, thumbnail=args.thumbnail, output='README.md')
     else:
         parser.print_help()
 
