@@ -46,16 +46,17 @@ generate-coverage-char:
 generate-coverage-token:
 	python vocab_coverage/generate.py coverage --debug --granularity=token
 
-generate-embedding: generate-embedding-token generate-embedding-char generate-embedding-word
+generate-embedding:
+	python vocab_coverage/generate.py embedding --debug --granularity=token,char,word --position=input,output
 
 generate-embedding-token:
-	python vocab_coverage/generate.py embedding --debug --granularity=token
+	python vocab_coverage/generate.py embedding --debug --granularity=token --position=input,output
 
 generate-embedding-char:
-	python vocab_coverage/generate.py embedding --debug --granularity=char
+	python vocab_coverage/generate.py embedding --debug --granularity=char --position=input,output
 
 generate-embedding-word:
-	python vocab_coverage/generate.py embedding --debug --granularity=word
+	python vocab_coverage/generate.py embedding --debug --granularity=word --position=input,output
 
 generate-thumbnails:
 	python vocab_coverage/generate.py thumbnails --debug

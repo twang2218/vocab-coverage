@@ -44,7 +44,7 @@ class Lexicon:
             self.lexicon = self._handle_dict(wordbook)
         else:
             raise ValueError(f'unsupported lexicon type. ({type(wordbook)})')
-        logger.debug('Lexicon 词表加载完成')
+        logger.debug('Lexicon 词表加载完成 (%s)', self.get_item_count())
 
     def get_categories(self) -> List[str]:
         return list(self.classifier.get_categories().keys())
