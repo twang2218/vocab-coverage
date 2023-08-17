@@ -33,7 +33,7 @@ def coverage_analysis(model_name:str,
 
     try:
         # 对于 ChatGLM 等模型，有特殊的头部token，需要特殊处理
-        special_prefix_id = tokenizer.convert_tokens_to_ids('▁')
+        special_prefix_id = tokenizer.convert_tokens_to_ids(constants.TEXT_LEADING_UNDERSCORE)
     # pylint: disable=broad-except
     except Exception:
         special_prefix_id = tokenizer.cls_token_id
@@ -115,6 +115,10 @@ def get_token_split_count(tokenizer, text:str, special_prefix_id, attached_prefi
     if len(tokens_ids) > 0 and tokens_ids[0] == attached_prefix_id:
         tokens_ids = tokens_ids[1:]
 
+    if len(tokens_ids) == 1 and tokens_ids[0] == tokenizer.unk_token_id:
+        # 未知token
+        return 0
+
     # 验证编码
     if len(tokens_ids) > 1:
         decoded = tokenizer.decode(tokens_ids)
@@ -123,5 +127,6 @@ def get_token_split_count(tokenizer, text:str, special_prefix_id, attached_prefi
         if text != decoded:
             logger.warning("[%s] 编码文本 %s(%s) 和解码结果（%s）不一致", tn, text, tokens_ids, decoded)
 
-    return len(tokens_ids)
+    # logger.debug("[%s] 编码文本 %s(%s) => %s", tn, text, tokens_ids, tokenizer.decode(tokens_ids))
 
+    return len(tokens_ids)

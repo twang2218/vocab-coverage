@@ -17,6 +17,20 @@ import tiktoken
 from vocab_coverage.utils import show_gpu_usage, logger
 from vocab_coverage import constants
 
+def load_tokenizer_openai(model_name:str, debug:bool=False):
+    name = model_name.split("/")[-1]
+    tokenizer = tiktoken.encoding_for_model(name)
+    tokenizer.vocab_size = tokenizer.n_vocab
+    eos_token_id = tokenizer.encode_single_token(constants.TEXT_OPENAI_END_OF_TEXT)
+    tokenizer.cls_token_id = tokenizer.cls_token_id if hasattr(tokenizer, 'cls_token_id') else eos_token_id
+    tokenizer.pad_token_id = tokenizer.pad_token_id if hasattr(tokenizer, 'pad_token_id') else eos_token_id
+    tokenizer.unk_token_id = tokenizer.unk_token_id if hasattr(tokenizer, 'unk_token_id') else eos_token_id
+    tokenizer.pad_token = constants.TEXT_OPENAI_END_OF_TEXT
+    if debug:
+        # pylint: disable=protected-access
+        logger.debug(tokenizer._special_tokens)
+    return tokenizer
+
 def load_tokenizer(model_name:str, debug:bool=False):
     try:
         kwargs = {}
@@ -26,45 +40,34 @@ def load_tokenizer(model_name:str, debug:bool=False):
             # Avoid LlamaTokenizerFast conversion
             # lmsys/vicuna-7b-v1.3
             tokenizer = LlamaTokenizer.from_pretrained(model_name, **kwargs)
+        elif 'openai' in model_name.lower():
+            tokenizer = load_tokenizer_openai(model_name, debug=debug)
         else:
             tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
     # pylint: disable=invalid-name,broad-exception-caught
     except Exception as e:
-        if "aquila" in e.args[0]:
-            Tokenizer = import_module('flagai.data.tokenizer.Tokenizer')
-            name = 'aquila-7b'
-            cache_dir = os.path.join('./model', name)
-            tokenizer = Tokenizer.from_pretrained(name, cache_dir=cache_dir)
-            tokenizer.cls_token_id = tokenizer.token_start_id
-            tokenizer.sep_token_id = tokenizer.token_end_id
-            tokenizer.unk_token_id = tokenizer.get('token_unk_id', None)
-            tokenizer.pad_token_id = tokenizer.get('token_pad_id', None)
-            tokenizer.mask_token_id = tokenizer.get('token_mask_id', None)
-            tokenizer.vocab_size = tokenizer.num_tokens
-        elif "OpenAI" in e.args[0]:
-            name = model_name.split("/")[-1]
-            tokenizer = tiktoken.encoding_for_model(name)
-            tokenizer.vocab_size = tokenizer.n_vocab
-            tokenizer.cls_token_id = tokenizer.encode_single_token('<|endoftext|>')
-            if debug:
-                # pylint: disable=protected-access
-                logger.debug(tokenizer._special_tokens)
-        else:
-            logger.error("加载模型 %s 失败：%s", model_name, e)
-            raise e
+        logger.error("加载模型 %s 失败：%s", model_name, e)
+        raise e
 
     # https://github.com/huggingface/transformers/issues/24514
     if isinstance(tokenizer, LlamaTokenizerFast):
         tokenizer.model_input_names = ["input_ids", "attention_mask"]
 
+    # special cases
+    if 'qwen' in model_name.lower():
+        eos_token_id = tokenizer.convert_tokens_to_ids(constants.TEXT_OPENAI_END_OF_TEXT)
+        tokenizer.pad_token = constants.TEXT_OPENAI_END_OF_TEXT
+        tokenizer.eos_token_id = eos_token_id
+        tokenizer.pad_token_id = eos_token_id
+
     # https://github.com/huggingface/transformers/issues/22312
-    if not tokenizer.pad_token:
+    if not hasattr(tokenizer, 'pad_token') or tokenizer.pad_token is None:
         if hasattr(tokenizer, 'eos_token') and tokenizer.eos_token:
             logger.warning("[%s]: 'tokenizer.pad_token' is None, set tokenizer.pad_token = tokenizer.eos_token (%s))",
                            model_name, tokenizer.eos_token)
             tokenizer.pad_token = tokenizer.eos_token
         else:
-            logger.warning("[%s]: 'tokenizer.pad_token' and 'tokenizer.eos_token' are None, set tokenizer.pad_token = '</s>'", model_name)
+            logger.warning("[%s]: both 'tokenizer.pad_token' and 'tokenizer.eos_token' are None, set tokenizer.pad_token = '</s>'", model_name)
             tokenizer.bos_token = '<s>'
             tokenizer.eos_token = '</s>'
             tokenizer.unk_token = '<unk>'
@@ -79,62 +82,47 @@ def _generate_model_kwargs(model_name:str):
     model_name_lower = model_name.lower()
     if 'openai' in model_name_lower:
         raise ValueError(f"不支持的模型：{model_name}")
-    models_kwargs = {
-        'chatglm-6b': {
-            # THUDM/chatglm-6b
-            'torch_dtype': torch.half,
-            'trust_remote_code': True,
-        },
-        'chatglm2': {
-            # THUDM/chatglm2-6b
-            'trust_remote_code': True,
-        },
-        'falcon-7b': {
-            'torch_dtype': torch.bfloat16,
-            'device_map': 'auto',
-            'trust_remote_code': True,
-        },
-        'mpt-7b': {
-            # tiiuae/falcon-7b-instruct
-            # mosaicml/mpt-7b-instruct
-            'torch_dtype': torch.bfloat16,
-            'device_map': 'auto',
-            'trust_remote_code': True,
-        },
-        'qwen': {
-            'torch_dtype': torch.bfloat16,
-            'device_map': 'auto',
-            'trust_remote_code': True,
-        },
-        'oasst': {
-            'load_in_4bit': True,
-            'device_map': 'auto',
-            'trust_remote_code': True,
-        },
-    }
-    large_model_kwargs = {
+    # 判断是否是需要用 int8 加载的模型
+    int8_models = ['12b', '13b', 'taiwan-llama', 'moss']
+    int8_kwargs = {
+        'load_in_8bit': True,
         'torch_dtype': torch.float16,
         'device_map': 'auto',
         'trust_remote_code': True,
     }
-    large_model_pattern = ['6b', '7b', '12b', '13b', 'llama', 'gpt', 'aquila', 'moss']
-    for pattern, kwargs in models_kwargs.items():
+    for pattern in int8_models:
         if pattern in model_name_lower:
-            return kwargs
-    for pattern in large_model_pattern:
+            return int8_kwargs
+    # 判断是否是需要 fp16 加载的模型
+    fp16_models = ['6b', '7b', 'llama', 'gpt']
+    fp16_kwargs = {
+        'torch_dtype': torch.float16,
+        'device_map': 'auto',
+        'trust_remote_code': True,
+    }
+    for pattern in fp16_models:
         if pattern in model_name_lower:
-            return large_model_kwargs
+            return fp16_kwargs
+    # 其他返回空
     return {}
 
 def _get_model_class(model_name:str):
-    models_classes = {
-        'falcon': AutoModelForCausalLM,
+    model_name_lower = model_name.lower()
+    # AutoModelForCausalLM
+    causallm_models = ['falcon', 'aquila', 'qwen', 'baichuan', 'mpt']
+    for pattern in causallm_models:
+        if pattern in model_name_lower:
+            return AutoModelForCausalLM
+    # special cases
+    special_models = {
+        # 'aquila': 'flagai.model.aquila_model.AQUILAModel'
     }
-    for pattern, model_class in models_classes.items():
+    for pattern, model_class in special_models.items():
         if pattern in model_name.lower():
             if isinstance(model_class, str):
                 model_class = import_module(model_class)
             return model_class
+    # default to AutoModel
     return AutoModel
 
 def load_model(model_name:str, debug:bool=False):
@@ -161,16 +149,9 @@ def load_model(model_name:str, debug:bool=False):
                        model_name, model_name, kwargs, e, e.args)
         if isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "AutoModel" in e.args[0]:
             logger.debug("[%s]: 试图加载 AutoModelForCausalLM", model_name)
-            model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
-        elif isinstance(e.args, (list, tuple)) and isinstance(e.args[0], str) and "aquila" in e.args[0]:
-            logger.debug("[%s]: 试图加载 flagai.model.aquila_model.AQUILAModel", model_name)
-            # pylint: disable=invalid-name
-            AQUILAModel = import_module('flagai.model.aquila_model.AQUILAModel')
-            # cache_dir = os.path.join('./model', 'aquila-7b')
-            # logger.debug(f"cache_dir: {os.path.abspath(cache_dir)}")
-            model = AQUILAModel.from_pretrain(model_name='aquila-7b', download_path='./model')
+            model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
         else:
-            logger.error("加载 AutoModel 模型 %s 失败：%s", model_name, e)
+            logger.error("加载 AutoModel 模型 %s (kwargs=%s) 失败：%s", model_name, kwargs, e)
             raise e
 
     if debug:
@@ -182,8 +163,9 @@ def load_model(model_name:str, debug:bool=False):
     #   OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5
     # if not should_use_4bit:
     #     if hasattr(torch, 'device'):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
+    if not getattr(model, 'is_quantized', False):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
     model.eval()
 
     logger.info("[%s]: %s model loaded on device: %s",

@@ -379,7 +379,20 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
             if item['text'].startswith('##'):
                 color = lighten_color(color, 0.4)
             if 'tokenized_text' in item:
-                text = '/'.join(item['tokenized_text'])
+                texts = item['tokenized_text']
+                if len(texts) > 0 and isinstance(texts[0], bytes):
+                    # Qwen/Qwen-7B-Chat
+                    new_texts = []
+                    for t in texts:
+                        try:
+                            t = t.decode('utf-8')
+                        except UnicodeDecodeError:
+                            hex_representation = t.hex()
+                            t = ''.join(['\\x' + hex_representation[i:i+2] for i in range(0, len(hex_representation), 2)])
+                        finally:
+                            new_texts.append(t)
+                    texts = new_texts
+                text = '/'.join(texts)
             else:
                 text = item['text']
             draw.text((item_x, item_y), text,
