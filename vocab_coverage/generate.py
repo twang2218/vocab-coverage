@@ -167,7 +167,7 @@ def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES, debug:bool=
         logger.debug("Thumbnail for %s already exists.", filename)
         return
     logger.info("Creating thumbnail for %s", filename)
-    ret = os.system(f"convert {filename} -quality 50 -resize 20% {thumbnail_filename}")
+    ret = os.system(f"convert {filename} -quality 50 -resize 10% {thumbnail_filename}")
     if ret != 0:
         raise ValueError(f"Failed to create thumbnail for {filename}. ({ret})")
 
@@ -218,9 +218,13 @@ def generate_embedding_thumbnails(models:List[dict],
                             logger.debug('> 未发现 [%s] [%s] 向量分布图。', granularity, position)
 
 def get_oss_url(image) -> str:
+    ## OSS加速器地址，浏览器访问该地址会提示下载，而不是直接看图
     # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
+    ## OSS直接链接地址，访问正常，但是国内访问会慢
     # base_url = "https://lab99-syd-pub.oss-ap-southeast-2.aliyuncs.com/vocab-coverage/"
+    ## 备案后的域名指向OSS加速器地址，这种情况会直接看图，而不是下载，国内访问速度也还可以
     base_url = "http://syd.jiefu.org/vocab-coverage/"
+    ## 本地测试使用
     # base_url = "images/"
     if image.startswith("images/assets/"):
         image = image.replace("images/assets/", "")
@@ -313,10 +317,14 @@ def generate_markdown_for_models(models:List[str],
                                  level:int=3) -> str:
     content = ""
     with io.StringIO() as f:
-        # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
+        # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布图 | 输出向量分布图 |\n")
         # f.write("| :---: | :---: | :---: | :---: |\n")
-        header = "| 模型名称 | Token 完整性覆盖率 | Token 输入向量分布 | Token 输出向量分布 | 汉字 完整性覆盖率 | 汉字 输入向量分布 | 汉字 输出向量分布 | 词语 输入向量分布 | 词语 输出向量分布 |\n"
+        # header = "| 模型名称 | Token<br/>完整性图 | Token<br/>输入分布 | Token<br/>输出分布 | 汉字<br/>完整性图 | 汉字<br/>输入分布 | 汉字<br/>输出分布 | 词语<br/>输入分布 | 词语<br/>输出分布 |\n"
+        # header = "| 模型名称 | ![](images/static/empty.2000.png) 完整覆盖率分析<br/>(Token) | ![](images/static/empty.2000.png) 输入向量分布图<br/>(Token) | ![](images/static/empty.2000.png) 输出向量分布图<br/>(Token) | ![](images/static/empty.2000.png) 完整覆盖率分析<br/>(汉字) | ![](images/static/empty.2000.png) 输入向量分布图<br/>(汉字) | ![](images/static/empty.2000.png) 输出向量分布图<br/>(汉字) | ![](images/static/empty.2000.png) 输入向量分布图<br/>(词语) | ![](images/static/empty.2000.png) 输出向量分布图<br/>(词语) |\n"
+        # header =  "|     |     |     |     |     |     |     |     |     |\n"
+        header =  "| 模型 | 完整性分析 (子字) | 入向量分布 (子字) | 出向量分布 (子字) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) |\n"
         header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+        # header += "| **模型** |**(Token)**|**(Token)**|**(Token)**|**(汉字)**|**(汉字)**|**(汉字)**|**(词语)**|**(词语)**|\n"
         f.write(header)
         # Table body
         for model_name in models:
@@ -326,12 +334,31 @@ def generate_markdown_for_models(models:List[str],
         content = f.getvalue()
     return content
 
+def markdown_text2anchor(text):
+    anchor = ""
+    for c in text:
+        if c == ' ':
+            anchor += '-'
+        elif c in '()':
+            continue
+        else:
+            anchor += c.lower()
+    return anchor
+
 def generate_markdown_for_all(models:List[dict],
                               fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
                               thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
                               output:str="graphs.md",
                               section_level:int=2):
     with open(output, "w", encoding='utf-8') as f:
+        # 输出目录
+        f.write("# 所有模型的分析图\n\n")
+        f.write("## 目录\n\n")
+        for section in models:
+            section_name = section['name']
+            f.write(f"- [{section_name}](#{markdown_text2anchor(section_name)})\n")
+        f.write("\n\n")
+        # 输出模型
         section_mark = "#" * section_level
         for section in models:
             f.write(f"{section_mark} {section['name']}\n\n")

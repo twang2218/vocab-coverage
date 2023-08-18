@@ -1,3 +1,23 @@
+# 所有模型的分析图
+
+## 目录
+
+- [原生的BERT类的模型](#原生的bert类的模型)
+- [Sentence Transformers 提供的模型](#sentence-transformers-提供的模型)
+- [多语言 BERT 系列模型](#多语言-bert-系列模型)
+- [BERT 中文模型](#bert-中文模型)
+- [百度 ERNIE 系列模型及其衍生模型](#百度-ernie-系列模型及其衍生模型)
+- [Google T5 系列模型 (Encoder-Decoder)](#google-t5-系列模型-encoder-decoder)
+- [LLAMA 及衍生模型](#llama-及衍生模型)
+- [LLAMA 中文衍生模型](#llama-中文衍生模型)
+- [LLAMA 2 及衍生模型](#llama-2-及衍生模型)
+- [LLAMA 2 中文衍生模型](#llama-2-中文衍生模型)
+- [Bloom 及衍生模型](#bloom-及衍生模型)
+- [中文大语言模型](#中文大语言模型)
+- [其他大语言模型](#其他大语言模型)
+- [OpenAI 提供的模型](#openai-提供的模型)
+
+
 ## 原生的BERT类的模型
 
 | 模型 | 完整性分析 (子字) | 入向量分布 (子字) | 出向量分布 (子字) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) |
