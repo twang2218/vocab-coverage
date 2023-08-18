@@ -159,15 +159,16 @@ def generate_embedding(models:List[dict],
                 release_resource(model_name, clear_cache=cleanup)
 
 
-def generate_thumbnail(filename:str, folder=constants.FOLDER_IMAGES, debug:bool=False):
+def generate_thumbnail(model_name:str, filename:str, folder=constants.FOLDER_IMAGES, debug:bool=False):
     if not(filename and os.path.exists(filename)):
         raise ValueError(f"Cannot find file {filename}")
     thumbnail_filename = generate_thumbnail_filename(filename, folder=folder)
     if os.path.exists(thumbnail_filename):
-        logger.debug("Thumbnail for %s already exists.", filename)
+        if debug:
+            logger.debug("[%s] 生成缩略图 (%s)...", model_name, filename)
         return
-    logger.info("Creating thumbnail for %s", filename)
-    ret = os.system(f"convert {filename} -quality 50 -resize 20% {thumbnail_filename}")
+    logger.info("[%s] 生成缩略图 (%s)...", model_name, filename)
+    ret = os.system(f"convert {filename} -quality 50 -resize 10% {thumbnail_filename}")
     if ret != 0:
         raise ValueError(f"Failed to create thumbnail for {filename}. ({ret})")
 
@@ -180,16 +181,15 @@ def generate_coverage_thumbnails(models:List[dict],
         granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER]
     for section in models:
         for model_name in section["models"]:
-            logger.debug('为模型 [%s] 生成完整覆盖率缩略图...', model_name)
             for granularity in granularities:
                 coverage = find_coverage_file(model_name,
                                             granularity=granularity,
                                             folder=input)
                 if coverage is not None:
-                    generate_thumbnail(coverage, folder=output)
+                    generate_thumbnail(model_name, coverage, folder=output)
                 else:
                     if debug:
-                        logger.debug('> 未发现 [%s] 覆盖率图。', granularity)
+                        logger.debug('[%s] 未发现 [%s] 覆盖率图。', model_name, granularity)
 
 def generate_embedding_thumbnails(models:List[dict],
                                   granularities:List[str]=None,
@@ -203,7 +203,6 @@ def generate_embedding_thumbnails(models:List[dict],
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     for section in models:
         for model_name in section["models"]:
-            logger.debug('为模型 [%s] 生成向量分布图缩略图...', model_name)
             for granularity in granularities:
                 for position in positions:
                     embedding = find_embedding_file(model_name,
@@ -212,10 +211,10 @@ def generate_embedding_thumbnails(models:List[dict],
                                                     folder=input,
                                                     debug=debug)
                     if embedding is not None:
-                        generate_thumbnail(embedding, folder=output)
+                        generate_thumbnail(model_name, embedding, folder=output)
                     else:
                         if debug:
-                            logger.debug('> 未发现 [%s] [%s] 向量分布图。', granularity, position)
+                            logger.debug('[%s] 未发现 [%s] [%s] 向量分布图。', model_name, granularity, position)
 
 def get_oss_url(image) -> str:
     # base_url = "https://lab99-syd-pub.oss-accelerate.aliyuncs.com/vocab-coverage/"
@@ -267,7 +266,7 @@ def generate_markdown_for_model(model_name:str,
     # title = f"| {model_name} | | |\n"
     # title = f"#### {model_name}\n"
 
-    # header =  "| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n"
+    # header =  "| 颗粒度 | 完整覆盖率分析 | 输入向量分布图 | 输出向量分布图 |\n"
     # header += "| :---: | :---: | :---: | :---: |\n"
     # token_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
     #     granularity='Token',
@@ -315,7 +314,7 @@ def generate_markdown_for_models(models:List[str],
     with io.StringIO() as f:
         # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
         # f.write("| :---: | :---: | :---: | :---: |\n")
-        header = "| 模型名称 | Token 完整性覆盖率 | Token 输入向量分布 | Token 输出向量分布 | 汉字 完整性覆盖率 | 汉字 输入向量分布 | 汉字 输出向量分布 | 词语 输入向量分布 | 词语 输出向量分布 |\n"
+        header = "| 模型 | 完整性分析 (子词) | 入向量分布 (子词) | 出向量分布 (子词) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) |\n"
         header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
         f.write(header)
         # Table body
@@ -326,12 +325,32 @@ def generate_markdown_for_models(models:List[str],
         content = f.getvalue()
     return content
 
+def markdown_text2anchor(text:str):
+    anchor = ''
+    for c in text:
+        if c == ' ':
+            anchor += '-'
+        elif c in '()':
+            # 括号会被忽略
+            continue
+        else:
+            anchor += c.lower()
+    return anchor
+
 def generate_markdown_for_all(models:List[dict],
                               fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
                               thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
                               output:str="graphs.md",
                               section_level:int=2):
     with open(output, "w", encoding='utf-8') as f:
+        # 标题和目录
+        f.write("# 所有模型的分析图\n\n")
+        f.write("## 目录\n\n")
+        for section in models:
+            name = section['name']
+            f.write(f"- [{name}](#{markdown_text2anchor(name)})\n")
+        f.write("\n\n")
+        # 模型内容
         section_mark = "#" * section_level
         for section in models:
             f.write(f"{section_mark} {section['name']}\n\n")
