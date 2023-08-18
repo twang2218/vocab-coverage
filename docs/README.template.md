@@ -65,7 +65,7 @@
 
 对于 WordPiece 这类按照字符编码，或者说按照 Unicode 码位编码的情况，如果其 Tokenizer 中的词表(vocab) 中没有对应的汉字，那么这个模型就是完全不认识这个汉字。对应的汉字将被编码为 `unk_token_id`，即词表中的 `[UNK]`。这类模型对于汉字的认知程度，可以用词表中汉字的数量来衡量，存在于词表则计数为 `1`，不存在则计数为 `0`。
 
-![](images/static/tokenizer_wordpiece_2.jpg)
+![](images/static/tokenizer_wordpiece_1.jpg)
 
 而对于可能将一个汉字拆分为多个 token 的 BBPE 这类编码方式，则需要更复杂一些的思考和应对。这类 Tokenizer 如果在训练的过程中，遇到过一些汉字，则可能会在词表中直接包含该汉字，从而产生单一的 token 与之对应；但如果在训练的过程中，没有遇到过某个汉字，或较少的遇到某些汉字，则该汉字将被拆分为多个 token。因此这类模型中，汉字对应的 token 数量，从1个到4个不等。
 
@@ -73,7 +73,7 @@
 
 但是，由于理论上 BBPE 这类 Tokenizer 是可以识别任意字符的，因此我们会在图中，用颜色来表示这种差别。对于词表中存在的汉字，我们用最深的颜色表示；对于一个汉字拆分成多个 token 的情况，拆分的越多，颜色越浅，用以表示其语义的损失程度。
 
-![](images/static/tokenizer_bbpe_2.jpg)
+![](images/static/tokenizer_bbpe_1.jpg)
 
 > 在进行判断前，会先行去除前缀后缀的特殊token。
 

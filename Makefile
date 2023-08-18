@@ -58,40 +58,64 @@ generate-embedding-char:
 generate-embedding-word:
 	python vocab_coverage/generate.py embedding --debug --granularity=word --position=input,output
 
-generate-thumbnails:
-	python vocab_coverage/generate.py thumbnails --debug
+generate-thumbnail:
+	python vocab_coverage/generate.py thumbnail
 
-generate-markdown:
+generate-markdown: generate-thumbnail
 	python vocab_coverage/generate.py markdown
 
-generate: generate-coverage generate-embedding generate-thumbnails generate-markdown
+generate: generate-coverage generate-embedding generate-thumbnail generate-markdown
+
+sync-from-vast:
+	rsync -avP 'vast:./vocab/images/assets/embedding.token/*' images/fullsize/
+	rsync -avP 'vast:./vocab/images/assets/embedding/*' images/fullsize/
+
+temp: sync-from-vast generate-markdown sync-to-oss
 
 clean-cache:
 	rm -rf ~/.cache/huggingface/hub/*
 
-sync-to-oss:
-	aliyun oss cp \
-		--region=ap-southeast-2 \
-		--recursive \
-		--include='*.jpg' \
-		--jobs=10 \
-		images/assets oss://lab99-syd-pub/vocab-coverage/
+sync-to-oss: sync-to-oss-fullsize sync-to-oss-thumbnail
 
-sync-to-oss-thumbnails:
-	aliyun oss cp \
+sync-to-oss-fullsize:
+	aliyun oss sync \
 		--region=ap-southeast-2 \
-		--recursive \
+		--update \
 		--include='*.jpg' \
 		--jobs=10 \
-		images/thumbnails oss://lab99-syd-pub/vocab-coverage/thumbnails/
+		images/fullsize oss://lab99-syd-pub/vocab-coverage/fullsize/
+
+sync-to-oss-thumbnail:
+	aliyun oss sync \
+		--region=ap-southeast-2 \
+		--update \
+		--include='*.jpg' \
+		--jobs=10 \
+		images/thumbnail oss://lab99-syd-pub/vocab-coverage/thumbnail/
+
+# sync-to-oss:
+# 	aliyun oss cp \
+# 		--region=ap-southeast-2 \
+# 		--recursive \
+# 		--include='*.jpg' \
+# 		--jobs=10 \
+# 		images/assets oss://lab99-syd-pub/vocab-coverage/
+
+# sync-to-oss-thumbnails:
+# 	aliyun oss cp \
+# 		--region=ap-southeast-2 \
+# 		--recursive \
+# 		--include='*.jpg' \
+# 		--jobs=10 \
+# 		images/thumbnails oss://lab99-syd-pub/vocab-coverage/thumbnails/
 
 sync-from-oss:
-	aliyun oss cp \
+	aliyun oss sync \
 		--region=ap-southeast-2 \
-		--recursive \
+		--update \
 		--include='*.jpg' \
 		--jobs=10 \
-		oss://lab99-syd-pub/vocab-coverage/ images/assets
+		oss://lab99-syd-pub/vocab-coverage/ images/
 
 # remote
 
