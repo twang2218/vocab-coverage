@@ -30,6 +30,7 @@
       - [`charset` 子命令](#charset-子命令)
       - [`coverage` 子命令](#coverage-子命令)
       - [`embedding` 子命令](#embedding-子命令)
+  - [Star History](#star-history)
 
 > 跳到 [所有模型的分析图](graphs.md)。
 
@@ -375,3 +376,7 @@ font size: 25, font: ('Noto Sans CJK JP', 'Regular')
 ...
 save to images/embeddings/THUDM-chatglm-6b.embedding.jpg...
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=twang2218/vocab-coverage&type=Date)](https://star-history.com/#twang2218/vocab-coverage&Date)

@@ -67,10 +67,9 @@ generate-markdown: generate-thumbnail
 generate: generate-coverage generate-embedding generate-thumbnail generate-markdown
 
 sync-from-vast:
-	rsync -avP 'vast:./vocab/images/assets/embedding.token/*' images/fullsize/
-	rsync -avP 'vast:./vocab/images/assets/embedding/*' images/fullsize/
+	rsync -avP 'vast:./vocab/images/fullsize/*' images/fullsize/
 
-temp: sync-from-vast generate-markdown sync-to-oss
+sync-graph: sync-from-vast generate-markdown sync-to-oss
 
 clean-cache:
 	rm -rf ~/.cache/huggingface/hub/*

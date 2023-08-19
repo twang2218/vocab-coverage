@@ -114,29 +114,29 @@ def generate_embedding(models:List[dict],
         if group not in ('', section['group']):
             continue
         for model_name in section["models"]:
-            try:
-                # check embedding files
-                position_candidates = {}
-                for granularity in granularities:
-                    position_candidates[granularity] = []
-                    for position in positions:
-                        embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder, debug=debug)
-                        if embedding_file is None:
-                            position_candidates[granularity].append(position)
-                        standard_file = generate_embedding_filename(model_name,
-                                                                    granularity=granularity,
-                                                                    position=position,
-                                                                    folder=folder)
-                        if embedding_file and standard_file != embedding_file:
-                            logger.info("Renaming %s => %s", embedding_file, standard_file)
-                            os.rename(embedding_file, standard_file)
-                            embedding_file = standard_file
-                
-                if sum(len(position_candidates[granularity]) for granularity in granularities) == 0:
-                    logger.debug("[%s] Skip. Exists all [%s] embedding for [%s]", model_name, positions, granularities)
-                    continue
+            # check embedding files
+            position_candidates = {}
+            for granularity in granularities:
+                position_candidates[granularity] = []
+                for position in positions:
+                    embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder, debug=debug)
+                    if embedding_file is None:
+                        position_candidates[granularity].append(position)
+                    standard_file = generate_embedding_filename(model_name,
+                                                                granularity=granularity,
+                                                                position=position,
+                                                                folder=folder)
+                    if embedding_file and standard_file != embedding_file:
+                        logger.info("Renaming %s => %s", embedding_file, standard_file)
+                        os.rename(embedding_file, standard_file)
+                        embedding_file = standard_file
+            
+            if sum(len(position_candidates[granularity]) for granularity in granularities) == 0:
+                logger.debug("[%s] Skip. Exists all [%s] embedding for [%s]", model_name, positions, granularities)
+                continue
 
-                # generate embedding
+            # generate embedding
+            try:
                 for granularity in granularities:
                     # release cache (Only for GPU)
                     release_resource(model_name, clear_cache=False)
@@ -261,7 +261,8 @@ def generate_markdown_for_model(model_name:str,
     # construct the markdown
     if "/" in model_name:
         org, name = model_name.split("/")
-        model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
+        # model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
+        model_name = f'{org}<br/>/<br/>{name}'
     model_name = f'<b>{model_name}</b>'
     # title = f"| {model_name} | | |\n"
     # title = f"#### {model_name}\n"
@@ -406,7 +407,7 @@ def main():
     if hasattr(args, "debug") and args.debug:
         logger.setLevel(logging.DEBUG)
 
-    models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models.yaml')
+    models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), constants.FILE_MODELS)
     with open(models_file, "r", encoding='utf-8') as f:
         models = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -431,12 +432,18 @@ def main():
     elif args.command == "markdown":
         # markdown for all models
         logger.info("Generating markdown for all models to %s", args.markdown)
-        generate_markdown_for_all(models, fullsize=args.fullsize, thumbnail=args.thumbnail, output=args.markdown)
+        generate_markdown_for_all(models, fullsize=args.fullsize,
+                                  thumbnail=args.thumbnail, output=args.markdown)
         # markdown for readme
         template_file = os.path.join('docs', 'README.template.md')
-        models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models_readme.yaml')
+        models_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   constants.FILE_MODELS_README)
         logger.info("Generating markdown for readme by %s and %s", template_file, models_file)
-        generate_markdown_from_template(template_file=template_file, model_list_file=models_file, fullsize=args.fullsize, thumbnail=args.thumbnail, output='README.md')
+        generate_markdown_from_template(template_file=template_file,
+                                        model_list_file=models_file,
+                                        fullsize=args.fullsize,
+                                        thumbnail=args.thumbnail,
+                                        output=constants.FILE_README_MD)
     else:
         parser.print_help()
 

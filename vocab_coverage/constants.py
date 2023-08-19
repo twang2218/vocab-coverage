@@ -140,3 +140,21 @@ REDUCER_SET = [
 # 特殊字符
 TEXT_LEADING_UNDERSCORE = '▁'
 TEXT_OPENAI_END_OF_TEXT = '<|endoftext|>'
+
+# 文件
+FOLDER_CACHE = '.cache'
+FILE_CACHE = 'embedding.cache'
+FILE_CACHE_LOCK = 'embedding.cache.lock'
+FILE_CHARSET_CHAR = 'charsets_char.json'
+FILE_CHARSET_TOKEN = 'charsets_token.json'
+FILE_DICT_WORD = 'dict_word.json'
+FILE_CHARSET_DICT = {
+    GRANULARITY_TOKEN: FILE_CHARSET_TOKEN,
+    GRANULARITY_CHARACTER: FILE_CHARSET_CHAR,
+    GRANULARITY_WORD: FILE_DICT_WORD
+}
+FILE_MODELS = 'models.yaml'
+FILE_MODELS_README = 'models_readme.yaml'
+FILE_README_MD = 'README.md'
+FILE_README_TEMPLATE_MD = 'README.template.md'
+FILE_GRAPHS_MD = 'graphs.md'

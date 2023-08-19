@@ -13,6 +13,7 @@ from vocab_coverage.loader import load_model, load_tokenizer
 from vocab_coverage.utils import generate_embedding_filename, has_parameter, logger
 from vocab_coverage.reducer import reduce_to_2d
 from vocab_coverage.lexicon import Lexicon
+from vocab_coverage.cache import cache
 from vocab_coverage import constants
 
 def get_token_embeddings(model_name:str, model:PreTrainedModel, debug:bool=False):
@@ -258,25 +259,34 @@ def embedding_analysis(model_name:str,
 
 
     # 获取向量
-    embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)
+    has_cache = all(cache.has(cache.key(model_name, granularity, position, 'embeddings_2d')) for position in positions)
+    if not has_cache:
+        embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)
     # 处理不同位置的向量
     for position in positions:
-        if embeddings[position] is not None and len(embeddings[position]) > 0:
-            # 检查
-            ## 检查长度是否一致
-            vocab_size = lexicon.get_item_count()
-            if len(embeddings[position]) != vocab_size:
-                logger.warning("[%s]: %s_embeddings %s != vocab_size %s, skip...", model_name, position, len(embeddings[position]), vocab_size)
-                continue
-            ## 检查是否有 nan
-            i = 0
-            for _, value in lexicon:
-                for item in value['items']:
-                    if np.isnan(embeddings[position][i]).any():
-                        logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
-                    i += 1
-            # 降维
-            embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
+        cache_key = cache.key(model_name, granularity, position, 'embeddings_2d')
+        if cache.has(cache_key) or (embeddings[position] is not None and len(embeddings[position]) > 0):
+            if cache.has(cache_key):
+                embeddings_2d = cache.get(cache_key)
+                logger.info("[%s]: 从缓存中获取 Embedding 2D 向量(%s)...", model_name, cache_key)
+            else:
+                # 检查
+                ## 检查长度是否一致
+                vocab_size = lexicon.get_item_count()
+                if len(embeddings[position]) != vocab_size:
+                    logger.warning("[%s]: %s_embeddings %s != vocab_size %s, skip...", model_name, position, len(embeddings[position]), vocab_size)
+                    continue
+                ## 检查是否有 nan
+                i = 0
+                for _, value in lexicon:
+                    for item in value['items']:
+                        if np.isnan(embeddings[position][i]).any():
+                            logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
+                        i += 1
+                # 降维
+                embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
+                # 缓存
+                cache.set(cache_key, embeddings_2d)
             # 为 lexicon 添加 embedding 信息
             i = 0
             for _, value in lexicon:

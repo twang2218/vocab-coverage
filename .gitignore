@@ -273,3 +273,5 @@ research/
 *.zip
 images/assets
 images/fullsize
+images/thumbnail*
+.cache
