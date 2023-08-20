@@ -167,7 +167,6 @@
   # 2023-07-25
   - OpenBuddy/openbuddy-llama2-13b-v8.1-fp16
   # 2023-07-25
-  # CUDA error: Assertion `srcIndex < srcSelectDimSize` failed.
   - YeungNLP/firefly-llama2-13b
   # 2023-07-25
   - michaelwzhu/Chinese-LlaMA2-chat-7B-sft

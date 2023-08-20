@@ -34,8 +34,7 @@ def get_token_embeddings(model_name:str, model:PreTrainedModel, debug:bool=False
 def get_sentences_embeddings(model_name:str, model:PreTrainedModel, tokenizer:PreTrainedTokenizer,
                            sentences:List[str]|List[int],
                            positions:List[str]=None,
-                           max_length:int=256,
-                           batch_size:int=32):
+                           max_length:int=256):
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     embeddings = {position: [] for position in positions}
@@ -46,29 +45,23 @@ def get_sentences_embeddings(model_name:str, model:PreTrainedModel, tokenizer:Pr
         num_embeddings = model.get_input_embeddings().num_embeddings
         if max_id >= num_embeddings:
             logger.error("[%s]: get_sentences_embeddings(): max_id: [%s]=%s >= num_embeddings %s", model_name, max_id_index, max_id, num_embeddings)
-    # 按批次进行向量计算
-    for i in range(0, len(sentences), batch_size):
-        batch_sentences = sentences[i:i+batch_size]
 
-        inputs = _get_inputs(model_name, tokenizer, batch_sentences, max_length)
-        inputs = inputs.to(model.device)
-        with torch.no_grad():
-            outputs = model(**inputs, output_hidden_states=True)
-        # get attention_mask and token_embeddings
-        attention_mask = _prepare_attention_mask(model_name=model_name, attention_mask=inputs['attention_mask'])
+    inputs = _get_inputs(model_name, tokenizer, sentences, max_length)
+    inputs = inputs.to(model.device)
+    with torch.no_grad():
+        outputs = model(**inputs, output_hidden_states=True)
+    # get attention_mask and token_embeddings
+    attention_mask = _prepare_attention_mask(model_name=model_name, attention_mask=inputs['attention_mask'])
 
-        for position in positions:
-            if position == constants.EMBEDDING_POSITION_INPUT:
-                token_embeddings = outputs.hidden_states[0].detach().clone()
-            else:
-                token_embeddings = outputs.hidden_states[-1].detach().clone()
-            token_embeddings = _prepare_token_embeddings(model_name=model_name, token_embeddings=token_embeddings)
-            batch_embeddings = _calculate_sentence_embedding_mean_pooling(token_embeddings, attention_mask)
+    for position in positions:
+        if position == constants.EMBEDDING_POSITION_INPUT:
+            token_embeddings = outputs.hidden_states[0].detach().clone()
+        else:
+            token_embeddings = outputs.hidden_states[-1].detach().clone()
+        token_embeddings = _prepare_token_embeddings(model_name=model_name, token_embeddings=token_embeddings)
+        sentence_embeddings = _calculate_sentence_embedding_mean_pooling(token_embeddings, attention_mask)
 
-            if i == 0:
-                embeddings[position] = batch_embeddings
-            else:
-                embeddings[position] = np.concatenate((embeddings[position], batch_embeddings), axis=0)
+        embeddings[position] = sentence_embeddings
 
     return embeddings
 
@@ -192,8 +185,16 @@ def get_embeddings(model_name:str,
             embeddings[constants.EMBEDDING_POSITION_INPUT] = get_token_embeddings(model_name, model, debug=debug)
         if constants.EMBEDDING_POSITION_OUTPUT in positions:
             for _, value in lexicon:
-                for item in value['items']:
-                    texts.append(item['id'])
+                for i, item in enumerate(value['items']):
+                    token_id = item['id']
+                    if hasattr(model, 'get_input_embeddings') and hasattr(model.get_input_embeddings(), 'num_embeddings'):
+                        # 检查给入ID是否超过词表大小
+                        num_embeddings = model.get_input_embeddings().num_embeddings
+                        if token_id >= num_embeddings:
+                            logger.warning("[%s]: get_embeddings(): [%s]:'%s' id: %s >= num_embeddings: %s. use (num_embeddings - 1)=%s",
+                                        model_name, i, item['text'], token_id, num_embeddings, num_embeddings-1)
+                            token_id = num_embeddings - 1
+                    texts.append(token_id)
     elif granularity == constants.GRANULARITY_CHARACTER:
         for _, value in lexicon:
             for item in value['items']:
@@ -303,7 +304,11 @@ def embedding_analysis(model_name:str,
                     kwargs = {}
                     if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
                         kwargs['add_special_tokens'] = False
-                    tokenized_text = tokenizer.tokenize(item['text'], **kwargs)
+                    text = item['text']
+                    if isinstance(text, bytes):
+                        # Qwen/Qwen-7B-Chat
+                        text = text.decode('utf-8')
+                    tokenized_text = tokenizer.tokenize(text, **kwargs)
                     item['tokenized_text'] = [t for t in tokenized_text if t != constants.TEXT_LEADING_UNDERSCORE]
                     i += 1
             # 绘制图像
