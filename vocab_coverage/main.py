@@ -49,25 +49,35 @@ def main():
     #     logger.setLevel(logging.DEBUG)
 
     if args.command == 'coverage':
-        lexicon = load_lexicon(args.model_name, granularity=args.granularity, debug=args.debug)
-        coverage_analysis(args.model_name,
-                          lexicon=lexicon,
-                          granularity=args.granularity,
-                          folder=args.folder,
-                          debug=args.debug)
+        granularities = args.granularity.split(',')
+        for granularity in granularities:
+            if granularity not in constants.GRANULARITY_SETS:
+                logger.error('不支持的颗粒度：%s', granularity)
+                continue
+            lexicon = load_lexicon(args.model_name, granularity=granularity, debug=args.debug)
+            coverage_analysis(args.model_name,
+                            lexicon=lexicon,
+                            granularity=granularity,
+                            folder=args.folder,
+                            debug=args.debug)
     elif args.command == 'embedding':
-        lexicon = load_lexicon(args.model_name, granularity=args.granularity, debug=args.debug)
+        granularities = args.granularity.split(',')
         positions = args.position.split(',')
-        embedding_analysis(
-            model_name=args.model_name,
-            lexicon=lexicon,
-            folder=args.folder,
-            postfix=args.postfix,
-            override=args.override,
-            positions=positions,
-            granularity=args.granularity,
-            reducer=args.reducer_method,
-            debug=args.debug)
+        for granularity in granularities:
+            if granularity not in constants.GRANULARITY_SETS:
+                logger.error('不支持的颗粒度：%s', granularity)
+                continue
+            lexicon = load_lexicon(args.model_name, granularity=granularity, debug=args.debug)
+            embedding_analysis(
+                model_name=args.model_name,
+                lexicon=lexicon,
+                folder=args.folder,
+                postfix=args.postfix,
+                override=args.override,
+                positions=positions,
+                granularity=granularity,
+                reducer=args.reducer_method,
+                debug=args.debug)
     elif args.command == 'crawler':
         # 爬取用以统计识字率的字表文件
         if args.granularity == constants.GRANULARITY_CHARACTER:

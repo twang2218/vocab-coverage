@@ -64,14 +64,17 @@ def find_thumbnail_file(filename:str, folder:str=constants.FOLDER_IMAGES):
 
 def generate_coverage(models:List[dict],
                       group:str='',
-                      granularity:str=constants.GRANULARITY_CHARACTER,
+                      granularities:List[str]=None,
                       folder=constants.FOLDER_IMAGES,
                       debug:bool=False):
+    if granularities is None:
+        granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER]
     for section in models:
         if group not in ('', section['group']):
             continue
         for model_name in section["models"]:
-            try:
+            for granularity in granularities:
+                # check coverage files
                 coverage = find_coverage_file(model_name, granularity=granularity, folder=folder)
                 if coverage is not None:
                     # fix coverage filename
@@ -81,20 +84,21 @@ def generate_coverage(models:List[dict],
                         os.rename(coverage, standard_coverage)
                         coverage = standard_coverage
                     if debug:
-                        logger.debug("[%s] No [%s] coverage is required to be generated.", model_name, granularity)
+                        logger.debug("[%s] Skip. Exists [%s] coverage.", model_name, granularity)
                     continue
-                # generate coverage
-                lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
-                coverage_analysis(model_name,
-                                  lexicon=lexicon,
-                                  granularity=granularity,
-                                  folder=folder,
-                                  debug=debug)
-                logger.info("[%s] Generated [%s] coverage.", model_name, granularity)
-            # pylint: disable=broad-except
-            except Exception as ex:
-                logger.error("[%s] coverage_analysis() failed. [%s]", model_name, ex)
-                traceback.print_exc()
+                try:
+                    # generate coverage
+                    lexicon = load_lexicon(model_name, granularity=granularity, debug=debug)
+                    coverage_analysis(model_name,
+                                    lexicon=lexicon,
+                                    granularity=granularity,
+                                    folder=folder,
+                                    debug=debug)
+                    logger.info("[%s] Generated [%s] coverage.", model_name, granularity)
+                # pylint: disable=broad-except
+                except Exception as ex:
+                    logger.error("[%s] coverage_analysis() failed. [%s]", model_name, ex)
+                    traceback.print_exc()
 
 def generate_embedding(models:List[dict],
                        group:str='',
@@ -261,7 +265,6 @@ def generate_markdown_for_model(model_name:str,
     # construct the markdown
     if "/" in model_name:
         org, name = model_name.split("/")
-        # model_name = f'<p>{org}</p><p>/</p><p>{name}</p>'
         model_name = f'{org}<br/>/<br/>{name}'
     model_name = f'<b>{model_name}</b>'
     # title = f"| {model_name} | | |\n"
@@ -414,7 +417,7 @@ def main():
     if args.command == "coverage":
         generate_coverage(models,
                           group=args.group,
-                          granularity=args.granularity,
+                          granularities=args.granularity.split(','),
                           folder=args.folder,
                           debug=args.debug)
     elif args.command == "embedding":

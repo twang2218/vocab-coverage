@@ -275,3 +275,6 @@ images/assets
 images/fullsize
 images/thumbnail*
 .cache
+# OSS generated files
+.report
+ossutil_output

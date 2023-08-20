@@ -10,7 +10,7 @@ from tqdm import tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizer, BatchEncoding
 from vocab_coverage.draw import draw_embeddings_graph
 from vocab_coverage.loader import load_model, load_tokenizer
-from vocab_coverage.utils import generate_embedding_filename, has_parameter, logger
+from vocab_coverage.utils import generate_embedding_filename, has_parameter, release_resource, logger
 from vocab_coverage.reducer import reduce_to_2d
 from vocab_coverage.lexicon import Lexicon
 from vocab_coverage.cache import cache
@@ -23,7 +23,7 @@ def get_token_embeddings(model_name:str, model:PreTrainedModel, debug:bool=False
     if not isinstance(embedding, torch.nn.Embedding):
         raise ValueError(f"[{model_name}]: get_token_embeddings(): unknown input_embedding_func: {embedding}")
     if debug:
-        logger.debug("[%s]: get_token_embeddings(): %s", model_name, embedding.weight.shape)
+        logger.debug("[%s]: get_token_embeddings(): embedding:[weight.shape: %s, num_embeddings:%s]", model_name, embedding.weight.shape, embedding.num_embeddings)
     # embedding = embedding.weight
     token_ids = torch.tensor(np.arange(0, embedding.num_embeddings, 1)).to(model.device)
     embedding = embedding(token_ids)
@@ -39,6 +39,14 @@ def get_sentences_embeddings(model_name:str, model:PreTrainedModel, tokenizer:Pr
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
     embeddings = {position: [] for position in positions}
+    # 检查给入ID是否超过词表大小
+    if isinstance(sentences[0], int):
+        max_id = max(sentences)
+        max_id_index = sentences.index(max_id)
+        num_embeddings = model.get_input_embeddings().num_embeddings
+        if max_id >= num_embeddings:
+            logger.error("[%s]: get_sentences_embeddings(): max_id: [%s]=%s >= num_embeddings %s", model_name, max_id_index, max_id, num_embeddings)
+    # 按批次进行向量计算
     for i in range(0, len(sentences), batch_size):
         batch_sentences = sentences[i:i+batch_size]
 
@@ -254,15 +262,15 @@ def embedding_analysis(model_name:str,
         return
     positions = positions_candidates
 
-    tokenizer = load_tokenizer(model_name, debug=debug)
-    model = load_model(model_name, debug=debug)
-
-
     # 获取向量
+    tokenizer = load_tokenizer(model_name, debug=debug)
     has_cache = all(cache.has(cache.key(model_name, granularity, position, 'embeddings_2d')) for position in positions)
     if not has_cache:
-        embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)
-    # 处理不同位置的向量
+        # 如果没有缓存，重新计算
+        model = load_model(model_name, debug=debug)
+        embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)    # 处理不同位置的向量
+        del model
+        release_resource(model_name, clear_cache=False)
     for position in positions:
         cache_key = cache.key(model_name, granularity, position, 'embeddings_2d')
         if cache.has(cache_key) or (embeddings[position] is not None and len(embeddings[position]) > 0):
@@ -316,9 +324,4 @@ def embedding_analysis(model_name:str,
             filename = filenames[position]
             logger.info("[%s]: 保存 [%s] %s 向量图像 (%s)...", model_name, granularity, position, filename)
             image.save(filename, quality=80, optimize=True)
-    
-    # 释放资源
-    del model
-    del tokenizer
-
     return
