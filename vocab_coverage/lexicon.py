@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
+from tqdm import tqdm
+
 from vocab_coverage.classifier import Classifier, load_classifier
 from vocab_coverage.loader import load_wordbook
 from vocab_coverage.utils import logger
+from vocab_coverage import constants
 
 class Lexicon:
     def __init__(self, classifier:Classifier, wordbook:List[str]|List[dict]|dict[str, dict] = None):
@@ -110,7 +113,7 @@ class Lexicon:
                 'items': []
             }
         # 将词表中的每个字符串归类到对应的类别中
-        for item in wordbook:
+        for item in tqdm(wordbook, desc='Lexicon 加载词表'):
             text = item['text']
             category = self.classifier.classify(text)
             if category is None:

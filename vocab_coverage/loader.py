@@ -13,6 +13,7 @@ from transformers import (
 )
 import torch
 import tiktoken
+from tqdm import tqdm
 
 from vocab_coverage.utils import show_gpu_usage, logger
 from vocab_coverage import constants
@@ -177,7 +178,7 @@ def load_model(model_name:str, debug:bool=False):
     return model
 
 def load_vocab(model_name:str, tokenizer, debug=False) -> List[str]:
-    if "OpenAI" in model_name:
+    if "openai" in model_name.lower():
         model_name = model_name.split("/")[-1]
         return load_vocab_openai(model_name, debug=debug)
 
@@ -210,7 +211,7 @@ def load_vocab(model_name:str, tokenizer, debug=False) -> List[str]:
     return vocab
 
 def load_vocab_openai(model_name:str, debug=False):
-    t = tiktoken.encoding_for_model('gpt-3.5-turbo')
+    t = tiktoken.encoding_for_model(model_name)
     count_except = 0
     vocab = []
     # pylint: disable=protected-access
@@ -225,6 +226,8 @@ def load_vocab_openai(model_name:str, debug=False):
     if debug:
         logger.debug("[%s]: vocab: %s", model_name, len(vocab))
         logger.debug("[%s]: count_except: %s", model_name, count_except)
+    # debug with small amount of vocab
+    # vocab = vocab[:4000]
     return vocab
 
 def load_wordbook(model_name:str, granularity:str=constants.GRANULARITY_TOKEN, debug:bool=False) -> List[str]:

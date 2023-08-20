@@ -14,6 +14,7 @@ class Classifier:
             self.load(filename)
         else:
             self.load(self._get_default_filename())
+        self._text_category_index = self._create_text_category_index()
 
     def load(self, filename:str=None):
         if not(isinstance(filename, str) and len(filename) > 0):
@@ -34,10 +35,9 @@ class Classifier:
             json.dump(self.categories, f, indent=indent, ensure_ascii=False)
 
     def classify(self, text:str) -> str:
-        for category, value in self.categories.items():
-            # 文本如果出现在类别的文本集中，则属于该类别
-            if text in value['texts']:
-                return category
+        # 文本如果出现在类别的文本集中，则属于该类别
+        if text in self._text_category_index:
+            return self._text_category_index[text]
         return None
 
     def __getitem__(self, key:str) -> dict:
@@ -58,6 +58,14 @@ class Classifier:
         filename = constants.FILE_CHARSET_DICT[self.granularity]
         filename = os.path.join(basedir, filename)
         return filename
+    
+    def _create_text_category_index(self) -> dict:
+        index = {}
+        for category, value in self.categories.items():
+            for text in value['texts']:
+                index[text] = category
+        return index
+
 
 class TokenClassifier(Classifier):
     def classify(self, text: str) -> dict:

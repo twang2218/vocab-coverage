@@ -152,16 +152,16 @@ def _calculate_sentence_embedding_mean_pooling(token_embeddings:torch.Tensor,
     embeddings = embeddings.detach().numpy()
     return embeddings
 
-def get_output_embeddings_openai(model_name:str, vocab:List[str], batch=10, debug=False):
-    Embedding = importlib.import_module('openai.Embedding')
+def get_output_embeddings_openai(model_name:str, lexicon:Lexicon, batch:int=1000, debug=False):
+    Embedding = importlib.import_module('openai').Embedding
     embeddings = []
-    for i in range(0, len(vocab), batch):
-        if debug:
-            logger.debug("[%s]: get_output_embeddings_openai(): [%d:%d]", model_name, i, i+batch)
-        batch_embeddings = Embedding.create(input = vocab[i:i+batch], model=model_name)['data']
-        # ee = [e['embedding'] for e in ee]
-        embeddings.extend(e['embedding'] for e in batch_embeddings)
-
+    texts = [item['text'] for _, value in lexicon for item in value['items']]
+    with tqdm(total=len(texts), desc=f"get_output_embeddings_openai({model_name})") as pbar:
+        for i in range(0, len(texts), batch):
+            pbar.update(batch)
+            batch_texts = texts[i:i+batch]
+            batch_embeddings = Embedding.create(input = batch_texts, model=model_name)['data']
+            embeddings.extend(e['embedding'] for e in batch_embeddings)
     if debug:
         logger.debug("[%s] embeds: %d", model_name, len(embeddings))
     return np.array(embeddings)
@@ -232,15 +232,23 @@ def embedding_analysis(model_name:str,
                        postfix:str='',
                        override:bool=False,
                        debug=False):
-    logger.info("对模型 %s 的 embedding 进行可视化...", model_name)
+    logger.info("[%s] 对 [%s] @ %s embedding 进行可视化...", model_name, granularity, positions)
 
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
 
     if '/' in model_name:
         org, name = model_name.split('/')
-        if org.lower() == 'openai' and name != 'text-embedding-ada-002':
-            logger.warning("[%s] only 'text-embedding-ada-002' is supported, skip...", model_name)
+        supported_models = [
+            'text-similarity-babbage-001',
+            'text-search-babbage-doc-001',
+            'text-similarity-curie-001',
+            'text-search-curie-doc-001',
+            'text-embedding-ada-002',
+        ]
+        name = name.lower()
+        if org.lower() == 'openai' and name not in supported_models:
+            logger.warning("[%s] only '%s' are supported, skip...", model_name, supported_models)
             return
 
     # 生成文件名
@@ -268,65 +276,96 @@ def embedding_analysis(model_name:str,
     has_cache = all(cache.has(cache.key(model_name, granularity, position, 'embeddings_2d')) for position in positions)
     if not has_cache:
         # 如果没有缓存，重新计算
-        model = load_model(model_name, debug=debug)
-        embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)    # 处理不同位置的向量
-        del model
-        release_resource(model_name, clear_cache=False)
+        if 'openai' in model_name.lower():
+            cache_key = cache.key(model_name, granularity, constants.EMBEDDING_POSITION_OUTPUT, 'embeddings_2d')
+            if cache.has(cache_key):
+                # no need to calculate embeddings if we cached the embeddings_2d already, and there is no input embedding for OpenAI.
+                embeddings = {}
+            else:
+                # call openai api to get embeddings
+                openai_model_name = model_name.split('/')[-1]
+                embeddings_openai = get_output_embeddings_openai(openai_model_name, lexicon, batch=500, debug=debug)
+                embeddings = { constants.EMBEDDING_POSITION_OUTPUT: embeddings_openai }
+        else:
+            model = load_model(model_name, debug=debug)
+            embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)    # 处理不同位置的向量
+            del model
+            release_resource(model_name, clear_cache=False)
     for position in positions:
         cache_key = cache.key(model_name, granularity, position, 'embeddings_2d')
-        if cache.has(cache_key) or (embeddings[position] is not None and len(embeddings[position]) > 0):
-            if cache.has(cache_key):
-                embeddings_2d = cache.get(cache_key)
-                logger.info("[%s]: 从缓存中获取 Embedding 2D 向量(%s)...", model_name, cache_key)
-            else:
-                # 检查
-                ## 检查长度是否一致
-                vocab_size = lexicon.get_item_count()
-                if len(embeddings[position]) != vocab_size:
-                    logger.warning("[%s]: %s_embeddings %s != vocab_size %s, skip...", model_name, position, len(embeddings[position]), vocab_size)
-                    continue
-                ## 检查是否有 nan
-                i = 0
-                for _, value in lexicon:
-                    for item in value['items']:
-                        if np.isnan(embeddings[position][i]).any():
-                            logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
-                        i += 1
-                # 降维
-                embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
-                # 缓存
-                cache.set(cache_key, embeddings_2d)
-            # 为 lexicon 添加 embedding 信息
+        if cache.has(cache_key):
+            embeddings_2d = cache.get(cache_key)
+            logger.info("[%s]: 从缓存中获取 Embedding 2D 向量(%s)...", model_name, cache_key)
+        elif position in embeddings and embeddings[position] is not None and len(embeddings[position]) > 0:
+            # 检查
+            ## 检查长度是否一致
+            vocab_size = lexicon.get_item_count()
+            if len(embeddings[position]) != vocab_size:
+                logger.warning("[%s]: %s_embeddings %s != vocab_size %s, skip...", model_name, position, len(embeddings[position]), vocab_size)
+                continue
+            ## 检查是否有 nan
             i = 0
             for _, value in lexicon:
                 for item in value['items']:
-                    item['embedding'] = embeddings_2d[i]
-                    kwargs = {}
-                    if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
-                        kwargs['add_special_tokens'] = False
+                    if np.isnan(embeddings[position][i]).any():
+                        logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
+                    i += 1
+            # 降维
+            embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
+            # 缓存
+            cache.set(cache_key, embeddings_2d)
+        else:
+            logger.warning("[%s]: %s_embeddings is None, skip...", model_name, position)
+            continue
+        # 为 lexicon 添加 tokenized_text 信息
+        with tqdm(total=lexicon.get_item_count(), desc=f"为 lexicon 添加 tokenized_text 信息({position})") as pbar:
+            i = 0
+            for _, value in lexicon:
+                for item in value['items']:
+                    pbar.update(1)
                     text = item['text']
                     if isinstance(text, bytes):
                         # Qwen/Qwen-7B-Chat
-                        text = text.decode('utf-8')
-                    tokenized_text = tokenizer.tokenize(text, **kwargs)
-                    item['tokenized_text'] = [t for t in tokenized_text if t != constants.TEXT_LEADING_UNDERSCORE]
+                        try:
+                            text = text.decode('utf-8')
+                        except UnicodeDecodeError:
+                            logger.error("[%s]: decode '%s' failed, skip...", model_name, text)
+                            continue
+                    if hasattr(tokenizer, 'tokenize'):
+                        kwargs = {}
+                        if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
+                            kwargs['add_special_tokens'] = False
+                        tokens = tokenizer.tokenize(text, **kwargs)
+                    else:
+                        # OpenAI - tiktoken
+                        token_ids = tokenizer.encode(text)
+                        tokens = [tokenizer.decode([token_id]) for token_id in token_ids]
+                    item['tokenized_text'] = tokens
+        # 为 lexicon 添加 embedding 信息
+        with tqdm(total=lexicon.get_item_count(), desc=f"为 lexicon 添加 embedding 信息({position})") as pbar:
+            i = 0
+            for _, value in lexicon:
+                for item in value['items']:
+                    pbar.update(1)
+                    item['embedding'] = embeddings_2d[i]
                     i += 1
-            # 绘制图像
-            if debug:
-                logger.debug("[%s]: draw %s_embeddings %s...",
-                             model_name, position, embeddings_2d.shape)
-            image = draw_embeddings_graph(
-                model_name=model_name,
-                lexicon=lexicon,
-                position=position,
-                debug=debug)
+        
+        # 绘制图像
+        if debug:
+            logger.debug("[%s]: draw %s_embeddings %s...",
+                            model_name, position, embeddings_2d.shape)
+        image = draw_embeddings_graph(
+            model_name=model_name,
+            lexicon=lexicon,
+            position=position,
+            debug=debug)
 
-            # 保存图像到文件
-            if image is None:
-                logger.warning("[%s]: 生成 [%s] %s 向量图像失败...", model_name, granularity, position)
-                continue
-            
-            filename = filenames[position]
-            logger.info("[%s]: 保存 [%s] %s 向量图像 (%s)...", model_name, granularity, position, filename)
-            image.save(filename, quality=80, optimize=True)
+        # 保存图像到文件
+        if image is None:
+            logger.warning("[%s]: 生成 [%s] %s 向量图像失败...", model_name, granularity, position)
+            continue
+        
+        filename = filenames[position]
+        logger.info("[%s]: 保存 [%s] %s 向量图像 (%s)...", model_name, granularity, position, filename)
+        image.save(filename, quality=80, optimize=True)
     return
