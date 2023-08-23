@@ -9,7 +9,8 @@ from transformers import (
     AutoModelForCausalLM,
     # BitsAndBytesConfig,
     LlamaTokenizer,
-    LlamaTokenizerFast
+    LlamaTokenizerFast,
+    PreTrainedTokenizerBase,
 )
 import torch
 import tiktoken
@@ -78,6 +79,28 @@ def load_tokenizer(model_name:str, debug:bool=False):
         logger.debug(tokenizer)
 
     return tokenizer
+
+def is_bbpe_tokenizer(model_name:str, tokenizer:PreTrainedTokenizerBase):
+    tokenizer_white_list = [
+        "RobertaTokenizer",
+        "BartTokenizer",
+        "BloomTokenizer",
+        "LlamaTokenizer",
+        "GPT2Tokenizer",
+        "DebertaTokenizer",
+        "OpenAIGPTTokenizer",
+        "BartTokenizer",
+    ]
+    for name in tokenizer_white_list:
+        if name in str(type(tokenizer)):
+            return True
+    model_white_list = [
+        "6b", "7b", "12b", "13b", "llama", "moss", "gpt",
+    ]
+    for name in model_white_list:
+        if name in model_name.lower():
+            return True
+    return False
 
 def _generate_model_kwargs(model_name:str):
     model_name_lower = model_name.lower()

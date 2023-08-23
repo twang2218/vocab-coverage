@@ -279,7 +279,7 @@ def get_thuocl_dicts(debug:bool=False) -> dict[str, dict]:
 def get_chinese_word_dicts(debug:bool=False) -> dict[str, dict]:
     thuocl_dicts = get_thuocl_dicts(debug=debug)
     logger.info('精简词表...')
-    threshold_per_category = 2000
+    threshold_per_category = 1000
     dicts = {}
     for name, value in thuocl_dicts.items():
         dicts[name] = {

@@ -274,7 +274,8 @@ research/
 images/assets
 images/fullsize
 images/thumbnail*
-.cache
+.cache*
 # OSS generated files
 .report
 ossutil_output
+.vscode

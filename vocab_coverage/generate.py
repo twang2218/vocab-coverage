@@ -107,6 +107,8 @@ def generate_embedding(models:List[dict],
                        reducer:str=constants.REDUCER_TSNE,
                        folder=constants.FOLDER_IMAGES,
                        cleanup:bool=True,
+                       no_cache:bool=False,
+                       override:bool=False,
                        debug:bool=False):
     if granularities is None:
         granularities = [constants.GRANULARITY_TOKEN]
@@ -124,7 +126,7 @@ def generate_embedding(models:List[dict],
                 position_candidates[granularity] = []
                 for position in positions:
                     embedding_file = find_embedding_file(model_name, granularity=granularity, position=position, folder=folder, debug=debug)
-                    if embedding_file is None:
+                    if embedding_file is None or override:
                         position_candidates[granularity].append(position)
                     standard_file = generate_embedding_filename(model_name,
                                                                 granularity=granularity,
@@ -152,6 +154,8 @@ def generate_embedding(models:List[dict],
                                     positions=position_candidates[granularity],
                                     reducer=reducer,
                                     folder=folder,
+                                    no_cache=no_cache,
+                                    override=override,
                                     debug=debug)
                     logger.info("[%s] Generated [%s] embedding at %s", model_name, granularity, position_candidates[granularity])
             # pylint: disable=broad-except
@@ -263,9 +267,7 @@ def generate_markdown_for_model(model_name:str,
         return ""
 
     # construct the markdown
-    if "/" in model_name:
-        org, name = model_name.split("/")
-        model_name = f'{org}<br/>/<br/>{name}'
+    model_name = model_name.replace("/", "<br/>|<br/>")
     model_name = f'<b>{model_name}</b>'
     # title = f"| {model_name} | | |\n"
     # title = f"#### {model_name}\n"
@@ -394,6 +396,8 @@ def main():
     cmd_embedding.add_argument("--debug", action="store_true", help="是否输出调试信息")
     cmd_embedding.add_argument("--no_cleanup", action="store_true", help="是否保留模型缓存文件")
     cmd_embedding.add_argument("--reducer", type=str, default="tsne", help="降维算法，可选值为 tsne 或 umap（默认为 tsne）")
+    cmd_embedding.add_argument("--no_cache", action="store_true", help="是否忽略 embedding 缓存")
+    cmd_embedding.add_argument("--override", action="store_true", help="是否覆盖已有的 embedding 图片")
 
     cmd_thumbnail = subcommands.add_parser('thumbnail', help='Generate thumbnails for embedding graphs')
     cmd_thumbnail.add_argument("--input", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输入文件夹，用以查找全尺寸的图片文件，默认为 {constants.FOLDER_IMAGES_FULLSIZE}")
@@ -428,6 +432,8 @@ def main():
                            reducer=args.reducer,
                            folder=args.folder,
                            cleanup=not args.no_cleanup,
+                           no_cache=args.no_cache,
+                           override=args.override,
                            debug=args.debug)
     elif args.command == "thumbnail":
         generate_coverage_thumbnails(models, input=args.input, output=args.output, debug=args.debug)

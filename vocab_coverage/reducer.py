@@ -16,12 +16,13 @@ def reduce_to_2d_tsne(embeddings, debug=False):
     if debug:
         logger.debug("> reduce_to_2d_tsne(%s): %s", embeddings.shape, TSNE)
     tsne_model = TSNE(n_components=2,
+        perplexity=30,
         early_exaggeration=12,
         learning_rate='auto',
         metric='cosine',
         init='pca',
         verbose=2 if debug else 0,
-        n_iter=1500, # 碰到过 1000 次迭代还没收敛的情况
+        n_iter=1000,
         random_state=2218,
         method='barnes_hut',
         n_jobs=-1)

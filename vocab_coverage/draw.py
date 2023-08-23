@@ -290,6 +290,8 @@ def draw_embeddings_graph(model_name:str,
     image_height = height
     margin = image_width // 30
 
+    if debug:
+        logger.debug("> image size: %d x %d, margin:%d", image_width, image_height, margin)
     # 创建画布
     image = Image.new('RGB', (image_width, image_height), constants.PALETTE_BACKGROUND)
     draw = ImageDraw.Draw(image)
@@ -346,6 +348,22 @@ def draw_embeddings_graph(model_name:str,
 
     return image
 
+def clip(value, min_value, max_value):
+    return min(max(value, min_value), max_value)
+
+def _calculate_font_size(vocab_size, region_width, max_size:int=0, min_size:int=12, debug:bool=False):
+    if max_size == 0:
+        max_size = region_width // (28 * 6)
+    font_size = math.pow(0.6, 0.0001 * vocab_size + 10) + 0.0023
+    if debug:
+        logger.debug("> vocab_size: %d, font_size: %f => %f, clip(%d, %d)",
+                     vocab_size, font_size, int(font_size * region_width), min_size, max_size)
+    font_size = font_size * region_width
+    font_size = clip(font_size, min_size, max_size)
+    font_size = int(font_size)
+
+    return font_size
+
 def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lexicon:Lexicon, debug:bool=False):
     ## 计算尺寸位置数值
     x, y, x2, y2 = region
@@ -355,8 +373,9 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
     # 画底图
     draw.rectangle((x, y, x2, y2), fill=constants.PALETTE_REGION_BACKGROUND)
     # 字体
-    font_size = int(margin * 2000 / lexicon.get_item_count())
-    font_size = int(min(max(font_size, 12), margin))
+    font_size = _calculate_font_size(vocab_size=lexicon.get_item_count(),
+                                     region_width=width,
+                                     debug=debug)
     font = get_chinese_font(font_size)
     # 画字
     if debug:

@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizer, BatchEncoding
 from vocab_coverage.draw import draw_embeddings_graph
-from vocab_coverage.loader import load_model, load_tokenizer
+from vocab_coverage.loader import load_model, load_tokenizer, is_bbpe_tokenizer
 from vocab_coverage.utils import generate_embedding_filename, has_parameter, release_resource, logger
 from vocab_coverage.reducer import reduce_to_2d
 from vocab_coverage.lexicon import Lexicon
@@ -231,25 +231,26 @@ def embedding_analysis(model_name:str,
                        folder:str=constants.FOLDER_IMAGES,
                        postfix:str='',
                        override:bool=False,
+                       no_cache:bool=False,
                        debug=False):
     logger.info("[%s] 对 [%s] @ %s embedding 进行可视化...", model_name, granularity, positions)
 
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
 
-    if '/' in model_name:
-        org, name = model_name.split('/')
-        supported_models = [
-            'text-similarity-babbage-001',
-            'text-search-babbage-doc-001',
-            'text-similarity-curie-001',
-            'text-search-curie-doc-001',
-            'text-embedding-ada-002',
-        ]
-        name = name.lower()
-        if org.lower() == 'openai' and name not in supported_models:
-            logger.warning("[%s] only '%s' are supported, skip...", model_name, supported_models)
-            return
+    if 'openai' in model_name.lower():
+        parts = model_name.lower().split('/')
+        if len(parts) == 2:
+            supported_models = [
+                'text-similarity-babbage-001',
+                'text-search-babbage-doc-001',
+                'text-similarity-curie-001',
+                'text-search-curie-doc-001',
+                'text-embedding-ada-002',
+            ]
+            if parts[-1] not in supported_models:
+                logger.warning("[%s] only '%s' are supported, skip...", model_name, supported_models)
+                return
 
     # 生成文件名
     positions_candidates = []
@@ -274,11 +275,11 @@ def embedding_analysis(model_name:str,
     # 获取向量
     tokenizer = load_tokenizer(model_name, debug=debug)
     has_cache = all(cache.has(cache.key(model_name, granularity, position, 'embeddings_2d')) for position in positions)
-    if not has_cache:
+    if no_cache or not has_cache:
         # 如果没有缓存，重新计算
         if 'openai' in model_name.lower():
             cache_key = cache.key(model_name, granularity, constants.EMBEDDING_POSITION_OUTPUT, 'embeddings_2d')
-            if cache.has(cache_key):
+            if not no_cache and cache.has(cache_key):
                 # no need to calculate embeddings if we cached the embeddings_2d already, and there is no input embedding for OpenAI.
                 embeddings = {}
             else:
@@ -293,7 +294,7 @@ def embedding_analysis(model_name:str,
             release_resource(model_name, clear_cache=False)
     for position in positions:
         cache_key = cache.key(model_name, granularity, position, 'embeddings_2d')
-        if cache.has(cache_key):
+        if not no_cache and cache.has(cache_key):
             embeddings_2d = cache.get(cache_key)
             logger.info("[%s]: 从缓存中获取 Embedding 2D 向量(%s)...", model_name, cache_key)
         elif position in embeddings and embeddings[position] is not None and len(embeddings[position]) > 0:
@@ -319,28 +320,37 @@ def embedding_analysis(model_name:str,
             continue
         # 为 lexicon 添加 tokenized_text 信息
         with tqdm(total=lexicon.get_item_count(), desc=f"为 lexicon 添加 tokenized_text 信息({position})") as pbar:
-            i = 0
-            for _, value in lexicon:
-                for item in value['items']:
-                    pbar.update(1)
-                    text = item['text']
-                    if isinstance(text, bytes):
-                        # Qwen/Qwen-7B-Chat
-                        try:
-                            text = text.decode('utf-8')
-                        except UnicodeDecodeError:
-                            logger.error("[%s]: decode '%s' failed, skip...", model_name, text)
-                            continue
-                    if hasattr(tokenizer, 'tokenize'):
-                        kwargs = {}
-                        if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
-                            kwargs['add_special_tokens'] = False
-                        tokens = tokenizer.tokenize(text, **kwargs)
-                    else:
-                        # OpenAI - tiktoken
-                        token_ids = tokenizer.encode(text)
-                        tokens = [tokenizer.decode([token_id]) for token_id in token_ids]
-                    item['tokenized_text'] = tokens
+            if not is_bbpe_tokenizer(model_name, tokenizer):
+                i = 0
+                for _, value in lexicon:
+                    for item in value['items']:
+                        pbar.update(1)
+                        text = item['text']
+                        if isinstance(text, bytes):
+                            # Qwen/Qwen-7B-Chat
+                            try:
+                                text = text.decode('utf-8')
+                            except UnicodeDecodeError:
+                                logger.error("[%s]: decode '%s' failed, skip...", model_name, text)
+                                continue
+                        if hasattr(tokenizer, 'tokenize'):
+                            kwargs = {}
+                            if has_parameter(tokenizer.tokenize, 'add_special_tokens'):
+                                kwargs['add_special_tokens'] = False
+                            tokens = tokenizer.tokenize(text, **kwargs)
+                        else:
+                            # OpenAI - tiktoken
+                            token_ids = tokenizer.encode(text)
+                            tokens = [tokenizer.decode([token_id]) for token_id in token_ids]
+                        new_tokens = []
+                        for token in tokens:
+                            if token.startswith('Ġ'):
+                                token = token[1:]
+                            elif token.startswith('▁'):
+                                token = token[1:]
+                            if len(token) > 0:
+                                new_tokens.append(token)
+                        item['tokenized_text'] = new_tokens
         # 为 lexicon 添加 embedding 信息
         with tqdm(total=lexicon.get_item_count(), desc=f"为 lexicon 添加 embedding 信息({position})") as pbar:
             i = 0

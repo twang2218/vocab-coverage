@@ -121,6 +121,12 @@ sync-from-oss:
 remote-sync:
 	rsync -avzP --exclude-from=.gitignore --exclude='*.png' --exclude='.git' --exclude='images' . $(REMOTE_HOST):./vocab
 
+sync-to-remote-cache:
+	rsync -avzP vocab_coverage/.cache/ $(REMOTE_HOST):./vocab/.cache/
+
+sync-from-remote-cache:
+	rsync -avzP $(REMOTE_HOST):./vocab/.cache/ vocab_coverage/.cache/
+
 remote-download-images:
 	rsync -avzP $(REMOTE_HOST):./vocab/images/ ./images/
 
