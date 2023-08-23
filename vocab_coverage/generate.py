@@ -2,7 +2,6 @@
 
 import argparse
 import io
-import json
 import logging
 import os
 import sys
@@ -12,12 +11,21 @@ import yaml
 
 if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # pylint: disable=wrong-import-position
+from vocab_coverage.classifier import Classifier
+from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets, get_chinese_word_dicts
 from vocab_coverage.coverage import coverage_analysis
-from vocab_coverage.embedding import embedding_analysis
+from vocab_coverage.embedding import embedding_analysis, release_resource
 from vocab_coverage.lexicon import load_lexicon
-from vocab_coverage.utils import logger, generate_coverage_filename, generate_embedding_filename, generate_thumbnail_filename, generate_model_path, release_resource
 from vocab_coverage import constants
+from vocab_coverage.utils import (
+    logger,
+    generate_coverage_filename,
+    generate_embedding_filename,
+    generate_thumbnail_filename,
+    generate_model_path
+)
 
 def find_coverage_file(model_name:str, granularity:str, postfix:str='', folder:str=constants.FOLDER_IMAGES, debug:bool=False):
     basename = generate_model_path(model_name)
@@ -63,14 +71,17 @@ def find_thumbnail_file(filename:str, folder:str=constants.FOLDER_IMAGES):
     return None
 
 def generate_coverage(models:List[dict],
-                      group:str='',
+                      groups:List[str]=None,
                       granularities:List[str]=None,
                       folder=constants.FOLDER_IMAGES,
                       debug:bool=False):
+    if groups is None:
+        groups = []
     if granularities is None:
         granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER]
     for section in models:
-        if group not in ('', section['group']):
+        if len(groups) > 0 and section['group'] not in groups:
+            # 指定了组的列表，但是当前组不在列表中，跳过
             continue
         for model_name in section["models"]:
             for granularity in granularities:
@@ -101,7 +112,7 @@ def generate_coverage(models:List[dict],
                     traceback.print_exc()
 
 def generate_embedding(models:List[dict],
-                       group:str='',
+                       groups:List[str]=None,
                        granularities:List[str]=None,
                        positions:List[str]=None,
                        reducer:str=constants.REDUCER_TSNE,
@@ -110,14 +121,16 @@ def generate_embedding(models:List[dict],
                        no_cache:bool=False,
                        override:bool=False,
                        debug:bool=False):
+    if groups is None:
+        groups = []
     if granularities is None:
         granularities = [constants.GRANULARITY_TOKEN]
-
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
 
     for section in models:
-        if group not in ('', section['group']):
+        if len(groups) > 0 and section['group'] not in groups:
+            # 指定了组的列表，但是当前组不在列表中，跳过
             continue
         for model_name in section["models"]:
             # check embedding files
@@ -172,9 +185,11 @@ def generate_thumbnail(model_name:str, filename:str, folder=constants.FOLDER_IMA
         raise ValueError(f"Cannot find file {filename}")
     thumbnail_filename = generate_thumbnail_filename(filename, folder=folder)
     if os.path.exists(thumbnail_filename):
-        if debug:
-            logger.debug("[%s] 生成缩略图 (%s)...", model_name, filename)
-        return
+        # 对比全尺寸文件的时间和缩略图的时间，如果缩略图的时间比全尺寸文件的时间晚，则不需要重新生成缩略图
+        if os.path.getmtime(thumbnail_filename) > os.path.getmtime(filename):
+            if debug:
+                logger.debug("[%s] 无需生成缩略图 (%s)...", model_name, filename)
+            return
     logger.info("[%s] 生成缩略图 (%s)...", model_name, filename)
     ret = os.system(f"convert {filename} -quality 50 -resize 10% {thumbnail_filename}")
     if ret != 0:
@@ -267,7 +282,7 @@ def generate_markdown_for_model(model_name:str,
         return ""
 
     # construct the markdown
-    model_name = model_name.replace("/", "<br/>|<br/>")
+    model_name = model_name.replace("/", "<br/>/<br/>")
     model_name = f'<b>{model_name}</b>'
     # title = f"| {model_name} | | |\n"
     # title = f"#### {model_name}\n"
@@ -382,6 +397,11 @@ def main():
     parser = argparse.ArgumentParser()
     subcommands = parser.add_subparsers(dest='command')
 
+    cmd_crawler = subcommands.add_parser('crawler', help='爬取用以统计识字率的字表文件')
+    cmd_crawler.add_argument("--granularity", type=str, default="char", help="爬取的字表类型，可选值为 token, char（默认为 char）")
+    cmd_crawler.add_argument("-f", "--file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
+    cmd_crawler.add_argument("--indent", type=int, default=None, help="输出 JSON 文件时的缩进量（默认为 None）")
+
     cmd_coverage = subcommands.add_parser('coverage', help='Generate coverage graphs')
     cmd_coverage.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
     cmd_coverage.add_argument("--granularity", type=str, default="char", help="统计颗粒度，可选值为 token 或 char（默认为 char）")
@@ -389,7 +409,7 @@ def main():
     cmd_coverage.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
 
     cmd_embedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
-    cmd_embedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
+    cmd_embedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key，可以为多项，用逗号分隔")
     cmd_embedding.add_argument("--granularity", type=str, default="token", help="统计颗粒度，可选值为 (token、char、word）或组合（如：token,char），（默认为 token）")
     cmd_embedding.add_argument("--position", type=str, default="input,output", help="向量位置，可选值为 input, output 或 input,output（默认为 input,output）")
     cmd_embedding.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
@@ -418,15 +438,34 @@ def main():
     with open(models_file, "r", encoding='utf-8') as f:
         models = yaml.load(f, Loader=yaml.FullLoader)
 
-    if args.command == "coverage":
+    if args.command == 'crawler':
+        # 爬取用以统计识字率的字表文件
+        if args.granularity == constants.GRANULARITY_CHARACTER:
+            charsets = get_chinese_charsets(debug=True)
+        elif args.granularity == constants.GRANULARITY_TOKEN:
+            charsets = get_token_charsets(debug=True)
+        elif args.granularity == constants.GRANULARITY_WORD:
+            charsets = get_chinese_word_dicts(debug=True)
+        else:
+            logger.error('不支持的字表类型：%s', args.granularity)
+            sys.exit(1)
+        # 处理缩进
+        if isinstance(args.indent, int):
+            if args.indent > 4:
+                args.indent = 4
+            elif args.indent < 0:
+                args.indent = 0
+        # 保存到文件
+        Classifier(charsets, granularity=args.granularity).save(args.file, args.indent)
+    elif args.command == "coverage":
         generate_coverage(models,
-                          group=args.group,
+                          groups=args.group.split(','),
                           granularities=args.granularity.split(','),
                           folder=args.folder,
                           debug=args.debug)
     elif args.command == "embedding":
         generate_embedding(models,
-                           group=args.group,
+                           groups=args.group.split(','),
                            granularities=args.granularity.split(','),
                            positions=args.position.split(','),
                            reducer=args.reducer,

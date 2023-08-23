@@ -10,9 +10,7 @@ if __name__ == "__main__":
 
 # pylint: disable=wrong-import-position
 from vocab_coverage import coverage_analysis, embedding_analysis
-from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets, get_chinese_word_dicts
 from vocab_coverage.utils import logger
-from vocab_coverage.classifier import Classifier
 from vocab_coverage.lexicon import load_lexicon
 from vocab_coverage import constants
 
@@ -39,11 +37,6 @@ def main():
     cmd_embedding.add_argument("--reducer_method", type=str, default="tsne", help="降维算法（默认为 tsne），可选值为 tsne, umap, tsne_cuml, umap_cuml, umap_tsne, umap_tsne_cuml")
     cmd_embedding.add_argument("--no_cache", action="store_true", help="是否忽略 embedding 缓存")
 
-    cmd_crawler = subcommands.add_parser('crawler', help='爬取用以统计识字率的字表文件')
-    cmd_crawler.add_argument("--granularity", type=str, default="char", help="爬取的字表类型，可选值为 token, char（默认为 char）")
-    cmd_crawler.add_argument("-f", "--file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
-    # cmd_crawler.add_argument("--debug", action='store_true', help="是否打印调试信息（默认为 False）")
-    cmd_crawler.add_argument("--indent", type=int, default=None, help="输出 JSON 文件时的缩进量（默认为 None）")
     args = parser.parse_args()
 
     # if hasattr(args, "debug") and args.debug:
@@ -80,25 +73,6 @@ def main():
                 reducer=args.reducer_method,
                 no_cache=args.no_cache,
                 debug=args.debug)
-    elif args.command == 'crawler':
-        # 爬取用以统计识字率的字表文件
-        if args.granularity == constants.GRANULARITY_CHARACTER:
-            charsets = get_chinese_charsets(debug=True)
-        elif args.granularity == constants.GRANULARITY_TOKEN:
-            charsets = get_token_charsets(debug=True)
-        elif args.granularity == constants.GRANULARITY_WORD:
-            charsets = get_chinese_word_dicts(debug=True)
-        else:
-            logger.error('不支持的字表类型：%s', args.granularity)
-            sys.exit(1)
-        # 处理缩进
-        if isinstance(args.indent, int):
-            if args.indent > 4:
-                args.indent = 4
-            elif args.indent < 0:
-                args.indent = 0
-        # 保存到文件
-        Classifier(charsets, granularity=args.granularity).save(args.file, args.indent)
     else:
         parser.print_help()
 
