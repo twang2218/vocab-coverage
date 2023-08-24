@@ -77,11 +77,15 @@ def generate_coverage(models:List[dict],
                       debug:bool=False):
     if groups is None:
         groups = []
+    else:
+        groups = [group for group in groups if len(group) > 0]    
     if granularities is None:
         granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER]
     for section in models:
         if len(groups) > 0 and section['group'] not in groups:
             # 指定了组的列表，但是当前组不在列表中，跳过
+            if debug:
+                logger.debug("[%s] Skip. Not in %s", section['group'], groups)
             continue
         for model_name in section["models"]:
             for granularity in granularities:
@@ -123,6 +127,8 @@ def generate_embedding(models:List[dict],
                        debug:bool=False):
     if groups is None:
         groups = []
+    else:
+        groups = [group for group in groups if len(group) > 0]    
     if granularities is None:
         granularities = [constants.GRANULARITY_TOKEN]
     if positions is None:
@@ -131,6 +137,8 @@ def generate_embedding(models:List[dict],
     for section in models:
         if len(groups) > 0 and section['group'] not in groups:
             # 指定了组的列表，但是当前组不在列表中，跳过
+            if debug:
+                logger.debug("[%s] Skip. Not in %s", section['group'], groups)
             continue
         for model_name in section["models"]:
             # check embedding files

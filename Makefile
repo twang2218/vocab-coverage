@@ -74,7 +74,7 @@ sync-graph: sync-from-vast generate-markdown sync-to-oss
 clean-cache:
 	rm -rf ~/.cache/huggingface/hub/*
 
-sync-to-oss: sync-to-oss-fullsize sync-to-oss-thumbnail
+sync-to-oss: sync-to-oss-thumbnail sync-to-oss-fullsize
 
 sync-to-oss-fullsize:
 	aliyun oss sync \
@@ -90,6 +90,7 @@ sync-to-oss-thumbnail:
 		--update \
 		--include='*.jpg' \
 		--jobs=10 \
+		--meta='Cache-Control:no-cache' \
 		images/thumbnail oss://lab99-syd-pub/vocab-coverage/thumbnail/
 
 # sync-to-oss:

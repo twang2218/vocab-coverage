@@ -90,12 +90,13 @@ def is_bbpe_tokenizer(model_name:str, tokenizer:PreTrainedTokenizerBase):
         "DebertaTokenizer",
         "OpenAIGPTTokenizer",
         "BartTokenizer",
+        "tiktoken.core.Encoding",
     ]
     for name in tokenizer_white_list:
         if name in str(type(tokenizer)):
             return True
     model_white_list = [
-        "6b", "7b", "12b", "13b", "llama", "moss", "gpt",
+        "6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai",
     ]
     for name in model_white_list:
         if name in model_name.lower():
