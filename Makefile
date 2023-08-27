@@ -90,8 +90,8 @@ sync-to-oss-thumbnail:
 		--update \
 		--include='*.jpg' \
 		--jobs=10 \
-		--meta='Cache-Control:no-cache' \
 		images/thumbnail oss://lab99-syd-pub/vocab-coverage/thumbnail/
+# --meta='Cache-Control:no-cache'
 
 # sync-to-oss:
 # 	aliyun oss cp \
