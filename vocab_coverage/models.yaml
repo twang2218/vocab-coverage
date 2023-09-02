@@ -74,6 +74,8 @@
   - Langboat/mengzi-bert-base
   # 2022-01-23
   - shibing624/text2vec-base-chinese
+  # 2022-10-22
+  - IDEA-CCNL/Erlangshen-TCBert-330M-Sentence-Embedding-Chinese
   # 2023-06-06
   - moka-ai/m3e-base
   # 2023-08-05
@@ -98,6 +100,17 @@
   - shibing624/text2vec-base-chinese-sentence
   # 2023-06-19
   - shibing624/text2vec-base-chinese-paraphrase
+
+
+- group: gpt2
+  name: GPT2 架构模型
+  models:
+  # 2020-12-12
+  - TsinghuaAI/CPM-Generate
+  # 2021-11-25
+  - IDEA-CCNL/Wenzhong-GPT2-3.5B
+  # 2022-06-08
+  - IDEA-CCNL/Wenzhong2.0-GPT2-3.5B-chinese
 
 - group: t5
   name: Google T5 系列模型 (Encoder-Decoder)
@@ -176,6 +189,9 @@
   - ziqingyang/chinese-llama-2-7b
   # 2023-08-10
   - yentinglin/Taiwan-LLaMa-v1.0
+  # 2023-08-28
+  - FlagAlpha/Atom-7B
+
 
 - group: bloom
   name: Bloom 及衍生模型
@@ -206,8 +222,28 @@
   - YeungNLP/firefly-baichuan-7b
   # 2023-06-28
   - BAAI/Aquila-7B
+  # 2023-07-06
+  - internlm/internlm-chat-7b
   # 2023-08-03
   - Qwen/Qwen-7B-Chat
+  # 2023-08-19
+  - xverse/XVERSE-13B-Chat
+  # 2023-08-25
+  - YeungNLP/firefly-internlm-7b
+
+
+- group: atom
+  name: 原子回声13B模型（位于预训练不同阶段）
+  models:
+  # 2023-06-08
+  - AtomEchoAI/AtomGPT_8k
+  # 2023-06-19
+  - AtomEchoAI/AtomGPT_14k
+  # 2023-07-06
+  - AtomEchoAI/AtomGPT_28k
+  # 2023-07-19
+  - AtomEchoAI/AtomGPT_56k
+
 
 - group: llm
   name: 其他大语言模型
@@ -233,3 +269,26 @@
   - OpenAI/text-similarity-babbage-001
   - OpenAI/text-search-babbage-doc-001
   # - OpenAI/text-similarity-curie-001
+
+# - group: new
+#   name: 新增模型，用于服务器批量处理，平时应该被注释掉。
+#   models:
+#   # 2023-09-02
+#   - FlagAlpha/Atom-7B
+#   - internlm/internlm-chat-7b
+#   - xverse/XVERSE-13B-Chat
+#   - YeungNLP/firefly-internlm-7b
+#   - IDEA-CCNL/Erlangshen-TCBert-330M-Sentence-Embedding-Chinese
+#   - TsinghuaAI/CPM-Generate
+#   # 2021-11-25
+#   - IDEA-CCNL/Wenzhong-GPT2-3.5B
+#   # 2022-06-08
+#   - IDEA-CCNL/Wenzhong2.0-GPT2-3.5B-chinese
+#   # 2023-06-08
+#   - AtomEchoAI/AtomGPT_8k
+#   # 2023-06-19
+#   - AtomEchoAI/AtomGPT_14k
+#   # 2023-07-06
+#   - AtomEchoAI/AtomGPT_28k
+#   # 2023-07-19
+#   - AtomEchoAI/AtomGPT_56k
