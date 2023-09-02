@@ -82,6 +82,7 @@ sync-to-oss-fullsize:
 		--update \
 		--include='*.jpg' \
 		--jobs=10 \
+		--output-dir=logs/ \
 		images/fullsize oss://lab99-syd-pub/vocab-coverage/fullsize/
 
 sync-to-oss-thumbnail:
@@ -90,6 +91,7 @@ sync-to-oss-thumbnail:
 		--update \
 		--include='*.jpg' \
 		--jobs=10 \
+		--output-dir=logs/ \
 		images/thumbnail oss://lab99-syd-pub/vocab-coverage/thumbnail/
 # --meta='Cache-Control:no-cache'
 
@@ -115,6 +117,7 @@ sync-from-oss:
 		--update \
 		--include='*.jpg' \
 		--jobs=10 \
+		--output-dir=logs/ \
 		oss://lab99-syd-pub/vocab-coverage/ images/
 
 # remote
