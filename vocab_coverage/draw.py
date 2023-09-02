@@ -396,13 +396,6 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
             #     logger.debug(">> %s: %s, %s", category, item['text'], embedding)
             color = value['color']
             text = item['text']
-            if isinstance(text, bytes):
-                # Qwen/Qwen-7B-Chat
-                try:
-                    text = text.decode('utf-8')
-                except UnicodeDecodeError:
-                    hex_representation = text.hex()
-                    text = ''.join(['\\x' + hex_representation[i:i+2] for i in range(0, len(hex_representation), 2)])
             if text.startswith('##'):
                 color = lighten_color(color, 0.4)
             if 'tokenized_text' in item:

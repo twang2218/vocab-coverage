@@ -93,13 +93,6 @@ def get_token_split_count(tokenizer, text:str, special_prefix_id, attached_prefi
 
     has_attached_prefix = False
 
-    if isinstance(text, bytes):
-        # Qwen/Qwen-7B-Chat
-        try:
-            text = text.decode('utf-8')
-        except UnicodeDecodeError:
-            return 0
-
     if len(text) > 2 and text.startswith('##') and text[2] != '#':
         text = text[2:]
         text = attached_prefix + text

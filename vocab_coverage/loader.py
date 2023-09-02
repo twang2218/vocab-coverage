@@ -16,7 +16,7 @@ import torch
 import tiktoken
 from tqdm import tqdm
 
-from vocab_coverage.utils import show_gpu_usage, logger
+from vocab_coverage.utils import logger, show_gpu_usage, is_match_patterns
 from vocab_coverage import constants
 
 def load_tokenizer_openai(model_name:str, debug:bool=False):
@@ -37,12 +37,12 @@ def load_tokenizer(model_name:str, debug:bool=False):
     try:
         kwargs = {}
         kwargs['trust_remote_code'] = True
-        if 'llama' in model_name.lower() or 'vicuna' in model_name.lower() or 'alpaca' in model_name.lower():
+        if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_LLAMA):
             # https://github.com/LianjiaTech/BELLE/issues/242#issuecomment-1514330432
             # Avoid LlamaTokenizerFast conversion
             # lmsys/vicuna-7b-v1.3
             tokenizer = LlamaTokenizer.from_pretrained(model_name, **kwargs)
-        elif 'openai' in model_name.lower():
+        elif is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
             tokenizer = load_tokenizer_openai(model_name, debug=debug)
         else:
             tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
@@ -56,7 +56,7 @@ def load_tokenizer(model_name:str, debug:bool=False):
         tokenizer.model_input_names = ["input_ids", "attention_mask"]
 
     # special cases
-    if 'qwen' in model_name.lower():
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_QWEN):
         eos_token_id = tokenizer.convert_tokens_to_ids(constants.TEXT_OPENAI_END_OF_TEXT)
         tokenizer.pad_token = constants.TEXT_OPENAI_END_OF_TEXT
         tokenizer.eos_token_id = eos_token_id
@@ -81,77 +81,44 @@ def load_tokenizer(model_name:str, debug:bool=False):
     return tokenizer
 
 def is_bbpe_tokenizer(model_name:str, tokenizer:PreTrainedTokenizerBase):
-    tokenizer_white_list = [
-        "RobertaTokenizer",
-        "BartTokenizer",
-        "BloomTokenizer",
-        "LlamaTokenizer",
-        "GPT2Tokenizer",
-        "DebertaTokenizer",
-        "OpenAIGPTTokenizer",
-        "BartTokenizer",
-        "tiktoken.core.Encoding",
-    ]
-    for name in tokenizer_white_list:
-        if name in str(type(tokenizer)):
-            return True
-    model_white_list = [
-        "6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai",
-    ]
-    for name in model_white_list:
-        if name in model_name.lower():
-            return True
-    return False
+    logger.debug("[%s]: %s", model_name, tokenizer)
+    return is_match_patterns(str(type(tokenizer)), constants.PATTERN_TOKENIZER_BBPE) or \
+            is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_BBPE)
 
 def _generate_model_kwargs(model_name:str):
-    model_name_lower = model_name.lower()
-    if 'openai' in model_name_lower:
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
         raise ValueError(f"不支持的模型：{model_name}")
     # 判断是否是需要用 int8 加载的模型
-    int8_models = ['12b', '13b', 'taiwan-llama', 'moss']
     int8_kwargs = {
         'load_in_8bit': True,
         'torch_dtype': torch.float16,
         'device_map': 'auto',
         'trust_remote_code': True,
     }
-    for pattern in int8_models:
-        if pattern in model_name_lower:
-            return int8_kwargs
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_INT8):
+        return int8_kwargs
+
     # 判断是否是需要 fp16 加载的模型
-    fp16_models = ['6b', '7b', 'llama', 'gpt']
     fp16_kwargs = {
         'torch_dtype': torch.float16,
         'device_map': 'auto',
         'trust_remote_code': True,
     }
-    for pattern in fp16_models:
-        if pattern in model_name_lower:
-            return fp16_kwargs
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_FP16):
+        return fp16_kwargs
+
     # 其他返回空
     return {}
 
 def _get_model_class(model_name:str):
-    model_name_lower = model_name.lower()
     # AutoModelForCausalLM
-    causallm_models = ['falcon', 'aquila', 'qwen', 'baichuan', 'mpt']
-    for pattern in causallm_models:
-        if pattern in model_name_lower:
-            return AutoModelForCausalLM
-    # special cases
-    special_models = {
-        # 'aquila': 'flagai.model.aquila_model.AQUILAModel'
-    }
-    for pattern, model_class in special_models.items():
-        if pattern in model_name.lower():
-            if isinstance(model_class, str):
-                model_class = import_module(model_class)
-            return model_class
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_CAUSALLM):
+        return AutoModelForCausalLM
     # default to AutoModel
     return AutoModel
 
 def load_model(model_name:str, debug:bool=False):
-    if "OpenAI" in model_name:
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
         raise ValueError(f"不支持加载的模型：{model_name}")
 
     try:
@@ -202,7 +169,7 @@ def load_model(model_name:str, debug:bool=False):
     return model
 
 def load_vocab(model_name:str, tokenizer, debug=False) -> List[str]:
-    if "openai" in model_name.lower():
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
         model_name = model_name.split("/")[-1]
         return load_vocab_openai(model_name, debug=debug)
 
@@ -220,7 +187,11 @@ def load_vocab(model_name:str, tokenizer, debug=False) -> List[str]:
         try:
             if isinstance(k, bytes):
                 # Qwen/Qwen-7B-Chat
-                vocab[v] = k
+                try:
+                    vocab[v] = k.decode('utf-8')
+                except UnicodeDecodeError:
+                    hex_representation = k.hex()
+                    vocab[v] = ''.join(['\\x' + hex_representation[i:i+2] for i in range(0, len(hex_representation), 2)])
             elif hasattr(tokenizer, 'convert_tokens_to_string'):
                 vocab[v] = tokenizer.convert_tokens_to_string([k])
             elif hasattr(tokenizer, 'text_tokenizer') and hasattr(tokenizer.text_tokenizer, 'convert_tokens_to_string'):

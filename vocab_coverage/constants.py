@@ -158,3 +158,24 @@ FILE_MODELS_README = 'models_readme.yaml'
 FILE_README_MD = 'README.md'
 FILE_README_TEMPLATE_MD = 'README.template.md'
 FILE_GRAPHS_MD = 'graphs.md'
+
+# 模型名称模式
+
+PATTERN_MODEL_NAME_LLAMA = ['llama', 'vicuna', 'alpaca', 'koala', 'wizardlm', 'pajama', 'guanaco', 'atom']
+PATTERN_MODEL_NAME_OPENAI = ['openai']
+PATTERN_MODEL_NAME_QWEN = ['qwen']
+PATTERN_MODEL_NAME_BBPE = ["6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai"]
+PATTERN_TOKENIZER_BBPE = [
+        "RobertaTokenizer",
+        "BartTokenizer",
+        "BloomTokenizer",
+        "LlamaTokenizer",
+        "GPT2Tokenizer",
+        "DebertaTokenizer",
+        "OpenAIGPTTokenizer",
+        "BartTokenizer",
+        "tiktoken.core.Encoding",
+    ]
+PATTERN_MODEL_NAME_INT8 = ['12b', '13b', 'taiwan-llama', 'moss', 'atomgpt']
+PATTERN_MODEL_NAME_FP16 = ['6b', '7b', 'llama', 'gpt']
+PATTERN_MODEL_NAME_CAUSALLM = ['falcon', 'aquila', 'qwen', 'baichuan', 'mpt']

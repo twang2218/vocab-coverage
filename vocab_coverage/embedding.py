@@ -10,7 +10,7 @@ from tqdm import tqdm
 from transformers import PreTrainedModel, PreTrainedTokenizer, BatchEncoding
 from vocab_coverage.draw import draw_embeddings_graph
 from vocab_coverage.loader import load_model, load_tokenizer, is_bbpe_tokenizer
-from vocab_coverage.utils import generate_embedding_filename, has_parameter, release_resource, logger
+from vocab_coverage.utils import logger, generate_embedding_filename, has_parameter, release_resource, is_match_patterns
 from vocab_coverage.reducer import reduce_to_2d
 from vocab_coverage.lexicon import Lexicon
 from vocab_coverage.cache import cache
@@ -92,22 +92,26 @@ def _get_inputs(model_name:str,
         raise TypeError(f"[{model_name}]: get_sentences_embedding(): sentences must be a list of str or int")
 
     # post-processing
-    if 'falcon' in model_name.lower():
+    model_patterns_token_type_ids = [
         # tiiuae/falcon-7b-instruct
         # ValueError: Got unexpected arguments: {'token_type_ids': tensor([[0]])}
-        del inputs['token_type_ids']
-    elif 'bart' in model_name.lower():
+        'falcon',
         # fnlp/bart-base-chinese
         # BartEncoder.forward() got an unexpected keyword argument 'token_type_ids'
-        del inputs['token_type_ids']
+        'bart',
+        # xverse/XVERSE-13B-Chat
+        # TypeError: XverseForCausalLM.forward() got an unexpected keyword argument 'token_type_ids'
+        'xverse'
+        ]
+    if is_match_patterns(model_name, model_patterns_token_type_ids):
+            del inputs['token_type_ids']
     return inputs
 
 cache_model_fix_attention_mask = []
 cache_model_fix_token_embeddings = []
 
 def _prepare_attention_mask(model_name:str, attention_mask):
-    model_name = model_name.lower()
-    if 'chatglm-6b' in model_name:
+    if is_match_patterns(model_name, ['chatglm-6b']):
         # THUDM/chatglm-6b
         #   attention_mask.shape: [50, 1, 4, 4] => [50, 4]
         old_shape = attention_mask.shape
@@ -119,8 +123,7 @@ def _prepare_attention_mask(model_name:str, attention_mask):
     return attention_mask
 
 def _prepare_token_embeddings(model_name:str, token_embeddings):
-    model_name = model_name.lower()
-    if 'chatglm-6b' in model_name:
+    if is_match_patterns(model_name, ['chatglm-6b']):
         # THUDM/chatglm-6b
         #   token_embeddings.shape: [4, 50, 4096] => [50, 4, 4096]
         old_shape = token_embeddings.shape
@@ -129,7 +132,7 @@ def _prepare_token_embeddings(model_name:str, token_embeddings):
             cache_model_fix_token_embeddings.append(model_name)
             logger.debug("[%s]: fix token_embeddings: %s => %s",
                         model_name, old_shape, token_embeddings.shape)
-    elif 'chatglm2-6b' in model_name:
+    elif is_match_patterns(model_name, ['chatglm2-6b']):
         # THUDM/chatglm2-6b
         #   attention_mask.shape: [50, 7]
         #   token_embeddings.shape: [7, 50, 4096] => [50, 7, 4096]
@@ -238,9 +241,10 @@ def embedding_analysis(model_name:str,
     if positions is None:
         positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
 
-    if 'openai' in model_name.lower():
+    if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
         parts = model_name.lower().split('/')
         if len(parts) == 2:
+            name = parts[-1]
             supported_models = [
                 'text-similarity-babbage-001',
                 'text-search-babbage-doc-001',
@@ -248,7 +252,7 @@ def embedding_analysis(model_name:str,
                 'text-search-curie-doc-001',
                 'text-embedding-ada-002',
             ]
-            if parts[-1] not in supported_models:
+            if not is_match_patterns(name, supported_models):
                 logger.warning("[%s] only '%s' are supported, skip...", model_name, supported_models)
                 return
 
@@ -277,7 +281,7 @@ def embedding_analysis(model_name:str,
     has_cache = all(cache.has(cache.key(model_name, granularity, position, 'embeddings_2d')) for position in positions)
     if no_cache or not has_cache:
         # 如果没有缓存，重新计算
-        if 'openai' in model_name.lower():
+        if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
             cache_key = cache.key(model_name, granularity, constants.EMBEDDING_POSITION_OUTPUT, 'embeddings_2d')
             if not no_cache and cache.has(cache_key):
                 # no need to calculate embeddings if we cached the embeddings_2d already, and there is no input embedding for OpenAI.
@@ -326,13 +330,6 @@ def embedding_analysis(model_name:str,
                     for item in value['items']:
                         pbar.update(1)
                         text = item['text']
-                        if isinstance(text, bytes):
-                            # Qwen/Qwen-7B-Chat
-                            try:
-                                text = text.decode('utf-8')
-                            except UnicodeDecodeError:
-                                logger.error("[%s]: decode '%s' failed, skip...", model_name, text)
-                                continue
                         if hasattr(tokenizer, 'tokenize'):
                             kwargs = {}
                             if has_parameter(tokenizer.tokenize, 'add_special_tokens'):

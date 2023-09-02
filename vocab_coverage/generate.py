@@ -412,13 +412,13 @@ def main():
 
     cmd_coverage = subcommands.add_parser('coverage', help='Generate coverage graphs')
     cmd_coverage.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key")
-    cmd_coverage.add_argument("--granularity", type=str, default="char", help="统计颗粒度，可选值为 token 或 char（默认为 char）")
+    cmd_coverage.add_argument("--granularity", type=str, default="token,char", help="统计颗粒度，可选值为 token 或 char（默认为 token,char）")
     cmd_coverage.add_argument("--debug", action="store_true", help="是否输出调试信息")
     cmd_coverage.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
 
     cmd_embedding = subcommands.add_parser('embedding', help='Generate embedding graphs')
     cmd_embedding.add_argument("--group", type=str, default="", help="要生成的模型组（默认为全部），组名称见 models.json 中的 key，可以为多项，用逗号分隔")
-    cmd_embedding.add_argument("--granularity", type=str, default="token", help="统计颗粒度，可选值为 (token、char、word）或组合（如：token,char），（默认为 token）")
+    cmd_embedding.add_argument("--granularity", type=str, default="token,char,word", help="统计颗粒度，可选值为 (token、char、word）或组合（如：token,char），（默认为 token,char,word）")
     cmd_embedding.add_argument("--position", type=str, default="input,output", help="向量位置，可选值为 input, output 或 input,output（默认为 input,output）")
     cmd_embedding.add_argument("--folder", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输出文件夹（默认为 {constants.FOLDER_IMAGES_FULLSIZE}）")
     cmd_embedding.add_argument("--debug", action="store_true", help="是否输出调试信息")

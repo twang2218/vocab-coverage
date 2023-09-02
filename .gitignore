@@ -279,3 +279,4 @@ images/thumbnail*
 .report
 ossutil_output
 .vscode
+logs

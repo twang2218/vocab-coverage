@@ -78,7 +78,8 @@ def get_logger():
     # 创建FileHandler处理器，用于输出到文件
     # 获取当前日期，生成日期字符串，用于日志文件名
     date_str = datetime.datetime.now().strftime('%Y-%m-%d.%H-%M')
-    log_file = f"{__package__}_{date_str}.log"
+    os.makedirs("logs", exist_ok=True)
+    log_file = f"logs/{__package__}_{date_str}.log"
     file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
@@ -125,3 +126,12 @@ def generate_thumbnail_filename(filename:str, folder:str=''):
     _prepare_folder(filename)
     return filename
 
+def is_match_patterns(model_name:str, patterns:list[str], ignore_case:bool=True) -> bool:
+    if ignore_case:
+        model_name = model_name.lower()
+    for pattern in patterns:
+        if ignore_case:
+            pattern = pattern.lower()
+        if pattern in model_name:
+            return True
+    return False

@@ -72,14 +72,6 @@ class TokenClassifier(Classifier):
         # 统计每个字符的类别归属
         candidates = {}
 
-        # 处理字节流类型情况
-        if isinstance(text, bytes):
-            # Qwen/Qwen-7B-Chat
-            try:
-                text = text.decode('utf-8')
-            except UnicodeDecodeError:
-                return constants.CHARSET_OTHER
-
         # 逐个字符判别类别
         for ch in text:
             category = super().classify(ch)
