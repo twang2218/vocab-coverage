@@ -35,8 +35,11 @@ def load_tokenizer_openai(model_name:str, debug:bool=False):
 
 def load_tokenizer(model_name:str, debug:bool=False):
     try:
+        model_name, revision = _split_revision(model_name)
         kwargs = {}
         kwargs['trust_remote_code'] = True
+        if revision:
+            kwargs['revision'] = revision
         if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_LLAMA):
             # https://github.com/LianjiaTech/BELLE/issues/242#issuecomment-1514330432
             # Avoid LlamaTokenizerFast conversion
@@ -117,12 +120,20 @@ def _get_model_class(model_name:str):
     # default to AutoModel
     return AutoModel
 
+def _split_revision(model_name:str):
+    if '@' in model_name:
+        return model_name.split('@')
+    return model_name, None
+
 def load_model(model_name:str, debug:bool=False):
     if is_match_patterns(model_name, constants.PATTERN_MODEL_NAME_OPENAI):
         raise ValueError(f"不支持加载的模型：{model_name}")
 
     try:
+        model_name, revision = _split_revision(model_name)
         kwargs = _generate_model_kwargs(model_name)
+        if revision:
+            kwargs['revision'] = revision
         if debug:
             logger.debug("[%s]: AutoModel.from_pretrained(model_name=%s, kwargs=%s)",
                          model_name, model_name, kwargs)
@@ -231,10 +242,10 @@ def load_wordbook(model_name:str, granularity:str=constants.GRANULARITY_TOKEN, d
         vocab = load_vocab(model_name, tokenizer, debug=debug)
         wordbook = [{'id': i, 'text': v} for i, v in enumerate(vocab)]
         return wordbook
-    elif granularity == constants.GRANULARITY_CHARACTER:
-        # 返回 None，表示将使用 classifier 的内容做语料
-        return None
-    elif granularity == constants.GRANULARITY_WORD:
+    elif granularity in [constants.GRANULARITY_CHARACTER,
+                         constants.GRANULARITY_WORD,
+                         constants.GRANULARITY_SENTENCE,
+                         constants.GRANULARITY_PARAGRAPH]:
         # 返回 None，表示将使用 classifier 的内容做语料
         return None
     else:

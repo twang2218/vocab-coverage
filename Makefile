@@ -47,7 +47,7 @@ generate-coverage-token:
 	python vocab_coverage/generate.py coverage --debug --granularity=token
 
 generate-embedding:
-	python vocab_coverage/generate.py embedding --debug --granularity=token,char,word --position=input,output
+	python vocab_coverage/generate.py embedding --debug --granularity=token,char,word,sentence,paragraph --position=input,output
 
 generate-embedding-token:
 	python vocab_coverage/generate.py embedding --debug --granularity=token --position=input,output
@@ -57,6 +57,10 @@ generate-embedding-char:
 
 generate-embedding-word:
 	python vocab_coverage/generate.py embedding --debug --granularity=word --position=input,output
+
+generate-new:
+	python vocab_coverage/generate.py coverage --debug --granularity=token,char --group=new
+	python vocab_coverage/generate.py embedding --debug --no_cache --granularity=token,char,word,sentence,paragraph --position=input,output --group=new
 
 generate-thumbnail:
 	python vocab_coverage/generate.py thumbnail

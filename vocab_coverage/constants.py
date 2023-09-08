@@ -95,12 +95,14 @@ GRANULARITY_TOKEN = 'token'
 GRANULARITY_CHARACTER = 'char'
 GRANULARITY_WORD = 'word'
 GRANULARITY_SENTENCE = 'sentence'
+GRANULARITY_PARAGRAPH = 'paragraph'
 
 GRANULARITY_SETS = [
     GRANULARITY_TOKEN,
     GRANULARITY_CHARACTER,
     GRANULARITY_WORD,
     GRANULARITY_SENTENCE,
+    GRANULARITY_PARAGRAPH,
 ]
 
 # 目录结构
@@ -148,10 +150,14 @@ FILE_CACHE_LOCK = 'embedding.cache.lock'
 FILE_CHARSET_CHAR = 'charsets_char.json'
 FILE_CHARSET_TOKEN = 'charsets_token.json'
 FILE_DICT_WORD = 'dict_word.json'
+FILE_DATASET_SENTENCE = 'dataset_sentence_short.json'
+FILE_DATASET_PARAGRAPH = 'dataset_sentence_long.json'
 FILE_CHARSET_DICT = {
     GRANULARITY_TOKEN: FILE_CHARSET_TOKEN,
     GRANULARITY_CHARACTER: FILE_CHARSET_CHAR,
-    GRANULARITY_WORD: FILE_DICT_WORD
+    GRANULARITY_WORD: FILE_DICT_WORD,
+    GRANULARITY_SENTENCE: FILE_DATASET_SENTENCE,
+    GRANULARITY_PARAGRAPH: FILE_DATASET_PARAGRAPH,
 }
 FILE_MODELS = 'models.yaml'
 FILE_MODELS_README = 'models_readme.yaml'
@@ -164,7 +170,7 @@ FILE_GRAPHS_MD = 'graphs.md'
 PATTERN_MODEL_NAME_LLAMA = ['llama', 'vicuna', 'alpaca', 'koala', 'wizardlm', 'pajama', 'guanaco', 'atom']
 PATTERN_MODEL_NAME_OPENAI = ['openai']
 PATTERN_MODEL_NAME_QWEN = ['qwen']
-PATTERN_MODEL_NAME_BBPE = ["6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai"]
+PATTERN_MODEL_NAME_BBPE = ["6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai", "bloom"]
 PATTERN_TOKENIZER_BBPE = [
         "RobertaTokenizer",
         "BartTokenizer",

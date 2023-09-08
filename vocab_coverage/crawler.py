@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import requests
+from typing import List
 from bs4 import BeautifulSoup
-from vocab_coverage.utils import logger
+import zipfile
+import random
+from harvesttext import HarvestText
+from tqdm import tqdm
+from vocab_coverage.utils import logger, get_colors_hex
 from vocab_coverage import constants
 
 
@@ -276,15 +281,15 @@ def get_thuocl_dicts(debug:bool=False) -> dict[str, dict]:
         logger.debug('总词数：%d', total)
     return dicts
 
-def get_chinese_word_dicts(debug:bool=False) -> dict[str, dict]:
+def get_chinese_word_dicts(category_size:int=1000, debug:bool=False) -> dict[str, dict]:
     thuocl_dicts = get_thuocl_dicts(debug=debug)
     logger.info('精简词表...')
-    threshold_per_category = 1000
     dicts = {}
     for name, value in thuocl_dicts.items():
         dicts[name] = {
-            # 'items': value['items'][:threshold_per_category],
-            'texts': [item['text'] for item in value['items'][:threshold_per_category]],
+            # 'items': value['items'][:category_size],
+            # 不乱序，取前1000个，前面的概率最高
+            'texts': [item['text'] for item in value['items'][:category_size]],
             'color': value['color']
         }
         if debug:
@@ -293,3 +298,63 @@ def get_chinese_word_dicts(debug:bool=False) -> dict[str, dict]:
     if debug:
         logger.debug('总词数：%d', total)
     return dicts
+
+def get_thucnews_dataset(file:str=None, debug:bool=False) -> dict[str, dict]:
+    if not file:
+        # TODO: download file
+        url = "https://thunlp.oss-cn-qingdao.aliyuncs.com/THUCNews.zip"
+        print(f"Downloading {url}...")
+    segmenter = HarvestText()
+    datasets = {}
+    with zipfile.ZipFile(file, 'r') as z:
+        # 修复文件名编码问题
+        namelist = [i.encode('cp437', errors='replace').decode('utf-8', errors='replace') for i in z.namelist()]
+        namelist = [i for i in namelist if '__MACOSX' not in i]
+        # 获取所有分类
+        categories_blacklist = ['彩票', '星座', '房产', '股票']
+        categories = [i.strip("THUCNews/") for i in namelist if i.endswith('/')]
+        categories = [i for i in categories if i not in categories_blacklist and i != '']
+        # 读取所有文件，断句，分类存储
+        for category in categories:
+            datasets[category] = []
+            category_files = []
+            # 寻找分类下的文件
+            for info in z.infolist():
+                name = info.filename.encode('cp437', errors='replace').decode('utf-8', errors='replace')
+                if name.startswith(f'THUCNews/{category}/') and not name.endswith('/') and '__MACOSX' not in name:
+                    category_files.append(info)
+            # 读取分类下的所有文件，并进行断句
+            for info in tqdm(category_files, desc=f"类别: {category}"):
+                with z.open(info) as f:
+                    content = f.read().strip().decode('utf-8', errors='replace')
+                    sentences = segmenter.cut_sentences(content)
+                    sentences = [i for i in sentences if len(i) > 0]
+                    datasets[category].extend(sentences)
+        # if debug:
+        #     for category in categories:
+        #         logger.debug('%s \t文档数：%d', category, len(datasets[category]))
+    return datasets
+
+def get_chinese_sentence_datasets(range:List[int], colormap='Paired', category_size:int=1000, file:str=None, debug:bool=False) -> dict[str, dict]:
+    datasets = get_thucnews_dataset(file, debug=debug)
+    # 获取分类颜色
+    categories = list(datasets.keys())
+    categories_colors = get_colors_hex(len(categories), colormap)
+    new_datasets = {}
+    rnd = random.Random(42)
+    for category, color in zip(categories, categories_colors):
+        # 按照句子长度过滤符合条件的句子
+        sentences = [i for i in datasets[category] if len(i) >= range[0] and len(i) <= range[1]]
+        # 随机抽取指定数量的句子（种子42）
+        if debug:
+            logger.debug('%s: 总共 %d 个句子，符合长度的句子 %d 个，抽取 %d 个句子',
+                        category, len(datasets[category]), len(sentences), category_size)
+        if len(sentences) > category_size:
+            sentences = rnd.sample(sentences, category_size)
+        new_datasets[category] = {
+            'texts': sentences,
+            'color': color
+        }
+        # if debug:
+        #     logger.debug('%s \t文档数：%d', category, len(new_datasets[category]['texts']))
+    return new_datasets

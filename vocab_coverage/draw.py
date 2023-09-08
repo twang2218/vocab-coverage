@@ -324,6 +324,12 @@ def draw_embeddings_graph(model_name:str,
     elif granularity == constants.GRANULARITY_WORD:
         subtitle = f"〔 中文多字词向量{position_name[position]}分布图 〕"
         vocab_name = 'word'
+    elif granularity == constants.GRANULARITY_SENTENCE:
+        subtitle = f"〔 句子向量{position_name[position]}分布图 〕"
+        vocab_name = 'sentence'
+    elif granularity == constants.GRANULARITY_PARAGRAPH:
+        subtitle = f"〔 段落向量{position_name[position]}分布图 〕"
+        vocab_name = 'paragraph'
     else:
         raise ValueError(f"不支持的颗粒度：{granularity}")
     ## 辅助信息
@@ -376,6 +382,17 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
     font_size = _calculate_font_size(vocab_size=lexicon.get_item_count(),
                                      region_width=width,
                                      debug=debug)
+    # 统计一下平均字符串长度，用于计算字体大小
+    lengths = []
+    for _, value in lexicon:
+        for item in value['items']:
+            lengths.append(len(item['text']))
+    avg_length = sum(lengths) / len(lengths)
+    if debug:
+        logger.debug("> avg length: %f", avg_length)
+    if avg_length > 20:
+        # 如果平均字符串长度太长，说明是句子或段落，字体要小一些
+        font_size = int(font_size * 0.5)
     font = get_chinese_font(font_size)
     # 画字
     if debug:
@@ -400,21 +417,13 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
                 color = lighten_color(color, 0.4)
             if 'tokenized_text' in item:
                 texts = item['tokenized_text']
-                if len(texts) > 0 and isinstance(texts[0], bytes):
-                    # Qwen/Qwen-7B-Chat
-                    new_texts = []
-                    for t in texts:
-                        try:
-                            t = t.decode('utf-8')
-                        except UnicodeDecodeError:
-                            hex_representation = t.hex()
-                            t = ''.join(['\\x' + hex_representation[i:i+2] for i in range(0, len(hex_representation), 2)])
-                        finally:
-                            new_texts.append(t)
-                    texts = new_texts
                 text = '/'.join(texts)
             else:
                 text = item['text']
+            # 如果平均字符串长度太长，说明是句子或段落，只显示前10个字符，后面的用省略号代替
+            max_text_length = 10
+            if avg_length > 20 and len(text) > max_text_length+3:
+                text = text[:max_text_length] + '...'
             draw.text((item_x, item_y), text,
                       fill=color,
                       stroke_fill=constants.PALETTE_REGION_BACKGROUND, stroke_width=1,

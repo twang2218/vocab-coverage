@@ -36,6 +36,7 @@ def main():
     cmd_embedding.add_argument("--granularity", type=str, default='token,char,word', help="向量分析的颗粒度，可以为 'token'、'char'(汉字)、'word'(词)、'sentence'(句)，（默认为 'token,char,word'）")
     cmd_embedding.add_argument("--reducer_method", type=str, default="tsne", help="降维算法（默认为 tsne），可选值为 tsne, umap, tsne_cuml, umap_cuml, umap_tsne, umap_tsne_cuml")
     cmd_embedding.add_argument("--no_cache", action="store_true", help="是否忽略 embedding 缓存")
+    cmd_embedding.add_argument("--batch_size", type=int, default=100, help="批量处理的大小（默认为 100）")
 
     args = parser.parse_args()
 
@@ -72,6 +73,7 @@ def main():
                 granularity=granularity,
                 reducer=args.reducer_method,
                 no_cache=args.no_cache,
+                batch_size=args.batch_size,
                 debug=args.debug)
     else:
         parser.print_help()

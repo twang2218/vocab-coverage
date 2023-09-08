@@ -25,6 +25,7 @@ setup(
     ],
     extras_require={
         'cuml': ['cudf-cu12', 'cuml-cu12'],
+        'datasets': ['harvesttext', 'matplotlib', 'cmaps']
     },
     description='语言模型中文识字率分析\nA Python package designed to perform coverage analysis on Chinese vocabulary for language models.',
     long_description_content_type="text/markdown",

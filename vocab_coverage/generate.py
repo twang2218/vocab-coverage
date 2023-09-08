@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
 # pylint: disable=wrong-import-position
 from vocab_coverage.classifier import Classifier
-from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets, get_chinese_word_dicts
+from vocab_coverage.crawler import get_chinese_charsets, get_token_charsets, get_chinese_word_dicts, get_chinese_sentence_datasets
 from vocab_coverage.coverage import coverage_analysis
 from vocab_coverage.embedding import embedding_analysis, release_resource
 from vocab_coverage.lexicon import load_lexicon
@@ -124,15 +124,16 @@ def generate_embedding(models:List[dict],
                        cleanup:bool=True,
                        no_cache:bool=False,
                        override:bool=False,
+                       batch_size:int=100,
                        debug:bool=False):
     if groups is None:
         groups = []
     else:
         groups = [group for group in groups if len(group) > 0]    
     if granularities is None:
-        granularities = [constants.GRANULARITY_TOKEN]
+        granularities = constants.GRANULARITY_SETS
     if positions is None:
-        positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
+        positions = constants.EMBEDDING_POSITION_ALL
 
     for section in models:
         if len(groups) > 0 and section['group'] not in groups:
@@ -177,6 +178,7 @@ def generate_embedding(models:List[dict],
                                     folder=folder,
                                     no_cache=no_cache,
                                     override=override,
+                                    batch_size=batch_size,
                                     debug=debug)
                     logger.info("[%s] Generated [%s] embedding at %s", model_name, granularity, position_candidates[granularity])
             # pylint: disable=broad-except
@@ -229,9 +231,9 @@ def generate_embedding_thumbnails(models:List[dict],
                                   output:str=constants.FOLDER_IMAGES_THUMBNAIL,
                                   debug:bool=False):
     if granularities is None:
-        granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER, constants.GRANULARITY_WORD]
+        granularities = constants.GRANULARITY_SETS
     if positions is None:
-        positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
+        positions = constants.EMBEDDING_POSITION_ALL
     for section in models:
         for model_name in section["models"]:
             for granularity in granularities:
@@ -260,6 +262,7 @@ def get_oss_url(image) -> str:
 
 def generate_markdown_for_model_graph(image_file, thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL) -> str:
     content = " "
+
     if image_file is None or len(image_file) == 0:
         content = " "
     else:
@@ -277,9 +280,9 @@ def generate_markdown_for_model(model_name:str,
                                 folder:str=constants.FOLDER_IMAGES,
                                 fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
                                 thumbnail:str=constants.FOLDER_THUMBNAIL) -> str:
-    granularities = [constants.GRANULARITY_TOKEN, constants.GRANULARITY_CHARACTER, constants.GRANULARITY_WORD]
+    granularities = constants.GRANULARITY_SETS
     coverages = {granularity: find_coverage_file(model_name, granularity=granularity, folder=fullsize) for granularity in granularities}
-    positions = [constants.EMBEDDING_POSITION_INPUT, constants.EMBEDDING_POSITION_OUTPUT]
+    positions = constants.EMBEDDING_POSITION_ALL
     embeddings = {granularity:
                   {position:
                     find_embedding_file(model_name, granularity=granularity, position=position, folder=fullsize)
@@ -328,12 +331,20 @@ def generate_markdown_for_model(model_name:str,
         input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
         output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
     )
-    word_content = " {input_embedding} | {output_embedding} |\n".format(
+    word_content = " {input_embedding} | {output_embedding} |".format(
         input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
         output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
     )
+    sentence_content = " {input_embedding} | {output_embedding} |".format(
+        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    )
+    paragraph_content = " {input_embedding} | {output_embedding} |".format(
+        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    )
 
-    return header + token_content + character_content + word_content
+    return header + token_content + character_content + word_content + sentence_content + paragraph_content + "\n"
 
 def generate_markdown_for_models(models:List[str],
                                  fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
@@ -343,8 +354,8 @@ def generate_markdown_for_models(models:List[str],
     with io.StringIO() as f:
         # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
         # f.write("| :---: | :---: | :---: | :---: |\n")
-        header = "| 模型 | 完整性分析 (子词) | 入向量分布 (子词) | 出向量分布 (子词) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) |\n"
-        header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+        header = "| 模型 | 完整性分析 (子词) | 入向量分布 (子词) | 出向量分布 (子词) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) | 入向量分布 (句子) | 出向量分布 (句子) | 入向量分布 (段落) | 出向量分布 (段落) |\n"
+        header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
         f.write(header)
         # Table body
         for model_name in models:
@@ -359,7 +370,7 @@ def markdown_text2anchor(text:str):
     for c in text:
         if c == ' ':
             anchor += '-'
-        elif c in '()':
+        elif c in '()（）':
             # 括号会被忽略
             continue
         else:
@@ -376,12 +387,18 @@ def generate_markdown_for_all(models:List[dict],
         f.write("# 所有模型的分析图\n\n")
         f.write("## 目录\n\n")
         for section in models:
+            if section['group'] == 'new':
+                # group: new 是为了辅助生成新模型的分析图，不需要在文档中显示
+                continue
             name = section['name']
             f.write(f"- [{name}](#{markdown_text2anchor(name)})\n")
         f.write("\n\n")
         # 模型内容
         section_mark = "#" * section_level
         for section in models:
+            if section['group'] == 'new':
+                # group: new 是为了辅助生成新模型的分析图，不需要在文档中显示
+                continue
             f.write(f"{section_mark} {section['name']}\n\n")
             f.write(generate_markdown_for_models(section["models"], fullsize=fullsize, thumbnail=thumbnail, level=section_level+1))
             f.write("\n\n")
@@ -407,6 +424,8 @@ def main():
 
     cmd_crawler = subcommands.add_parser('crawler', help='爬取用以统计识字率的字表文件')
     cmd_crawler.add_argument("--granularity", type=str, default="char", help="爬取的字表类型，可选值为 token, char（默认为 char）")
+    cmd_crawler.add_argument("--local_source", type=str, default="", help="使用本地文件来避免重复下载")
+    cmd_crawler.add_argument("--size", type=int, default=None, help="每类语料数量")
     cmd_crawler.add_argument("-f", "--file", type=str, default="", help="用以统计识字率的字表文件（默认为内置字符集文件）")
     cmd_crawler.add_argument("--indent", type=int, default=None, help="输出 JSON 文件时的缩进量（默认为 None）")
 
@@ -426,6 +445,7 @@ def main():
     cmd_embedding.add_argument("--reducer", type=str, default="tsne", help="降维算法，可选值为 tsne 或 umap（默认为 tsne）")
     cmd_embedding.add_argument("--no_cache", action="store_true", help="是否忽略 embedding 缓存")
     cmd_embedding.add_argument("--override", action="store_true", help="是否覆盖已有的 embedding 图片")
+    cmd_embedding.add_argument("--batch_size", type=int, default=None, help="每批次处理的数据量")
 
     cmd_thumbnail = subcommands.add_parser('thumbnail', help='Generate thumbnails for embedding graphs')
     cmd_thumbnail.add_argument("--input", type=str, default=constants.FOLDER_IMAGES_FULLSIZE, help=f"输入文件夹，用以查找全尺寸的图片文件，默认为 {constants.FOLDER_IMAGES_FULLSIZE}")
@@ -449,11 +469,25 @@ def main():
     if args.command == 'crawler':
         # 爬取用以统计识字率的字表文件
         if args.granularity == constants.GRANULARITY_CHARACTER:
-            charsets = get_chinese_charsets(debug=True)
+            datasets = get_chinese_charsets(debug=True)
         elif args.granularity == constants.GRANULARITY_TOKEN:
-            charsets = get_token_charsets(debug=True)
+            datasets = get_token_charsets(debug=True)
         elif args.granularity == constants.GRANULARITY_WORD:
-            charsets = get_chinese_word_dicts(debug=True)
+            if args.size is None:
+                args.size = 1000
+            datasets = get_chinese_word_dicts(category_size=args.size, debug=True)
+        elif args.granularity == constants.GRANULARITY_SENTENCE:
+            if args.size is None:
+                args.size = 1000
+            colormap = 'cmaps:percent_11lev'
+            length_range = (25, 50)
+            datasets = get_chinese_sentence_datasets(length_range, colormap=colormap, file=args.local_source, debug=True)
+        elif args.granularity == constants.GRANULARITY_PARAGRAPH:
+            if args.size is None:
+                args.size = 1000
+            colormap = 'tab10'
+            length_range = (150,200)
+            datasets = get_chinese_sentence_datasets(length_range, colormap=colormap, file=args.local_source, debug=True)
         else:
             logger.error('不支持的字表类型：%s', args.granularity)
             sys.exit(1)
@@ -464,7 +498,7 @@ def main():
             elif args.indent < 0:
                 args.indent = 0
         # 保存到文件
-        Classifier(charsets, granularity=args.granularity).save(args.file, args.indent)
+        Classifier(datasets, granularity=args.granularity).save(args.file, args.indent)
     elif args.command == "coverage":
         generate_coverage(models,
                           groups=args.group.split(','),
@@ -481,6 +515,7 @@ def main():
                            cleanup=not args.no_cleanup,
                            no_cache=args.no_cache,
                            override=args.override,
+                           batch_size=args.batch_size,
                            debug=args.debug)
     elif args.command == "thumbnail":
         generate_coverage_thumbnails(models, input=args.input, output=args.output, debug=args.debug)

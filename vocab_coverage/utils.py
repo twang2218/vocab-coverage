@@ -135,3 +135,21 @@ def is_match_patterns(model_name:str, patterns:list[str], ignore_case:bool=True)
         if pattern in model_name:
             return True
     return False
+
+def get_cmap(name):
+    import matplotlib as mpl
+    import cmaps
+    if 'cmaps:' in name:
+        name = name.split(':')[1]
+        return getattr(cmaps, name)
+    else:
+        return mpl.colormaps[name]
+
+def get_colors(n, colormap='gist_rainbow'):
+    cm = get_cmap(colormap)
+    return [cm(i/n, bytes=True) for i in range(n)]
+
+def get_colors_hex(n, colormap='gist_rainbow'):
+    import matplotlib as mpl
+    cm = get_cmap(colormap)
+    return [mpl.colors.to_hex(cm(i/n)) for i in range(n)]

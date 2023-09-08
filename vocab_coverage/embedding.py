@@ -155,14 +155,14 @@ def _calculate_sentence_embedding_mean_pooling(token_embeddings:torch.Tensor,
     embeddings = embeddings.detach().numpy()
     return embeddings
 
-def get_output_embeddings_openai(model_name:str, lexicon:Lexicon, batch:int=1000, debug=False):
+def get_output_embeddings_openai(model_name:str, lexicon:Lexicon, batch_size:int=1000, debug=False):
     Embedding = importlib.import_module('openai').Embedding
     embeddings = []
     texts = [item['text'] for _, value in lexicon for item in value['items']]
     with tqdm(total=len(texts), desc=f"get_output_embeddings_openai({model_name})") as pbar:
-        for i in range(0, len(texts), batch):
-            pbar.update(batch)
-            batch_texts = texts[i:i+batch]
+        for i in range(0, len(texts), batch_size):
+            pbar.update(batch_size)
+            batch_texts = texts[i:i+batch_size]
             batch_embeddings = Embedding.create(input = batch_texts, model=model_name)['data']
             embeddings.extend(e['embedding'] for e in batch_embeddings)
     if debug:
@@ -175,6 +175,7 @@ def get_embeddings(model_name:str,
                    lexicon:Lexicon,
                    granularity:str=constants.GRANULARITY_TOKEN,
                    positions:List[str]=None,
+                   batch_size:int=100,
                    debug:bool=False):
     if debug:
         logger.debug("[%s]: get_embeddings(): granularity: %s, positions: %s",
@@ -198,16 +199,25 @@ def get_embeddings(model_name:str,
                                         model_name, i, item['text'], token_id, num_embeddings, num_embeddings-1)
                             token_id = num_embeddings - 1
                     texts.append(token_id)
-    elif granularity == constants.GRANULARITY_CHARACTER:
-        for _, value in lexicon:
-            for item in value['items']:
-                texts.append(item['text'])
-    elif granularity == constants.GRANULARITY_WORD:
+    elif granularity in [constants.GRANULARITY_CHARACTER,
+                         constants.GRANULARITY_WORD,
+                         constants.GRANULARITY_SENTENCE,
+                         constants.GRANULARITY_PARAGRAPH]:
         for _, value in lexicon:
             for item in value['items']:
                 texts.append(item['text'])
     # batch calculation
-    batch_size = 100
+    if batch_size is None:
+        if granularity == constants.GRANULARITY_TOKEN:
+            batch_size = 100
+        elif granularity == constants.GRANULARITY_CHARACTER:
+            batch_size = 100
+        elif granularity == constants.GRANULARITY_WORD:
+            batch_size = 100
+        elif granularity == constants.GRANULARITY_SENTENCE:
+            batch_size = 50
+        elif granularity == constants.GRANULARITY_PARAGRAPH:
+            batch_size = 20
     logger.debug("[%s]: get_embeddings(): batch_size: %d", model_name, batch_size)
     progress = tqdm(range(0, len(texts), batch_size))
     for i in progress:
@@ -235,6 +245,7 @@ def embedding_analysis(model_name:str,
                        postfix:str='',
                        override:bool=False,
                        no_cache:bool=False,
+                       batch_size:int=100,
                        debug=False):
     logger.info("[%s] 对 [%s] @ %s embedding 进行可视化...", model_name, granularity, positions)
 
@@ -289,11 +300,11 @@ def embedding_analysis(model_name:str,
             else:
                 # call openai api to get embeddings
                 openai_model_name = model_name.split('/')[-1]
-                embeddings_openai = get_output_embeddings_openai(openai_model_name, lexicon, batch=500, debug=debug)
+                embeddings_openai = get_output_embeddings_openai(openai_model_name, lexicon, batch_size=batch_size, debug=debug)
                 embeddings = { constants.EMBEDDING_POSITION_OUTPUT: embeddings_openai }
         else:
             model = load_model(model_name, debug=debug)
-            embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, debug=debug)    # 处理不同位置的向量
+            embeddings = get_embeddings(model_name, model, tokenizer, lexicon, granularity=granularity, positions=positions, batch_size=batch_size, debug=debug)    # 处理不同位置的向量
             del model
             release_resource(model_name, clear_cache=False)
     for position in positions:
@@ -324,7 +335,10 @@ def embedding_analysis(model_name:str,
             continue
         # 为 lexicon 添加 tokenized_text 信息
         with tqdm(total=lexicon.get_item_count(), desc=f"为 lexicon 添加 tokenized_text 信息({position})") as pbar:
-            if not is_bbpe_tokenizer(model_name, tokenizer):
+            if (granularity in [constants.GRANULARITY_TOKEN,
+                                constants.GRANULARITY_CHARACTER,
+                                constants.GRANULARITY_WORD]
+                and not is_bbpe_tokenizer(model_name, tokenizer)):
                 i = 0
                 for _, value in lexicon:
                     for item in value['items']:

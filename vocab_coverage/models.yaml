@@ -167,7 +167,7 @@
   - meta-llama/Llama-2-7b-chat-hf
 
 - group: llama2-zh
-  name: LLAMA 2 中文衍生模型
+  name: LLAMA-2 中文衍生模型
   models:
   # 2023-07-21
   - LinkSoul/Chinese-Llama-2-7b
@@ -179,6 +179,8 @@
   - wenge-research/yayi-7b-llama2
   # 2023-07-25
   - OpenBuddy/openbuddy-llama2-13b-v8.1-fp16
+  # 2023-08-24
+  - OpenBuddy/openbuddy-llama2-13b-v11.1-bf16
   # 2023-07-25
   - YeungNLP/firefly-llama2-13b
   # 2023-07-25
@@ -233,7 +235,7 @@
 
 
 - group: atom
-  name: 原子回声13B模型（位于预训练不同阶段）
+  name: 原子回声-13B 模型（位于预训练不同阶段）
   models:
   # 2023-06-08
   - AtomEchoAI/AtomGPT_8k
@@ -244,6 +246,22 @@
   # 2023-07-19
   - AtomEchoAI/AtomGPT_56k
 
+- group: baichuan2
+  name: 百川2-7B 模型（位于预训练不同阶段）
+  models:
+  - baichuan-inc/Baichuan2-7B-Chat
+  - baichuan-inc/Baichuan2-7B-Base
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00220B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00440B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00660B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00880B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01100B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01320B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01540B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01760B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01980B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02200B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02420B
 
 - group: llm
   name: 其他大语言模型
@@ -270,25 +288,19 @@
   - OpenAI/text-search-babbage-doc-001
   # - OpenAI/text-similarity-curie-001
 
-# - group: new
-#   name: 新增模型，用于服务器批量处理，平时应该被注释掉。
-#   models:
-#   # 2023-09-02
-#   - FlagAlpha/Atom-7B
-#   - internlm/internlm-chat-7b
-#   - xverse/XVERSE-13B-Chat
-#   - YeungNLP/firefly-internlm-7b
-#   - IDEA-CCNL/Erlangshen-TCBert-330M-Sentence-Embedding-Chinese
-#   - TsinghuaAI/CPM-Generate
-#   # 2021-11-25
-#   - IDEA-CCNL/Wenzhong-GPT2-3.5B
-#   # 2022-06-08
-#   - IDEA-CCNL/Wenzhong2.0-GPT2-3.5B-chinese
-#   # 2023-06-08
-#   - AtomEchoAI/AtomGPT_8k
-#   # 2023-06-19
-#   - AtomEchoAI/AtomGPT_14k
-#   # 2023-07-06
-#   - AtomEchoAI/AtomGPT_28k
-#   # 2023-07-19
-#   - AtomEchoAI/AtomGPT_56k
+- group: new
+  name: 新增模型，用于服务器批量处理，平时应该被注释掉。
+  models:
+  - baichuan-inc/Baichuan2-7B-Chat
+  - baichuan-inc/Baichuan2-7B-Base
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00220B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00440B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00660B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00880B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01100B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01320B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01540B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01760B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01980B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02200B
+  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02420B
