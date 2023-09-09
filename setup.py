@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='vocab-coverage',
-    version='0.8',
+    version='0.9',
     packages=find_packages(),
     install_requires=[
         'Pillow',
