@@ -280,7 +280,9 @@ def generate_markdown_for_model_graph(image_file, thumbnail:str=constants.FOLDER
 def generate_markdown_for_model(model_name:str,
                                 folder:str=constants.FOLDER_IMAGES,
                                 fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
-                                thumbnail:str=constants.FOLDER_THUMBNAIL) -> str:
+                                thumbnail:str=constants.FOLDER_THUMBNAIL,
+                                style:str=constants.MARKDOWN_STYLE_SINGLE_LINE,
+                                show_name:bool=True) -> str:
     granularities = constants.GRANULARITY_SETS
     coverages = {granularity: find_coverage_file(model_name, granularity=granularity, folder=fullsize) for granularity in granularities}
     positions = constants.EMBEDDING_POSITION_ALL
@@ -296,73 +298,79 @@ def generate_markdown_for_model(model_name:str,
     # construct the markdown
     model_name = model_name.replace("/", "<br/>/<br/>")
     model_name = f'<b>{model_name}</b>'
-    # title = f"| {model_name} | | |\n"
-    # title = f"#### {model_name}\n"
 
-    # header =  "| 颗粒度 | 完整覆盖率分析 | 输入向量分布图 | 输出向量分布图 |\n"
-    # header += "| :---: | :---: | :---: | :---: |\n"
-    # token_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
-    #     granularity='Token',
-    #     coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN], thumbnail=thumbnail),
-    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    # )
-    # character_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
-    #     granularity='汉字',
-    #     coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER], thumbnail=thumbnail),
-    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    # )
-    # word_content = "| **{granularity}** | {coverage} | {input_embedding} | {output_embedding} |\n".format(
-    #     granularity='汉字词汇',
-    #     coverage='', #generate_markdown_for_model_graph(coverages[constants.GRANULARITY_WORD], thumbnail=thumbnail),
-    #     input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-    #     output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    # )
-    # header = "| Token 完整覆盖率 | Token 输入向量分布 | Token 输出向量分布 | 汉字完整覆盖率 | 汉字输入向量分布 | 汉字输出向量分布 | 词语输入向量分布 | 词语输出向量分布 |\n"
-    # header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
-    header = f"| {model_name} "
-    token_content = "| {coverage} | {input_embedding} | {output_embedding} |".format(
-        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN], thumbnail=thumbnail),
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    )
-    character_content = " {coverage} | {input_embedding} | {output_embedding} |".format(
-        coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER], thumbnail=thumbnail),
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    )
-    word_content = " {input_embedding} | {output_embedding} |".format(
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    )
-    sentence_content = " {input_embedding} | {output_embedding} |".format(
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
-    )
-    paragraph_content = " {input_embedding} | {output_embedding} |".format(
-        input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
-        output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
+    content = ""
+    leading = ""
+    if style == constants.MARKDOWN_STYLE_SINGLE_LINE:
+        if show_name:
+            content = "| {model_name} "
+        content += "| {token_coverage} | {token_input_embedding} | {token_output_embedding} | {character_coverage} | {character_input_embedding} | {character_output_embedding} | {word_input_embedding} | {word_output_embedding} | {sentence_input_embedding} | {sentence_output_embedding} | {paragraph_input_embedding} | {paragraph_output_embedding} |\n"
+    elif style == constants.MARKDOWN_STYLE_DOUBLE_LINE:
+        if show_name:
+            leading = "| {model_name} "
+        content = leading + "| Token | {token_coverage} | 输入端 | {token_input_embedding} | {character_input_embedding} | {word_input_embedding} | {sentence_input_embedding} | {paragraph_input_embedding} |\n"
+        if show_name:
+            leading = "| "
+        content += leading + "| 汉字 | {character_coverage} | 输出端 | {token_output_embedding} | {character_output_embedding} | {word_output_embedding} | {sentence_output_embedding} | {paragraph_output_embedding} |\n"
+    else:
+        raise ValueError(f"Unknown markdown style {style}")
+
+    content = content.format(
+        model_name=model_name,
+        token_coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_TOKEN], thumbnail=thumbnail),
+        token_input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        token_output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_TOKEN][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail),
+        character_coverage=generate_markdown_for_model_graph(coverages[constants.GRANULARITY_CHARACTER], thumbnail=thumbnail),
+        character_input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        character_output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_CHARACTER][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail),
+        word_input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        word_output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_WORD][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail),
+        sentence_input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        sentence_output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_SENTENCE][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail),
+        paragraph_input_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_INPUT], thumbnail=thumbnail),
+        paragraph_output_embedding=generate_markdown_for_model_graph(embeddings[constants.GRANULARITY_PARAGRAPH][constants.EMBEDDING_POSITION_OUTPUT], thumbnail=thumbnail)
     )
 
-    return header + token_content + character_content + word_content + sentence_content + paragraph_content + "\n"
+    return content
+
 
 def generate_markdown_for_models(models:List[str],
                                  fullsize:str=constants.FOLDER_IMAGES_FULLSIZE,
                                  thumbnail:str=constants.FOLDER_IMAGES_THUMBNAIL,
-                                 level:int=3) -> str:
+                                 level:int=3,
+                                 style:str=constants.MARKDOWN_STYLE_SINGLE_LINE) -> str:
     content = ""
+    leading = ""
     with io.StringIO() as f:
-        # f.write("| 颗粒度 | 完整覆盖率分析 | 输入向量分布 | 输出向量分布 |\n")
-        # f.write("| :---: | :---: | :---: | :---: |\n")
-        header = "| 模型 | 完整性分析 (子词) | 入向量分布 (子词) | 出向量分布 (子词) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) | 入向量分布 (句子) | 出向量分布 (句子) | 入向量分布 (段落) | 出向量分布 (段落) |\n"
-        header += "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+        if len(models) > 1:
+            show_name = True
+        else:
+            show_name = False
+
+        if style == constants.MARKDOWN_STYLE_SINGLE_LINE:
+            if show_name:
+                leading = "| 模型 "
+            header = leading + "| 完整性分析 (子词) | 入向量分布 (子词) | 出向量分布 (子词) | 完整性分析 (汉字) | 入向量分布 (汉字) | 出向量分布 (汉字) | 入向量分布 (词语) | 出向量分布 (词语) | 入向量分布 (句子) | 出向量分布 (句子) | 入向量分布 (段落) | 出向量分布 (段落) |\n"
+            if show_name:
+                leading = "|:---:"
+            header += leading + "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
+        elif style == constants.MARKDOWN_STYLE_DOUBLE_LINE:
+            if show_name:
+                leading = "| 模型 "
+            header = leading + "|颗粒度| 完整性分析图 | 位置 | 子词向量分布 | 汉字向量分布 | 词语向量分布 | 句子向量分布 | 段落向量分布 |\n"
+            if show_name:
+                leading = "|:---:"
+            header += leading + "|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|\n"
         f.write(header)
         # Table body
         for model_name in models:
             # model_mark = "#" * level
             # f.write(f"{model_mark} {model_name}\n\n")
-            f.write(generate_markdown_for_model(model_name, fullsize=fullsize, thumbnail=thumbnail))
+            f.write(generate_markdown_for_model(model_name,
+                                                fullsize=fullsize,
+                                                thumbnail=thumbnail,
+                                                style=style,
+                                                show_name=show_name))
         content = f.getvalue()
     return content
 
@@ -401,7 +409,11 @@ def generate_markdown_for_all(models:List[dict],
                 # group: new 是为了辅助生成新模型的分析图，不需要在文档中显示
                 continue
             f.write(f"{section_mark} {section['name']}\n\n")
-            f.write(generate_markdown_for_models(section["models"], fullsize=fullsize, thumbnail=thumbnail, level=section_level+1))
+            f.write(generate_markdown_for_models(section["models"],
+                                                 fullsize=fullsize,
+                                                 thumbnail=thumbnail,
+                                                 level=section_level+1,
+                                                 style=constants.MARKDOWN_STYLE_SINGLE_LINE))
             f.write("\n\n")
 
 def generate_markdown_from_template(template_file:str, model_list_file:str,
@@ -413,7 +425,10 @@ def generate_markdown_from_template(template_file:str, model_list_file:str,
     with open(model_list_file, "r", encoding='utf-8') as f:
         models = yaml.load(f, Loader=yaml.FullLoader)
     for tag, section in models.items():
-        content = generate_markdown_for_models(section["models"], fullsize=fullsize, thumbnail=thumbnail)
+        content = generate_markdown_for_models(section["models"],
+                                               fullsize=fullsize,
+                                               thumbnail=thumbnail,
+                                               style=constants.MARKDOWN_STYLE_DOUBLE_LINE)
         if len(content) > 0:
             template = template.replace(f"{{{tag}}}", content)
     with open(output, "w", encoding='utf-8') as f:

@@ -186,3 +186,7 @@ PATTERN_TOKENIZER_BBPE = [
 PATTERN_MODEL_NAME_INT8 = ['12b', '13b', 'taiwan-llama', 'moss', 'atomgpt']
 PATTERN_MODEL_NAME_FP16 = ['6b', '7b', 'llama', 'gpt']
 PATTERN_MODEL_NAME_CAUSALLM = ['falcon', 'aquila', 'qwen', 'baichuan', 'mpt']
+
+# Markdown Style
+MARKDOWN_STYLE_SINGLE_LINE = 'single_line'
+MARKDOWN_STYLE_DOUBLE_LINE = 'double_line'
