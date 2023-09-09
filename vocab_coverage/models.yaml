@@ -131,8 +131,6 @@
   - TheBloke/koala-7B-HF
   # 2023-04-26
   - TheBloke/wizardLM-7B-HF
-  # 2023-05-05
-  - togethercomputer/RedPajama-INCITE-7B-Chat
   # 2023-05-26
   - TheBloke/guanaco-7B-HF
   # 2023-06-06
@@ -159,7 +157,7 @@
   - IDEA-CCNL/Ziya-LLaMA-13B-v1.1
 
 - group: llama2
-  name: LLAMA 2 及衍生模型
+  name: LLAMA-2 及衍生模型
   models:
   # 2023-07-18
   - meta-llama/Llama-2-7b-hf
@@ -194,7 +192,6 @@
   # 2023-08-28
   - FlagAlpha/Atom-7B
 
-
 - group: bloom
   name: Bloom 及衍生模型
   models:
@@ -202,8 +199,17 @@
   - bigscience/bloom-7b1
   # 2023-06-02
   - wenge-research/yayi-7b
+
+- group: tiger
+  name: TigerBot 模型（变基座模型的过程）
+  models:
+  # 2023-06-01
+  - TigerResearch/tigerbot-7b-base-v1
   # 2023-07-07
+  - TigerResearch/tigerbot-7b-base-v2
+  # 2023-08-19
   - TigerResearch/tigerbot-7b-base
+
 
 - group: llm-zh
   name: 中文大语言模型
@@ -272,6 +278,8 @@
   - nomic-ai/gpt4all-j
   # 2023-04-25
   - tiiuae/falcon-7b-instruct
+  # 2023-05-05
+  - togethercomputer/RedPajama-INCITE-7B-Chat
   # 2023-06-18
   - mosaicml/mpt-7b-instruct
 
@@ -291,16 +299,6 @@
 - group: new
   name: 新增模型，用于服务器批量处理，平时应该被注释掉。
   models:
-  - baichuan-inc/Baichuan2-7B-Chat
-  - baichuan-inc/Baichuan2-7B-Base
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00220B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00440B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00660B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_00880B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01100B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01320B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01540B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01760B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_01980B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02200B
-  - baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints@train_02420B
+  - TigerResearch/tigerbot-7b-base
+  - TigerResearch/tigerbot-7b-base-v1
+  - TigerResearch/tigerbot-7b-base-v2

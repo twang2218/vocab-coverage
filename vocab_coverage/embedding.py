@@ -159,6 +159,8 @@ def get_output_embeddings_openai(model_name:str, lexicon:Lexicon, batch_size:int
     Embedding = importlib.import_module('openai').Embedding
     embeddings = []
     texts = [item['text'] for _, value in lexicon for item in value['items']]
+    if batch_size is None:
+        batch_size = 64
     with tqdm(total=len(texts), desc=f"get_output_embeddings_openai({model_name})") as pbar:
         for i in range(0, len(texts), batch_size):
             pbar.update(batch_size)
@@ -206,18 +208,24 @@ def get_embeddings(model_name:str,
         for _, value in lexicon:
             for item in value['items']:
                 texts.append(item['text'])
-    # batch calculation
+
+    # 通过试错，寻找最大可用的 batch_size
     if batch_size is None:
-        if granularity == constants.GRANULARITY_TOKEN:
-            batch_size = 100
-        elif granularity == constants.GRANULARITY_CHARACTER:
-            batch_size = 100
-        elif granularity == constants.GRANULARITY_WORD:
-            batch_size = 100
-        elif granularity == constants.GRANULARITY_SENTENCE:
-            batch_size = 50
-        elif granularity == constants.GRANULARITY_PARAGRAPH:
-            batch_size = 20
+        batch_size = 1024
+    while batch_size > 2:
+        try:
+            # 随机texts中的10个位置，计算embedding，看是否会出错
+            indexes = np.random.randint(0, len(texts)-batch_size, 10)
+            for i in indexes:
+                get_sentences_embeddings(model_name, model, tokenizer, texts[i:i+batch_size], positions)
+            break
+        except Exception:
+            if debug:
+                logger.debug("[%s]: batch_size = %d is too large, try batch_size = %d...", model_name, batch_size, batch_size // 2)
+            batch_size = batch_size // 2
+        finally:
+            release_resource(model_name, clear_cache=False, debug=False)
+    batch_size = int(0.8*batch_size) # 降低一点，避免内存不足
     logger.debug("[%s]: get_embeddings(): batch_size: %d", model_name, batch_size)
     progress = tqdm(range(0, len(texts), batch_size))
     for i in progress:
@@ -324,7 +332,12 @@ def embedding_analysis(model_name:str,
             for _, value in lexicon:
                 for item in value['items']:
                     if np.isnan(embeddings[position][i]).any():
+                        # TigerResearch/tigerbot-7b-base
+                        # 
                         logger.warning("[%s]: [%d]: '%s' embedding: (%s): %s", model_name, i, item['text'], np.shape(embeddings[position][i]), embeddings[position][i])
+                        # 将 nan 替换为 0，避免降维时出错
+                        embeddings[position][i] = np.zeros_like(embeddings[position][i])
+                        item['is_nan'] = True
                     i += 1
             # 降维
             embeddings_2d = reduce_to_2d(embeddings[position], method=reducer, shuffle=True, debug=debug)
@@ -339,6 +352,8 @@ def embedding_analysis(model_name:str,
                                 constants.GRANULARITY_CHARACTER,
                                 constants.GRANULARITY_WORD]
                 and not is_bbpe_tokenizer(model_name, tokenizer)):
+                if debug:
+                    logger.debug("[%s](%s-%s): 添加 tokenized_text 信息...", model_name, granularity, position)
                 i = 0
                 for _, value in lexicon:
                     for item in value['items']:

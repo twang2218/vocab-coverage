@@ -401,6 +401,9 @@ def draw_embedding_region(draw:ImageDraw, region: Tuple[int, int, int, int], lex
     for category, value in reversed(list(lexicon)):
         count = 0
         for item in value['items']:
+            if 'is_nan' in item and item['is_nan']:
+                # 跳过 NaN 的项目，无需绘制
+                continue
             # 画字
             if 'embedding' not in item:
                 logger.warning("> item has no embedding: %s", item)

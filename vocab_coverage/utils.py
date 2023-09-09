@@ -15,7 +15,7 @@ def has_parameter(fn, parameter_name:str):
     except ValueError:  # Raised when a non-callable object is passed to `inspect.signature`
         return False
 
-def show_gpu_usage(name:str = ""):
+def show_gpu_usage(name:str = "", debug:bool=True):
     if torch.cuda.is_available():
         # 获取当前设备
         device = torch.cuda.current_device()
@@ -27,13 +27,15 @@ def show_gpu_usage(name:str = ""):
         memory_total = torch.cuda.get_device_properties(device=device).total_memory / 1024 ** 2
         # 获取剩余可用显存
         memory_free = memory_total - memory_used
-        if len(name) > 0:
-            name = f"[{name}]: "
-        else:
-            name = "> "
-        logger.debug("%s GPU Memory total: %s MiB", name, f'{memory_total:,.0f}')
-        logger.debug("%s GPU Memory usage: %s MiB", name, f'{memory_used:,.0f}')
-        logger.debug("%s GPU Memory free: %s MiB", name, f'{memory_free:,.0f}')
+
+        if debug:
+            if len(name) > 0:
+                name = f"[{name}]: "
+            else:
+                name = "> "
+            logger.debug("%s GPU Memory total: %s MiB", name, f'{memory_total:,.0f}')
+            logger.debug("%s GPU Memory usage: %s MiB", name, f'{memory_used:,.0f}')
+            logger.debug("%s GPU Memory free: %s MiB", name, f'{memory_free:,.0f}')
         return {"total": memory_total, "used": memory_used, "free": memory_free}
     else:
         logger.debug("GPU not available.")
@@ -52,18 +54,20 @@ def lighten_color(color, amount=0.2):
     )
     return adjusted_color
 
-def release_resource(model_name:str = "", clear_cache=False):
+def release_resource(model_name:str = "", clear_cache=False, debug:bool=True):
     gc.collect()
     if len(model_name) > 0:
         label = f"[{model_name}]: "
     if torch.cuda.is_available():
-        logger.debug("%sreleasing GPU memory...", label)
+        if debug:
+            logger.debug("%sreleasing GPU memory...", label)
         torch.cuda.empty_cache()
-        show_gpu_usage(model_name)
+        show_gpu_usage(model_name, debug=debug)
     if clear_cache:
         model_path = f"models--{model_name.replace('/', '--')}"
         cache_dir = os.path.join(os.path.expanduser("~"), ".cache/huggingface/hub", model_path)
-        logger.debug("%sclean up cache (%s)...", label, cache_dir)
+        if debug:
+            logger.debug("%sclean up cache (%s)...", label, cache_dir)
         shutil.rmtree(cache_dir, ignore_errors=True)
 
 def get_logger():

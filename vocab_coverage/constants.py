@@ -167,7 +167,7 @@ FILE_GRAPHS_MD = 'graphs.md'
 
 # 模型名称模式
 
-PATTERN_MODEL_NAME_LLAMA = ['llama', 'vicuna', 'alpaca', 'koala', 'wizardlm', 'pajama', 'guanaco', 'atom']
+PATTERN_MODEL_NAME_LLAMA = ['llama', 'vicuna', 'alpaca', 'koala', 'wizardlm', 'guanaco', 'atom']
 PATTERN_MODEL_NAME_OPENAI = ['openai']
 PATTERN_MODEL_NAME_QWEN = ['qwen']
 PATTERN_MODEL_NAME_BBPE = ["6b", "7b", "12b", "13b", "llama", "moss", "gpt", "openai", "bloom"]
@@ -177,6 +177,7 @@ PATTERN_TOKENIZER_BBPE = [
         "BloomTokenizer",
         "LlamaTokenizer",
         "GPT2Tokenizer",
+        "GPTNeoXTokenizer",
         "DebertaTokenizer",
         "OpenAIGPTTokenizer",
         "BartTokenizer",
